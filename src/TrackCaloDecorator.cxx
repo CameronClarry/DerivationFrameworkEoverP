@@ -352,6 +352,7 @@ namespace DerivationFramework {
 
     m_cutflow_evt -> Fill(m_cutflow_evt_all, 1);
 
+    bool evt_pass_all = true;
     for (const auto& track : *trackContainer) {
 
       m_cutflow_trk -> Fill(m_cutflow_trk_all, 1);
@@ -1086,10 +1087,11 @@ namespace DerivationFramework {
       decorator_Total_CellEnergy_0_100(*track) = totalCellEnergy[1];
 
       m_cutflow_trk -> Fill(m_cutflow_trk_pass_all, 1);
+      evt_pass_all = true;
 
     }
 
-    m_cutflow_evt -> Fill(m_cutflow_evt_pass_all, 1);
+    if (evt_pass_all) m_cutflow_evt -> Fill(m_cutflow_evt_pass_all, 1);
 
     return StatusCode::SUCCESS;
   }
