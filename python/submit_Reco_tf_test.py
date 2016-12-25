@@ -4,11 +4,11 @@ import subprocess as sp
 
 # Joakim Olsson <joakim.olsson@cern.ch>
 
-tag = '20161225_test0'
+tag = '20161225_test1'
 user = 'jolsson'
 
-nFiles = 9
-nFilesPerJob = 3
+nFiles = 2
+nFilesPerJob = 1
 nEventsPerFile = -1
 
 # If sub-jobs exceed the walltime limit, they will get killed. When you want to submit long running jobs (e.g., customized G4 simulation), submit them to sites where longer walltime limit is available by specifying the expected execution time (in second) to the --maxCpuCount option.
@@ -31,7 +31,7 @@ outDSs  = ['data15_13TeV.00267358.physics_MinBias.DAOD_EOP.r7922']
            # 'data15_13TeV.00267385.physics_MinBias.DAOD_EOP.r7922',
            # 'data15_13TeV.00267360.physics_MinBias.DAOD_EOP.r7922']
 
-setup = '--nFiles '+str(nFiles)+' --nFilesPerJob '+str(nFilesPerJob)+' --nEventsPerFile '+str(nEventsPerFile)+' --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputAODFile=%OUT --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything --maxEvents='+str(nEventsPerFile)+'" --extOutFile cutflow.root --individualOutDS'
+setup = '--nFiles '+str(nFiles)+' --nFilesPerJob '+str(nFilesPerJob)+' --nEventsPerFile '+str(nEventsPerFile)+' --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputDAOD_EOPFile=%OUT.pool.root --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything --maxEvents='+str(nEventsPerFile)+'" --extOutFile cutflow.root --individualOutDS'
 print 'setup: '+setup
 
 config = ''
@@ -50,5 +50,5 @@ for i,inDS in enumerate(inDSs):
         command = comFirst.format(setup, outDS, inDS, config)
     else:
         command = comLater.format(setup, outDS, inDS, config)
-    sp.call('echo '+command, shell=True)
+    print(command)
     sp.call(command, shell=True)
