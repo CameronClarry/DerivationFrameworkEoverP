@@ -36,18 +36,23 @@ namespace DerivationFramework {
   TrackCaloDecorator::TrackCaloDecorator(const std::string& t, const std::string& n, const IInterface* p) : 
     AthAlgTool(t,n,p), //type, name, parent
     m_sgName(""),
-    m_trackContainer(""),
+    m_eventInfoContainerName("EventInfo"),
+    m_trackContainerName("InDetTrackParticles"),
+    m_caloClusterContainerName("CaloCalTopoClusters"),
     m_extrapolator("Trk::Extrapolator"),
     m_theTrackExtrapolatorTool("Trk::ParticleCaloExtensionTool"),
     m_trackParametersIdHelper(new Trk::TrackParametersIdHelper),
     m_surfaceHelper("CaloSurfaceHelper/CaloSurfaceHelper"),
-    m_tileTBID(0) {
+    m_tileTBID(0),
+    m_doCutflow{false}{
       declareInterface<DerivationFramework::IAugmentationTool>(this);
       declareProperty("DecorationPrefix", m_sgName);
-      declareProperty("TrackContainer", m_trackContainer); //xAOD entry to be decorated
-      declareProperty("CaloClusterContainer", m_caloClusterContainerName = "CaloCalTopoClusters");
+      declareProperty("EventContainer", m_eventInfoContainerName);
+      declareProperty("TrackContainer", m_trackContainerName);
+      declareProperty("CaloClusterContainer", m_caloClusterContainerName);
       declareProperty("Extrapolator", m_extrapolator);
       declareProperty("TheTrackExtrapolatorTool", m_theTrackExtrapolatorTool);
+      declareProperty("DoCutflow", m_doCutflow);
     }
 
   StatusCode TrackCaloDecorator::initialize()
@@ -62,30 +67,46 @@ namespace DerivationFramework {
 
     ATH_CHECK(m_surfaceHelper.retrieve());
 
-    // Borrowed this piece of code, but this should be a tool handle?
     // Get the test beam identifier for the MBTS
     ATH_CHECK(detStore()->retrieve(m_tileTBID));
 
-    // Write cutflow histogram
-    ServiceHandle<ITHistSvc> histSvc("THistSvc", name()); 
-    CHECK( histSvc.retrieve() );
+    // Save cutflow histograms
+    if (m_doCutflow) {
+      ServiceHandle<ITHistSvc> histSvc("THistSvc", name()); 
+      CHECK( histSvc.retrieve() );
 
-    m_cutflow_evt = new TH1F("cutflow_evt", "cutflow_evt", 1, 1, 2);
-    m_cutflow_evt->SetCanExtend(TH1::kAllAxes);
-    m_cutflow_evt_all = m_cutflow_evt->GetXaxis()->FindBin("Total events");
-    m_cutflow_evt_pass_all = m_cutflow_evt->GetXaxis()->FindBin("Pass all");
-    histSvc->regHist("/CutflowStream/cutflow_evt", m_cutflow_evt).ignore(); 
+      m_cutflow_evt = new TH1F("cutflow_evt", "cutflow_evt", 1, 1, 2);
+      m_cutflow_evt->SetCanExtend(TH1::kAllAxes);
+      m_cutflow_evt_all = m_cutflow_evt->GetXaxis()->FindBin("Total events");
+      m_cutflow_evt_pass_all = m_cutflow_evt->GetXaxis()->FindBin("Pass all");
+      histSvc->regHist("/CutflowStream/cutflow_evt", m_cutflow_evt).ignore(); 
 
-    m_cutflow_trk = new TH1F("cutflow_trk", "cutflow_trk", 1, 1, 2);
-    m_cutflow_trk->SetCanExtend(TH1::kAllAxes);
-    m_cutflow_trk_all = m_cutflow_trk->GetXaxis()->FindBin("Total tracks");
-    m_cutflow_trk_pass_extrapolation = m_cutflow_trk->GetXaxis()->FindBin("Pass extrapolation");
-    m_cutflow_trk_pass_cluster_matching = m_cutflow_trk->GetXaxis()->FindBin("Pass trk-cluster matching");
-    m_cutflow_trk_pass_cell_matching = m_cutflow_trk->GetXaxis()->FindBin("Pass trk-cell matching");
-    m_cutflow_trk_pass_loop_matched_clusters = m_cutflow_trk->GetXaxis()->FindBin("Pass loop matched clusters");
-    m_cutflow_trk_pass_loop_matched_cells = m_cutflow_trk->GetXaxis()->FindBin("Pass loop matched cells");
-    m_cutflow_trk_pass_all = m_cutflow_trk->GetXaxis()->FindBin("Pass all");
-    histSvc->regHist("/CutflowStream/cutflow_trk", m_cutflow_trk).ignore(); 
+      m_cutflow_trk = new TH1F("cutflow_trk", "cutflow_trk", 1, 1, 2);
+      m_cutflow_trk->SetCanExtend(TH1::kAllAxes);
+      m_cutflow_trk_all = m_cutflow_trk->GetXaxis()->FindBin("Total tracks");
+      m_cutflow_trk_pass_extrapolation = m_cutflow_trk->GetXaxis()->FindBin("Pass extrapolation");
+      m_cutflow_trk_pass_cluster_matching = m_cutflow_trk->GetXaxis()->FindBin("Pass trk-cluster matching");
+      m_cutflow_trk_pass_cell_matching = m_cutflow_trk->GetXaxis()->FindBin("Pass trk-cell matching");
+      m_cutflow_trk_pass_loop_matched_clusters = m_cutflow_trk->GetXaxis()->FindBin("Pass loop matched clusters");
+      m_cutflow_trk_pass_loop_matched_cells = m_cutflow_trk->GetXaxis()->FindBin("Pass loop matched cells");
+      m_cutflow_trk_pass_all = m_cutflow_trk->GetXaxis()->FindBin("Pass all");
+      histSvc->regHist("/CutflowStream/cutflow_trk", m_cutflow_trk).ignore(); 
+
+      m_ntrks_per_event_all = new TH1F("ntrks_per_event_all", "ntrks_per_event_all", 300, 0, 300);
+      histSvc->regHist("/CutflowStream/ntrks_per_event_all", m_ntrks_per_event_all).ignore(); 
+
+      m_ntrks_per_event_pass_all = new TH1F("ntrks_per_event_pass_all", "ntrks_per_event_pass_all", 300, 0, 300);
+      histSvc->regHist("/CutflowStream/ntrks_per_event_pass_all", m_ntrks_per_event_pass_all).ignore(); 
+
+      m_tree = new TTree("cutflow_tree","cutflow_tree");
+      CHECK( histSvc->regTree("/CutflowStream/cutflow_tree", m_tree) );
+
+      m_tree->Branch("runNumber", &m_runNumber, "runNumber/I");
+      m_tree->Branch("eventNumber", &m_eventNumber, "eventNumber/I");
+      m_tree->Branch("lumiBlock", &m_lumiBlock, "lumiBlock/I");
+      m_tree->Branch("nTrks", &m_nTrks, "nTrks/I");
+      m_tree->Branch("nTrks_pass", &m_nTrks_pass, "nTrks_pass/I");
+    }
 
     return StatusCode::SUCCESS;
   }
@@ -94,7 +115,7 @@ namespace DerivationFramework {
     return StatusCode::SUCCESS;
   }
 
-  StatusCode TrackCaloDecorator::addBranches() const  {
+  StatusCode TrackCaloDecorator::addBranches() const {
 
     /*---------E/p Decorators---------*/
     /*---------Calo Sample layer Variables---------*/
@@ -342,7 +363,7 @@ namespace DerivationFramework {
 
     // Retrieve track container, Cluster container and Cell container
     const xAOD::TrackParticleContainer* trackContainer = 0;
-    CHECK(evtStore()->retrieve(trackContainer, m_trackContainer));
+    CHECK(evtStore()->retrieve(trackContainer, m_trackContainerName));
 
     const xAOD::CaloClusterContainer* clusterContainer = 0; //xAOD object used to create decorations.
     CHECK(evtStore()->retrieve(clusterContainer, m_caloClusterContainerName));
@@ -350,12 +371,17 @@ namespace DerivationFramework {
     const CaloCellContainer *caloCellContainer = 0; //ESD object used to create decorations
     CHECK(evtStore()->retrieve(caloCellContainer, "AllCalo"));
 
-    m_cutflow_evt -> Fill(m_cutflow_evt_all, 1);
-
     bool evt_pass_all = false;
+    int ntrks_all = 0;
+    int ntrks_pass_all = 0;
+    if (m_doCutflow) {
+      m_cutflow_evt -> Fill(m_cutflow_evt_all, 1);
+    }
     for (const auto& track : *trackContainer) {
-
-      m_cutflow_trk -> Fill(m_cutflow_trk_all, 1);
+      if (m_doCutflow) {
+        ntrks_all++;
+        m_cutflow_trk -> Fill(m_cutflow_trk_all, 1);
+      }
 
       // Need to record a value for every track, so using -999999999 as an invalid code
       decorator_extrapolation (*track) = 0;
@@ -615,7 +641,7 @@ namespace DerivationFramework {
       if(!(m_theTrackExtrapolatorTool->caloExtension(*track, extension))) continue; //No valid parameters for any of the layers of interest
       decorator_extrapolation(*track) = 1;
 
-      m_cutflow_trk -> Fill(m_cutflow_trk_pass_extrapolation, 1);
+      if (m_doCutflow) m_cutflow_trk -> Fill(m_cutflow_trk_pass_extrapolation, 1);
 
       /*Decorate track with extended eta and phi coordinates at intersection layers*/
       if(parametersMap[CaloCell_ID::CaloSample::PreSamplerB]) decorator_trkEta_PreSamplerB(*track) = parametersMap[CaloCell_ID::CaloSample::PreSamplerB]->momentum().eta();
@@ -725,7 +751,7 @@ namespace DerivationFramework {
         }
       }
 
-      m_cutflow_trk -> Fill(m_cutflow_trk_pass_cluster_matching, 1);
+      if (m_doCutflow) m_cutflow_trk -> Fill(m_cutflow_trk_pass_cluster_matching, 1);
 
       /*Track-cell matching*/
       //Approach: loop over cell container, getting the eta and phi coordinates of each cell for each layer.//
@@ -772,7 +798,7 @@ namespace DerivationFramework {
         }
       }
 
-      m_cutflow_trk -> Fill(m_cutflow_trk_pass_cell_matching, 1);
+      if (m_doCutflow) m_cutflow_trk -> Fill(m_cutflow_trk_pass_cell_matching, 1);
 
       /*Populating cluster decorations*/
       std::vector<std::vector<xAOD::CaloCluster*>> matchedClusters;
@@ -975,7 +1001,7 @@ namespace DerivationFramework {
         }
       }
 
-      m_cutflow_trk -> Fill(m_cutflow_trk_pass_loop_matched_clusters, 1);
+      if (m_doCutflow) m_cutflow_trk -> Fill(m_cutflow_trk_pass_loop_matched_clusters, 1);
 
       /*Populate cell decorations*/
       std::vector<std::vector<CaloCell*>> matchedCells;
@@ -1027,7 +1053,7 @@ namespace DerivationFramework {
         totalCellEnergy[i] = summedCellEnergy;
       }
 
-      m_cutflow_trk -> Fill(m_cutflow_trk_pass_loop_matched_cells, 1);
+      if (m_doCutflow) m_cutflow_trk -> Fill(m_cutflow_trk_pass_loop_matched_cells, 1);
 
       /*Cell decorations*/
       decorator_CellEnergy_PreSamplerB_200(*track) = matchedCellEnergy[0][0];
@@ -1086,13 +1112,32 @@ namespace DerivationFramework {
       decorator_Total_CellEnergy_0_200(*track) = totalCellEnergy[0];
       decorator_Total_CellEnergy_0_100(*track) = totalCellEnergy[1];
 
-      m_cutflow_trk -> Fill(m_cutflow_trk_pass_all, 1);
-      evt_pass_all = true;
+      if (m_doCutflow) {
+        m_cutflow_trk -> Fill(m_cutflow_trk_pass_all, 1);
+        evt_pass_all = true;
+        ntrks_pass_all++;
+      }
+    } // loop trackContainer
 
+    if (m_doCutflow) {
+      m_ntrks_per_event_all -> Fill(ntrks_all, 1);
+      m_ntrks_per_event_pass_all -> Fill(ntrks_pass_all, 1);
+      if (evt_pass_all) m_cutflow_evt -> Fill(m_cutflow_evt_pass_all, 1);
+
+      // Fill TTree with basic event info
+      const xAOD::EventInfo* eventInfo(nullptr);
+      CHECK( evtStore()->retrieve(eventInfo, m_eventInfoContainerName) );
+
+      const_cast<int&>(m_runNumber)    = eventInfo->runNumber();
+      const_cast<int&>(m_eventNumber)  = eventInfo->eventNumber();
+      const_cast<int&>(m_lumiBlock)    = eventInfo->lumiBlock();
+      const_cast<int&>(m_nTrks)        = ntrks_all;
+      const_cast<int&>(m_nTrks_pass)   = ntrks_pass_all;
+
+      m_tree->Fill();
     }
-
-    if (evt_pass_all) m_cutflow_evt -> Fill(m_cutflow_evt_pass_all, 1);
 
     return StatusCode::SUCCESS;
   }
 } // Derivation Framework
+

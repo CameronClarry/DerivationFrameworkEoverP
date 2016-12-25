@@ -30,9 +30,11 @@ fileName   = buildFileName( primDPD.WriteDAOD_EOP )
 EOPStream = MSMgr.NewPoolRootStream( streamName, fileName )
 
 # Save cutflow histograms
-from GaudiSvc.GaudiSvcConf import THistSvc
-ServiceMgr += THistSvc()
-svcMgr.THistSvc.Output += ["CutflowStream DATAFILE='cutflow.root' OPT='RECREATE'"]
+doCutflow = True
+if doCutflow:
+    from GaudiSvc.GaudiSvcConf import THistSvc
+    ServiceMgr += THistSvc()
+    svcMgr.THistSvc.Output += ["CutflowStream DATAFILE='cutflow.root' OPT='RECREATE'"]
 
 #====================================================================
 # AUGMENTATION TOOL
@@ -42,6 +44,7 @@ CaloDeco = DerivationFramework__TrackCaloDecorator(name = "TrackCaloDecorator",
                                                    TrackContainer = "InDetTrackParticles",
                                                    CaloClusterContainer = "CaloCalTopoClusters",
                                                    DecorationPrefix = "CALO",
+                                                   DoCutflow = doCutflow,
                                                    OutputLevel = DEBUG)
 ToolSvc += CaloDeco
 

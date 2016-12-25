@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "TH1F.h"
+#include "TTree.h"
 
 #include "AthenaBaseComps/AthAlgTool.h"
 #include "DerivationFrameworkInterfaces/IAugmentationTool.h"
@@ -45,7 +46,8 @@ namespace DerivationFramework {
     private:
 
       std::string m_sgName;
-      std::string m_trackContainer;
+      std::string m_eventInfoContainerName;
+      std::string m_trackContainerName;
       std::string m_caloClusterContainerName;
 
       ToolHandle<Trk::IExtrapolator> m_extrapolator;
@@ -55,13 +57,23 @@ namespace DerivationFramework {
 
       const TileTBID* m_tileTBID; 
 
+      bool m_doCutflow;
+
+      // Tree with run number, event number, lumi block, and nTrks
+      TTree* m_tree;
+      int m_runNumber;
+      int m_eventNumber;
+      int m_lumiBlock;
+      int m_nTrks;
+      int m_nTrks_pass;
+
       // cutflows
       TH1F* m_cutflow_evt;
       TH1F* m_cutflow_trk;
-
+      TH1F* m_ntrks_per_event_all;
+      TH1F* m_ntrks_per_event_pass_all;
       int m_cutflow_evt_all;
       int m_cutflow_evt_pass_all;
-
       int m_cutflow_trk_all;
       int m_cutflow_trk_pass_extrapolation;
       int m_cutflow_trk_pass_cluster_matching;
@@ -69,6 +81,7 @@ namespace DerivationFramework {
       int m_cutflow_trk_pass_loop_matched_clusters;
       int m_cutflow_trk_pass_loop_matched_cells;
       int m_cutflow_trk_pass_all;
+
   }; 
 } // Derivation Framework
 #endif 
