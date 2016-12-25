@@ -32,7 +32,8 @@ Reco_tf.py --autoConfiguration='everything' --maxEvents 1000 --inputESDFile test
 ```
 cd run
 lsetup panda
-pathena --nFiles 1 --nFilesPerJob 1 --nEventsPerFile 1000 --maxCpuCount 252000 --useNewTRF --trf Reco_tf.py --outputAODFile=%OUT --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything --maxEvents 1000 --extOutFile cutflow.pool.root --individualOutDS --outDS user.jolsson.data15_13TeV.00267360.physics_MinBias.DAOD_EOP.r7922.test1 --inDS data15_13TeV.00267360.physics_MinBias.recon.ESD.r7922
+tag=test0
+pathena --nFiles 1 --nFilesPerJob 1 --nEventsPerFile 1000 --maxCpuCount 252000 --useNewTRF --trf "Reco_tf.py --outputDAOD_EOPFile=%OUT.pool.root --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything --maxEvents 1000" --extOutFile cutflow.root --individualOutDS --outDS user.$USER.data15_13TeV.00267360.physics_MinBias.DAOD_EOP.r7922.$tag --inDS data15_13TeV.00267360.physics_MinBias.recon.ESD.r7922
 ```
 
 To submit grid jobs for several datasets, see scripts in 'DerivationFrameworkEoverP/python'.

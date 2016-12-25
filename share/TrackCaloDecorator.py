@@ -30,8 +30,9 @@ fileName   = buildFileName( primDPD.WriteDAOD_EOP )
 EOPStream = MSMgr.NewPoolRootStream( streamName, fileName )
 
 # Save cutflow histograms
-svcMgr += CfgMgr.THistSvc()
-svcMgr.THistSvc.Output += ["CutflowStream DATAFILE='cutflow.pool.root' OPT='RECREATE'"]
+from GaudiSvc.GaudiSvcConf import THistSvc
+ServiceMgr += THistSvc()
+svcMgr.THistSvc.Output += ["CutflowStream DATAFILE='cutflow.root' OPT='RECREATE'"]
 
 #====================================================================
 # AUGMENTATION TOOL

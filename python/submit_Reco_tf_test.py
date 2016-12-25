@@ -4,12 +4,12 @@ import subprocess as sp
 
 # Joakim Olsson <joakim.olsson@cern.ch>
 
-tag = '20161223_test0'
+tag = '20161225_test0'
 user = 'jolsson'
 
-nFiles = 2
-nFilesPerJob = 1
-nEventsPerFile = 1000
+nFiles = 9
+nFilesPerJob = 3
+nEventsPerFile = -1
 
 # If sub-jobs exceed the walltime limit, they will get killed. When you want to submit long running jobs (e.g., customized G4 simulation), submit them to sites where longer walltime limit is available by specifying the expected execution time (in second) to the --maxCpuCount option.
 maxCpuCount = 252000 # 70 hrs ##172800 # 48 hrs
@@ -17,21 +17,21 @@ maxCpuCount = 252000 # 70 hrs ##172800 # 48 hrs
 doBuild = True
 doBuildAll = True
 
-inDSs  = ['data15_13TeV.00267358.physics_MinBias.recon.ESD.r7922',
-          'data15_13TeV.00267599.physics_MinBias.recon.ESD.r7922',
-          'data15_13TeV.00267359.physics_MinBias.recon.ESD.r7922',
-          'data15_13TeV.00267367.physics_MinBias.recon.ESD.r7922',
-          'data15_13TeV.00267385.physics_MinBias.recon.ESD.r7922',
-          'data15_13TeV.00267360.physics_MinBias.recon.ESD.r7922']
+inDSs  = ['data15_13TeV.00267358.physics_MinBias.recon.ESD.r7922']
+          # 'data15_13TeV.00267599.physics_MinBias.recon.ESD.r7922',
+          # 'data15_13TeV.00267359.physics_MinBias.recon.ESD.r7922',
+          # 'data15_13TeV.00267367.physics_MinBias.recon.ESD.r7922',
+          # 'data15_13TeV.00267385.physics_MinBias.recon.ESD.r7922',
+          # 'data15_13TeV.00267360.physics_MinBias.recon.ESD.r7922']
 
-outDSs  = ['data15_13TeV.00267358.physics_MinBias.DAOD_EOP.r7922',
-           'data15_13TeV.00267599.physics_MinBias.DAOD_EOP.r7922',
-           'data15_13TeV.00267359.physics_MinBias.DAOD_EOP.r7922',
-           'data15_13TeV.00267367.physics_MinBias.DAOD_EOP.r7922',
-           'data15_13TeV.00267385.physics_MinBias.DAOD_EOP.r7922',
-           'data15_13TeV.00267360.physics_MinBias.DAOD_EOP.r7922']
+outDSs  = ['data15_13TeV.00267358.physics_MinBias.DAOD_EOP.r7922']
+           # 'data15_13TeV.00267599.physics_MinBias.DAOD_EOP.r7922',
+           # 'data15_13TeV.00267359.physics_MinBias.DAOD_EOP.r7922',
+           # 'data15_13TeV.00267367.physics_MinBias.DAOD_EOP.r7922',
+           # 'data15_13TeV.00267385.physics_MinBias.DAOD_EOP.r7922',
+           # 'data15_13TeV.00267360.physics_MinBias.DAOD_EOP.r7922']
 
-setup = '--nFiles '+str(nFiles)+' --nFilesPerJob '+str(nFilesPerJob)+' --nEventsPerFile '+str(nEventsPerFile)+' --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputAODFile=%OUT --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything --maxEvents '+str(nEventsPerFile)+'" --extOutFile cutflow.pool.root --individualOutDS'
+setup = '--nFiles '+str(nFiles)+' --nFilesPerJob '+str(nFilesPerJob)+' --nEventsPerFile '+str(nEventsPerFile)+' --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputAODFile=%OUT --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything --maxEvents='+str(nEventsPerFile)+'" --extOutFile cutflow.root --individualOutDS'
 print 'setup: '+setup
 
 config = ''

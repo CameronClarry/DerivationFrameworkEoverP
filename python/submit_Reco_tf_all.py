@@ -30,7 +30,7 @@ outDSs  = ['data15_13TeV.00267358.physics_MinBias.DAOD_EOP.r7922',
            'data15_13TeV.00267385.physics_MinBias.DAOD_EOP.r7922',
            'data15_13TeV.00267360.physics_MinBias.DAOD_EOP.r7922']
 
-setup = '--nFilesPerJob '+str(nFilesPerJob)+' --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputAODFile=%OUT --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything" --extOutFile cutflow.pool.root --individualOutDS'
+setup = '--nFilesPerJob '+str(nFilesPerJob)+' --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputAODFile=%OUT --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything" --extOutFile cutflow.root --individualOutDS'
 print 'setup: '+setup
 
 config = ''

@@ -352,7 +352,7 @@ namespace DerivationFramework {
 
     m_cutflow_evt -> Fill(m_cutflow_evt_all, 1);
 
-    bool evt_pass_all = true;
+    bool evt_pass_all = false;
     for (const auto& track : *trackContainer) {
 
       m_cutflow_trk -> Fill(m_cutflow_trk_all, 1);
