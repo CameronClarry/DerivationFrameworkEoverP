@@ -4,7 +4,7 @@ import subprocess as sp
 
 # Joakim Olsson <joakim.olsson@cern.ch>
 
-tag = '20161223_0'
+tag = '20161225_alpha1'
 user = 'jolsson'
 
 nFilesPerJob = 3
