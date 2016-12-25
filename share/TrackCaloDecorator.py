@@ -26,7 +26,7 @@ from OutputStreamAthenaPool.MultipleStreamManager import MSMgr
 from D2PDMaker.D2PDHelpers import buildFileName
 from PrimaryDPDMaker.PrimaryDPDFlags import primDPD
 streamName = primDPD.WriteDAOD_EOP.StreamName
-fileName   = buildFileName( primDPD.WriteDAOD_EOP )
+fileName = buildFileName( primDPD.WriteDAOD_EOP )
 EOPStream = MSMgr.NewPoolRootStream( streamName, fileName )
 
 # Save cutflow histograms
