@@ -4,7 +4,7 @@ import subprocess as sp
 
 # Joakim Olsson <joakim.olsson@cern.ch>
 
-tag = '20161225_alpha1'
+tag = '20161229_alpha1_1'
 user = 'jolsson'
 
 nFilesPerJob = 3
@@ -15,20 +15,22 @@ maxCpuCount = 252000 # 70 hrs ##172800 # 48 hrs
 doBuild = True
 doBuildAll = True
 
+# inDSs  = ['data15_13TeV.00267358.physics_MinBias.recon.ESD.r7922',
+#           'data15_13TeV.00267599.physics_MinBias.recon.ESD.r7922',
+#           'data15_13TeV.00267359.physics_MinBias.recon.ESD.r7922',
+#           'data15_13TeV.00267367.physics_MinBias.recon.ESD.r7922',
+#           'data15_13TeV.00267385.physics_MinBias.recon.ESD.r7922',
+#           'data15_13TeV.00267360.physics_MinBias.recon.ESD.r7922']
+#
+# outDSs  = ['data15_13TeV.00267358.physics_MinBias.DAOD_EOP.r7922',
+#            'data15_13TeV.00267599.physics_MinBias.DAOD_EOP.r7922',
+#            'data15_13TeV.00267359.physics_MinBias.DAOD_EOP.r7922',
+#            'data15_13TeV.00267367.physics_MinBias.DAOD_EOP.r7922',
+#            'data15_13TeV.00267385.physics_MinBias.DAOD_EOP.r7922',
+#            'data15_13TeV.00267360.physics_MinBias.DAOD_EOP.r7922']
 
-inDSs  = ['data15_13TeV.00267358.physics_MinBias.recon.ESD.r7922',
-          'data15_13TeV.00267599.physics_MinBias.recon.ESD.r7922',
-          'data15_13TeV.00267359.physics_MinBias.recon.ESD.r7922',
-          'data15_13TeV.00267367.physics_MinBias.recon.ESD.r7922',
-          'data15_13TeV.00267385.physics_MinBias.recon.ESD.r7922',
-          'data15_13TeV.00267360.physics_MinBias.recon.ESD.r7922']
-
-outDSs  = ['data15_13TeV.00267358.physics_MinBias.DAOD_EOP.r7922',
-           'data15_13TeV.00267599.physics_MinBias.DAOD_EOP.r7922',
-           'data15_13TeV.00267359.physics_MinBias.DAOD_EOP.r7922',
-           'data15_13TeV.00267367.physics_MinBias.DAOD_EOP.r7922',
-           'data15_13TeV.00267385.physics_MinBias.DAOD_EOP.r7922',
-           'data15_13TeV.00267360.physics_MinBias.DAOD_EOP.r7922']
+inDSs  = ['data15_13TeV.00267599.physics_MinBias.recon.ESD.r7922']
+outDSs = ['data15_13TeV.00267599.physics_MinBias.DAOD_EOP.r7922']
 
 setup = '--nFilesPerJob '+str(nFilesPerJob)+' --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputDAOD_EOPFile=%OUT.pool.root --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything" --extOutFile cutflow.root --individualOutDS'
 print 'setup: '+setup
