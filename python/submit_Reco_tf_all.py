@@ -4,7 +4,7 @@ import subprocess as sp
 
 # Joakim Olsson <joakim.olsson@cern.ch>
 
-tag = '20161229_alpha1_1'
+tag = '20160209_alpha1'
 user = 'jolsson'
 
 nFilesPerJob = 3
@@ -29,8 +29,22 @@ doBuildAll = True
 #            'data15_13TeV.00267385.physics_MinBias.DAOD_EOP.r7922',
 #            'data15_13TeV.00267360.physics_MinBias.DAOD_EOP.r7922']
 
-inDSs  = ['data15_13TeV.00267599.physics_MinBias.recon.ESD.r7922']
-outDSs = ['data15_13TeV.00267599.physics_MinBias.DAOD_EOP.r7922']
+# inDSs  = ['data15_13TeV.00267599.physics_MinBias.recon.ESD.r7922']
+# outDSs = ['data15_13TeV.00267599.physics_MinBias.DAOD_EOP.r7922']
+
+# inDSs = ['mc15_13TeV.361203.Pythia8_A2_MSTW2008LO_ND_minbias.recon.ESD.e3639_s2601_s2132_r7728',
+#          'mc15_13TeV.361204.Pythia8_A2_MSTW2008LO_SD_minbias.recon.ESD.e3639_s2601_s2132_r7728',
+#          'mc15_13TeV.361205.Pythia8_A2_MSTW2008LO_DD_minbias.recon.ESD.e3639_s2601_s2132_r7728']
+
+inDSs = ["mc15_13TeV.361020.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ0W.recon.ESD.e3569_s2832_r7968"]
+         #"mc15_13TeV.361021.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ1W.recon.ESD.e3569_s2832_r7968"
+
+# outDSs = ['mc15_13TeV.361203.Pythia8_A2_MSTW2008LO_ND_minbias.DAOD_EOP.e3639_s2601_s2132_r7728',
+#           'mc15_13TeV.361204.Pythia8_A2_MSTW2008LO_SD_minbias.DAOD_EOP.e3639_s2601_s2132_r7728',
+#           'mc15_13TeV.361205.Pythia8_A2_MSTW2008LO_DD_minbias.DAOD_EOP.e3639_s2601_s2132_r7728']
+
+outDSs = ["mc15_13TeV.361020.JZ0W.DAOD_EOP.e3569_s2832_r7968"]
+         # "mc15_13TeV.361020.JZ1W.DAOD_EOP.e3569_s2832_r7968"
 
 setup = '--nFilesPerJob '+str(nFilesPerJob)+' --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputDAOD_EOPFile=%OUT.pool.root --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything" --extOutFile cutflow.root --individualOutDS'
 print 'setup: '+setup
