@@ -25,6 +25,7 @@
 #include "xAODEventInfo/EventInfo.h"
 #include "CaloEvent/CaloClusterCellLinkContainer.h"
 #include "xAODCaloEvent/CaloClusterChangeSignalState.h"
+#include <AsgTools/MsgLevel.h>
 
 #include <utility>
 #include <vector>
@@ -635,7 +636,7 @@ namespace DerivationFramework {
         }
 
       } else {
-        msg(MSG::WARNING) << "TrackExtension failed for track with pt and eta " << track->pt() << " and " << track->eta() << endreq;
+        //msg(MSG::WARNING) << "TrackExtension failed for track with pt and eta " << track->pt() << " and " << track->eta() << endreq;
       }
 
       if(!(m_theTrackExtrapolatorTool->caloExtension(*track, extension))) continue; //No valid parameters for any of the layers of interest
