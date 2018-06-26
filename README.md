@@ -23,7 +23,6 @@ Setup AtlasDerivation and do a sparce checkout of athena.
 asetup AtlasDerivation 21.0.19.8 here
 lsetup git
 git atlas init-workdir https://:@gitlab.cern.ch:8443/atlas/athena.git
-#git atlas init-workdir https://:@gitlab.cern.ch:8443/luadamek/athena.git
 cd athena
 git atlas addpkg PrimaryDPDMaker
 git fetch upstream
@@ -31,7 +30,7 @@ git checkout -b 21.0.19 release/21.0.19
 cd ..
 ```
 
-Get the Derivation Frameowrk, and modify the PrimaryDPDFlags.py file in the PrimaryDPDMaker
+Clone the Derivation Framework, and modify the PrimaryDPDFlags.py file in the PrimaryDPDMaker
 
 ```
 git clone https://github.com/luadamek/DerivationFrameworkEoverP
@@ -47,7 +46,7 @@ source x86_64-slc6-gcc49-opt/setup.sh
 
 ## Running
 
-###Running locally on lxplus
+### Example: Running locally on lxplus
 Download an example esd, and run over it
 ```
 cd ../run
