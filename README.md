@@ -6,28 +6,60 @@ Package created by: Millie McDonald
 
 Modifications by: Joakim Olsson
 
+Port to release 21: Lukas Adamek
+
 ## Setup
 
+First we need to setup up our working directory
+
 ```
-mkdir DerivationFrameworkEoverPAthena; cd DerivationFrameworkEoverPAthena
-setupATLAS
-asetup 20.7.7.4,AtlasDerivation,here
-cmt co PhysicsAnalysis/PrimaryDPDMaker
-git clone https://github.com/jmrolsson/DerivationFrameworkEoverP
-cp DerivationFrameworkEoverP/python/PrimaryDPDFlags_mod.py PhysicsAnalysis/PrimaryDPDMaker/python/PrimaryDPDFlags.py
-cmt clean; cmt find_packages; cmt compile
+mkdir workdir && cd workdir
+mkdir source && build && run
+cd source
+```
+
+Setup AtlasDerivation and do a sparce checkout of athena.
+```
+asetup AtlasDerivation 21.0.19.8 here
+lsetup git
+git atlas init-workdir https://:@gitlab.cern.ch:8443/atlas/athena.git
+#git atlas init-workdir https://:@gitlab.cern.ch:8443/luadamek/athena.git
+cd athena
+git atlas addpkg PrimaryDPDMaker
+git fetch upstream
+git checkout -b 21.0.19 release/21.0.19
+cd ..
+```
+
+Get the Derivation Frameowrk, and modify the PrimaryDPDFlags.py file in the PrimaryDPDMaker
+
+```
+git clone https://github.com/luadamek/DerivationFrameworkEoverP
+cp DerivationFrameworkEoverP/python/PrimaryDPDFlags_mod.py athena/PhysicsAnalysis/PrimaryDPDMaker/python/PrimaryDPDFlags.py
+```
+
+And finally, compile the project.
+```
+cd ../build
+cmake ../source && make
+source x86_64-slc6-gcc49-opt/setup.sh
 ```
 
 ## Running
 
-### Example: running locally on lxplus
-
+###Running locally on lxplus
+Download an example esd, and run over it
 ```
-mkdir run; cd run
-Reco_tf.py --autoConfiguration='everything' --maxEvents 1000 --inputESDFile testESD.root --outputDAOD_EOPFile output_DAOD_EOP.root
+cd ../run
+lsetup rucio
+voms-proxy-init voms-atlas
+rucio download data16_13TeV.00303499.physics_ZeroBias.recon.ESD.f716._lb0156._SFO-ALL._0001.1
+Reco_tf.py --autoConfiguration='everything' --maxEvents 10 --inputESDFile data16_13TeV/data16_13TeV.00303499.physics_ZeroBias.recon.ESD.f716._lb0156._SFO-ALL._0001.1 --outputDAOD_EOPFile output_DAOD_EOP.root
 ```
 
 ### Example: submitting jobs to the grid
+
+NB: This has not been tested in Release 21 yet. This is to be updated
 
 ```
 cd run
