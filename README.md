@@ -28,6 +28,7 @@ git atlas addpkg PrimaryDPDMaker
 git fetch upstream
 git checkout -b 21.0.19 release/21.0.19
 cd ..
+echo "-athena/Projects/WorkDir" >> package_filters.txt
 ```
 
 Clone the Derivation Framework, and modify the PrimaryDPDFlags.py file in the PrimaryDPDMaker
