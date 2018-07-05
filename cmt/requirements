@@ -36,7 +36,7 @@ use CaloDetDescr        CaloDetDescr-*          Calorimeter
 public
 
 # declare the directories that CMT should know about
-branches DerivationFrameworkEoverP Root Root/components doc python share
+branches DerivationFrameworkEoverP src src/components doc python share
 
 # default is to make component library. See: https://twiki.cern.ch/twiki/bin/view/Main/LearningAthena#Libraries_in_CMT for alternatives
 apply_pattern dual_use_library files= " *.cxx "
