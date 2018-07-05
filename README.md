@@ -52,7 +52,7 @@ Download an example esd, and run over it
 ```
 cd ../run
 lsetup rucio
-voms-proxy-init --voms atlas
+voms-proxy-init -voms atlas
 rucio download data16_13TeV.00303499.physics_ZeroBias.recon.ESD.f716._lb0156._SFO-ALL._0001.1
 Reco_tf.py --autoConfiguration='everything' --maxEvents 10 --inputESDFile data16_13TeV/data16_13TeV.00303499.physics_ZeroBias.recon.ESD.f716._lb0156._SFO-ALL._0001.1 --outputDAOD_EOPFile output_DAOD_EOP.root
 ```
