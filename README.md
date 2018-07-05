@@ -8,7 +8,7 @@ Modifications by: Joakim Olsson
 
 Port to release 21: Lukas Adamek
 
-## Setup
+## Setup in Release 21
 
 First we need to setup up our working directory
 
@@ -43,6 +43,19 @@ And finally, compile the project.
 cd ../build
 cmake ../source && make
 source x86_64-slc6-gcc49-opt/setup.sh
+```
+
+
+## Setup in Release 20.7
+
+```
+mkdir DerivationFrameworkEoverPAthena; cd DerivationFrameworkEoverPAthena
+setupATLAS
+asetup 20.7.7.4,AtlasDerivation,here
+cmt co PhysicsAnalysis/PrimaryDPDMaker
+git clone https://github.com/jmrolsson/DerivationFrameworkEoverP
+cp DerivationFrameworkEoverP/python/PrimaryDPDFlags_mod_r207.py PhysicsAnalysis/PrimaryDPDMaker/python/PrimaryDPDFlags.py
+cmt clean; cmt find_packages; cmt compile
 ```
 
 ## Running
