@@ -24,7 +24,6 @@
 #include "RecoToolInterfaces/IParticleCaloExtensionTool.h"
 #include "xAODCaloEvent/CaloClusterContainer.h"
 #include "xAODCaloEvent/CaloClusterChangeSignalState.h"
-#include "AsgTools/MsgLevel.h"
 
 class TileTBID;
 class ICaloSurfaceHelper;

@@ -25,7 +25,6 @@
 #include "xAODEventInfo/EventInfo.h"
 #include "CaloEvent/CaloClusterCellLinkContainer.h"
 #include "xAODCaloEvent/CaloClusterChangeSignalState.h"
-#include <AsgTools/MsgLevel.h>
 
 #include <utility>
 #include <vector>
