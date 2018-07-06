@@ -42,5 +42,5 @@ atlas_install_joboptions( share/*.py )
 atlas_add_component(DerivationFrameworkEoverP DerivationFrameworkEoverP/*.h src/*.cxx src/components/*.cxx ${DerivationFrameworkEoverPDictSource}
                    INCLUDE_DIRS ${ROOT_INCLUDE_DIRS}
                    LINK_LIBRARIES  ${ROOT_LIBRARIES} 
-                   ${release_libs} GaudiKernel RecoToolInterfaces TrkExInterfaces DerivationFrameworkInterfaces
+                   ${release_libs} GaudiKernel DerivationFrameworkInterfaces RecoToolInterfaces
 )
