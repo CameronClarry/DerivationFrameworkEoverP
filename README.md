@@ -20,15 +20,14 @@ cd source
 
 Setup AtlasDerivation and do a sparce checkout of athena.
 ```
-asetup AtlasDerivation 21.0.19.8 here
+asetup Athena,21.0.74,here
 lsetup git
 git atlas init-workdir https://:@gitlab.cern.ch:8443/atlas/athena.git
 cd athena
 git atlas addpkg PrimaryDPDMaker
 git fetch upstream
-git checkout -b 21.0.19 release/21.0.19
+git checkout -b 21.0.74 release/21.0.74
 cd ..
-echo "-athena/Projects/WorkDir" >> package_filters.txt
 ```
 
 Clone the Derivation Framework, and modify the PrimaryDPDFlags.py file in the PrimaryDPDMaker
