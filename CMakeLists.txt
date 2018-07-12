@@ -9,7 +9,6 @@ atlas_subdir( DerivationFrameworkEoverP )
 atlas_depends_on_subdirs( PUBLIC
                           GaudiKernel
                           External/GaudiInterfaces
-                          Control/AthenBaseComps
                           External/AtlasROOT
                           PhysicsAnalysis/DerivationFramework/DerivationFrameworkInterfaces
                           Trigger/TrigEvent/TrigCaloEvent
@@ -42,5 +41,6 @@ atlas_install_joboptions( share/*.py )
 atlas_add_component(DerivationFrameworkEoverP DerivationFrameworkEoverP/*.h src/*.cxx src/components/*.cxx
                    INCLUDE_DIRS ${ROOT_INCLUDE_DIRS}
                    LINK_LIBRARIES  ${ROOT_LIBRARIES} 
-                   ${release_libs} GaudiKernel DerivationFrameworkInterfaces RecoToolInterfaces
+                   ${release_libs} GaudiKernel xAODEventInfo TrkExInterfaces
+                   RecoToolInterfaces
 )
