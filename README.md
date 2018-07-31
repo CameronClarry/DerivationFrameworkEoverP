@@ -41,7 +41,7 @@ And finally, compile the project.
 ```
 cd ../build
 cmake ../source && make
-source x86_64-slc6-gcc49-opt/setup.sh
+source x86_64-slc6-gcc62-opt/setup.sh
 ```
 
 
@@ -82,13 +82,10 @@ Reco_tf.py --autoConfiguration='everything' --maxEvents 10 --inputESDFile data15
 
 ### Example: submitting jobs to the grid
 
-NB: This has not been tested in Release 21 yet. This is to be updated
-
 ```
 cd run
 lsetup panda
-tag=test0
-pathena --nFiles 1 --nFilesPerJob 1 --nEventsPerFile 1000 --maxCpuCount 252000 --useNewTRF --trf "Reco_tf.py --outputDAOD_EOPFile=%OUT.pool.root --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything --maxEvents 1000" --extOutFile cutflow.root --individualOutDS --outDS user.$USER.data15_13TeV.00267360.physics_MinBias.DAOD_EOP.r7922.$tag --inDS data15_13TeV.00267360.physics_MinBias.recon.ESD.r7922
+python ../source/DerivationFrameworkEoverP/python/submit_Reco_tf_test.py
 ```
 
 To submit grid jobs for several datasets, see scripts in 'DerivationFrameworkEoverP/python'.
