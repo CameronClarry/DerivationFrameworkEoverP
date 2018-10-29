@@ -131,6 +131,33 @@ namespace DerivationFramework {
     //Building decorators this way instead of using auxdecor<> saves time//  
     static SG::AuxElement::Decorator<int> decorator_extrapolation (m_sgName + "_extrapolation");
 
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_Energy (m_sgName + "_ClusterEnergy_Energy");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_Eta (m_sgName + "_ClusterEnergy_Eta");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_Phi (m_sgName + "_ClusterEnergy_Phi");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_dRToTrack (m_sgName + "_ClusterEnergy_dRToTrack");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_lambdaCenter (m_sgName + "_ClusterEnergy_lambdaCenter");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_emProbability (m_sgName + "_ClusterEnergy_emProbability");
+    static SG::AuxElement::Decorator< std::vector<int> > decorator_ClusterEnergy_maxEnergyLayer (m_sgName + "_ClusterEnergy_maxEnergyLayer");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_firstEnergyDensity (m_sgName + "_ClusterEnergy_firstEnergyDensity");
+
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_Energy (m_sgName + "_ClusterEnergyLCW_Energy");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_Eta (m_sgName + "_ClusterEnergyLCW_Eta");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_Phi (m_sgName + "_ClusterEnergyLCW_Phi");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_dRToTrack (m_sgName + "_ClusterEnergyLCW_dRToTrack");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_lambdaCenter (m_sgName + "_ClusterEnergyLCW_lambdaCenter");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_emProbability (m_sgName + "_ClusterEnergyLCW_emProbability");
+    static SG::AuxElement::Decorator< std::vector<int> > decorator_ClusterEnergyLCW_maxEnergyLayer (m_sgName + "_ClusterEnergyLCW_maxEnergyLayer");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_firstEnergyDensity (m_sgName + "_ClusterEnergyLCW_firstEnergyDensity");
+
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_CellEnergy_Energy (m_sgName + "_CellEnergy_Energy");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_CellEnergy_Eta (m_sgName + "_CellEnergy_Eta");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_CellEnergy_Phi (m_sgName + "_CellEnergy_Phi");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_CellEnergy_dRToTrack (m_sgName + "_CellEnergy_dRToTrack");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_CellEnergy_lambdaCenter (m_sgName + "_CellEnergy_lambdaCenter");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_CellEnergy_emProbability (m_sgName + "_CellEnergy_emProbability");
+    static SG::AuxElement::Decorator< std::vector<int> > decorator_CellEnergy_maxEnergyLayer (m_sgName + "_CellEnergy_maxEnergyLayer");
+    static SG::AuxElement::Decorator< std::vector<float> > decorator_CellEnergy_firstEnergyDensity (m_sgName + "_CellEnergy_firstEnergyDensity");
+
     ///////////////Presamplers///////////////
     static SG::AuxElement::Decorator<float> decorator_trkEta_PreSamplerB (m_sgName + "_trkEta_PreSamplerB");
     static SG::AuxElement::Decorator<float> decorator_trkPhi_PreSamplerB (m_sgName + "_trkPhi_PreSamplerB");
@@ -385,6 +412,33 @@ namespace DerivationFramework {
 
       // Need to record a value for every track, so using -999999999 as an invalid code
       decorator_extrapolation (*track) = 0;
+
+      decorator_ClusterEnergy_Energy (*track) = std::vector<float>();
+      decorator_ClusterEnergy_Eta (*track) = std::vector<float>();
+      decorator_ClusterEnergy_Phi (*track) = std::vector<float>();
+      decorator_ClusterEnergy_dRToTrack (*track) = std::vector<float>();
+      decorator_ClusterEnergy_emProbability (*track) = std::vector<float>();
+      decorator_ClusterEnergy_firstEnergyDensity (*track) = std::vector<float>();
+      decorator_ClusterEnergy_lambdaCenter (*track) = std::vector<float>();
+      decorator_ClusterEnergy_maxEnergyLayer (*track) = std::vector<int>();
+
+      decorator_CellEnergy_Energy (*track) = std::vector<float>();
+      decorator_CellEnergy_Eta (*track) = std::vector<float>();
+      decorator_CellEnergy_Phi (*track) = std::vector<float>();
+      decorator_CellEnergy_emProbability (*track) = std::vector<float>();
+      decorator_CellEnergy_firstEnergyDensity (*track) = std::vector<float>();
+      decorator_CellEnergy_dRToTrack (*track) = std::vector<float>();
+      decorator_CellEnergy_lambdaCenter (*track) = std::vector<float>();
+      decorator_CellEnergy_maxEnergyLayer (*track) = std::vector<int>();
+
+      decorator_ClusterEnergyLCW_Energy (*track) = std::vector<float>();
+      decorator_ClusterEnergyLCW_Eta (*track) = std::vector<float>();
+      decorator_ClusterEnergyLCW_Phi (*track) = std::vector<float>();
+      decorator_ClusterEnergyLCW_emProbability (*track) = std::vector<float>();
+      decorator_ClusterEnergyLCW_firstEnergyDensity (*track) = std::vector<float>();
+      decorator_ClusterEnergyLCW_dRToTrack (*track) = std::vector<float>();
+      decorator_ClusterEnergyLCW_lambdaCenter (*track) = std::vector<float>();
+      decorator_ClusterEnergyLCW_maxEnergyLayer (*track) = std::vector<int>();
 
       decorator_trkEta_PreSamplerB (*track) = -999999999;
       decorator_trkPhi_PreSamplerB (*track) = -999999999;
@@ -702,6 +756,33 @@ namespace DerivationFramework {
       std::vector<xAOD::CaloCluster*> matchedClusters_200; //clusters within DeltaR < 0.2 of the track, reinitialised for each layer
       std::vector<xAOD::CaloCluster*> matchedClusters_100; //clusters within DeltaR < 0.1 of the track
 
+      std::vector<float> ClusterEnergy_Energy;
+      std::vector<float> ClusterEnergy_Eta;
+      std::vector<float> ClusterEnergy_Phi;
+      std::vector<float> ClusterEnergy_dRToTrack;
+      std::vector<float> ClusterEnergy_lambdaCenter;
+      std::vector<float> ClusterEnergy_firstEnergyDensity;
+      std::vector<float> ClusterEnergy_emProbability;
+      std::vector<int> ClusterEnergy_maxEnergyLayer;
+
+      std::vector<float> ClusterEnergyLCW_Energy;
+      std::vector<float> ClusterEnergyLCW_Eta;
+      std::vector<float> ClusterEnergyLCW_Phi;
+      std::vector<float> ClusterEnergyLCW_dRToTrack;
+      std::vector<float> ClusterEnergyLCW_lambdaCenter;
+      std::vector<float> ClusterEnergyLCW_firstEnergyDensity;
+      std::vector<float> ClusterEnergyLCW_emProbability;
+      std::vector<int> ClusterEnergyLCW_maxEnergyLayer;
+
+      std::vector<float> CellEnergy_Energy;
+      std::vector<float> CellEnergy_Eta;
+      std::vector<float> CellEnergy_Phi;
+      std::vector<float> CellEnergy_dRToTrack;
+      std::vector<float> CellEnergy_lambdaCenter;
+      std::vector<float> CellEnergy_firstEnergyDensity;
+      std::vector<float> CellEnergy_emProbability;
+      std::vector<int> CellEnergy_maxEnergyLayer;
+
       for (const auto& cluster : *clusterContainer) {
 
         /*Finding the most energetic layer of the cluster*/
@@ -721,8 +802,9 @@ namespace DerivationFramework {
 
         if(mostEnergeticLayer==xAOD::CaloCluster::CaloSample::Unknown) continue;
 
-        double clEta = cluster->eta();
-        double clPhi = cluster->phi();
+        //do track-cluster matching at EM-Scale
+        double clEta = cluster->rawEta();
+        double clPhi = cluster->rawPhi();
 
         if(clEta == -999 || clPhi == -999) continue;
 
@@ -736,13 +818,40 @@ namespace DerivationFramework {
         double etaDiff = clEta - trackEta;
         double phiDiff = clPhi - trackPhi;
 
-        if (phiDiff > TMath::Pi()) phiDiff = 2*TMath::Pi() - phiDiff;
+        if (phiDiff > TMath::Pi()) phiDiff = 2 * TMath::Pi() - phiDiff;
 
         double deltaR = std::sqrt((etaDiff*etaDiff) + (phiDiff*phiDiff));
 
         if(deltaR < 0.2){
           matchedClusterCounter_200++;
           matchedClusters_200.push_back(const_cast<xAOD::CaloCluster*>(cluster));
+
+          //decorate with EM-scale quanitities.
+          double lambda_center;
+          double em_probability;
+          double first_energy_density;
+          if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 501, lambda_center)) {ATH_MSG_WARNING("Couldn't retrieve the cluster lambda center");}
+          if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 900, em_probability)) {ATH_MSG_WARNING("Couldn't rertieve the EM Probability");}
+          if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 804, first_energy_density)) {ATH_MSG_WARNING("Couldn't rertieve the first energy density moment");}
+
+          //we want to include the information about these clusters in the derivation output
+          ClusterEnergy_Energy.push_back(cluster->rawE()); //Raw Energy
+          ClusterEnergy_Eta.push_back(cluster->rawEta()); //Eta and phi based on EM Scale
+          ClusterEnergy_Phi.push_back(cluster->rawPhi()); //Eta and phi based on EM Scale
+          ClusterEnergy_dRToTrack.push_back(deltaR);
+          ClusterEnergy_lambdaCenter.push_back(lambda_center);
+          ClusterEnergy_maxEnergyLayer.push_back(mostEnergeticLayer);
+          ClusterEnergy_emProbability.push_back(em_probability);
+          ClusterEnergy_firstEnergyDensity.push_back(first_energy_density);
+          
+          ClusterEnergyLCW_Energy.push_back(cluster->e());   //LCW Energy
+          ClusterEnergyLCW_Eta.push_back(cluster->calEta()); // Eta and phi at LCW scaleScale
+          ClusterEnergyLCW_Phi.push_back(cluster->calPhi()); 
+          ClusterEnergyLCW_dRToTrack.push_back(deltaR);
+          ClusterEnergyLCW_lambdaCenter.push_back(lambda_center);
+          ClusterEnergyLCW_maxEnergyLayer.push_back(mostEnergeticLayer);
+          ClusterEnergyLCW_emProbability.push_back(em_probability);
+          ClusterEnergyLCW_firstEnergyDensity.push_back(first_energy_density);
         }
 
         if(deltaR < 0.1){
@@ -790,6 +899,12 @@ namespace DerivationFramework {
         if (deltaR < 0.2){
           matchedCellCounter_200++;
           matchedCells_200.push_back(const_cast<CaloCell*>(cell));
+          //We want to include information about these clusters in the derivation output
+          //CellEnergy_Energy.push_back(cell->e()); This is too much information to include in the output derivation
+          //CellEnergy_Eta.push_back(cellEta);
+          //CellEnergy_Phi.push_back(cellPhi);
+          //CellEnergy_dRToTrack.push_back(deltaR);
+          //CellEnergy_MaxEnergyLayer.push_back(cellLayer);
         }
 
         if (deltaR < 0.1){
@@ -839,14 +954,8 @@ namespace DerivationFramework {
             double energy_EM = -999999999;
             double energy_LCW = -999999999;
 
-            {
-              CaloClusterChangeSignalState statechange (&cl, xAOD::CaloCluster::UNCALIBRATED); //EM scale //NB: CaloClusterChangeSignalState resets the cluster signalState to CALIBRATED once out of scope
-              energy_EM = cl.e();
-            }
-            {
-              CaloClusterChangeSignalState statechange (&cl, xAOD::CaloCluster::CALIBRATED); //LCW scale
-              energy_LCW = cl.e();
-            }
+            energy_EM = cl.rawE();
+            energy_LCW = cl.calE();
 
             if(energy_EM == -999999999 || energy_LCW == -999999999) continue;
 
@@ -1111,6 +1220,33 @@ namespace DerivationFramework {
       decorator_HAD_CellEnergy_0_100(*track) = totalHADCellEnergy[1];
       decorator_Total_CellEnergy_0_200(*track) = totalCellEnergy[0];
       decorator_Total_CellEnergy_0_100(*track) = totalCellEnergy[1];
+
+      decorator_ClusterEnergy_Energy (*track) = ClusterEnergy_Energy;
+      decorator_ClusterEnergy_Eta (*track) = ClusterEnergy_Eta;
+      decorator_ClusterEnergy_Phi (*track) = ClusterEnergy_Phi;
+      decorator_ClusterEnergy_dRToTrack (*track) = ClusterEnergy_dRToTrack;
+      decorator_ClusterEnergy_emProbability (*track) = ClusterEnergy_emProbability;
+      decorator_ClusterEnergy_firstEnergyDensity (*track) = ClusterEnergy_firstEnergyDensity;
+      decorator_ClusterEnergy_lambdaCenter (*track) = ClusterEnergy_lambdaCenter;
+      decorator_ClusterEnergy_maxEnergyLayer (*track) = ClusterEnergy_maxEnergyLayer;
+
+      decorator_CellEnergy_Energy (*track) = CellEnergy_Energy;
+      decorator_CellEnergy_Eta (*track) = CellEnergy_Eta;
+      decorator_CellEnergy_Phi (*track) = CellEnergy_Phi;
+      decorator_CellEnergy_dRToTrack (*track) = CellEnergy_dRToTrack;
+      decorator_CellEnergy_firstEnergyDensity (*track) = CellEnergy_firstEnergyDensity;
+      decorator_CellEnergy_emProbability (*track) = CellEnergy_emProbability;
+      decorator_CellEnergy_lambdaCenter (*track) = CellEnergy_lambdaCenter;
+      decorator_CellEnergy_maxEnergyLayer (*track) = CellEnergy_maxEnergyLayer;
+
+      decorator_ClusterEnergyLCW_Energy (*track) = ClusterEnergyLCW_Energy;
+      decorator_ClusterEnergyLCW_Eta (*track) = ClusterEnergyLCW_Eta;
+      decorator_ClusterEnergyLCW_Phi (*track) = ClusterEnergyLCW_Phi;
+      decorator_ClusterEnergyLCW_dRToTrack (*track) = ClusterEnergyLCW_dRToTrack;
+      decorator_ClusterEnergyLCW_lambdaCenter (*track) = ClusterEnergyLCW_lambdaCenter;
+      decorator_ClusterEnergyLCW_emProbability (*track) = ClusterEnergyLCW_emProbability;
+      decorator_ClusterEnergyLCW_firstEnergyDensity (*track) = ClusterEnergyLCW_firstEnergyDensity;
+      decorator_ClusterEnergyLCW_maxEnergyLayer (*track) = ClusterEnergyLCW_maxEnergyLayer;
 
       if (m_doCutflow) {
         m_cutflow_trk -> Fill(m_cutflow_trk_pass_all, 1);
