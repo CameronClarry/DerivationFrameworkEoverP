@@ -19,6 +19,9 @@ if not hasattr(svcMgr, 'DecisionSvc'):
     svcMgr += CfgMgr.DecisionSvc()
 svcMgr.DecisionSvc.CalcStats = True
 
+svcMgr.MessageSvc.OutputLevel = DEBUG #Comment this out when submitting grid jobs
+svcMgr.MessageSvc.defaultLimit = 9999999
+
 #====================================================================
 # SET UP STREAM
 #====================================================================
@@ -37,6 +40,24 @@ if doCutflow:
     svcMgr.THistSvc.Output += ["CutflowStream DATAFILE='cutflow.root' OPT='RECREATE'"]
 
 #====================================================================
+# THE ATLAS EXTRAPOLATOR
+#====================================================================
+# Configure the extrapolator. Maybe we should configure how the tracks loose energy in the ATLAS calorimeters?
+from TrackToCalo.TrackToCaloConf import Trk__ParticleCaloExtensionTool
+from TrkExTools.AtlasExtrapolator import AtlasExtrapolator
+EOPAtlasExtrapolator = AtlasExtrapolator(name = 'EOPExtrapolator')
+ToolSvc += EOPAtlasExtrapolator
+
+
+#====================================================================
+# THE TRACK TO CALORIMETER EXTRAPOLATION TOOL
+#====================================================================
+EOPTrackToCaloExtensionTool = Trk__ParticleCaloExtensionTool(name="EOPParticleExtensionTool",
+                                                             ParticleType = "pion", ##What difference does the choice between pion and muon make?
+                                                             Extrapolator = EOPAtlasExtrapolator)
+ToolSvc += EOPTrackToCaloExtensionTool
+
+#====================================================================
 # AUGMENTATION TOOL
 #====================================================================
 from DerivationFrameworkEoverP.DerivationFrameworkEoverPConf import DerivationFramework__TrackCaloDecorator
@@ -44,8 +65,9 @@ CaloDeco = DerivationFramework__TrackCaloDecorator(name = "TrackCaloDecorator",
                                                    TrackContainer = "InDetTrackParticles",
                                                    CaloClusterContainer = "CaloCalTopoClusters",
                                                    DecorationPrefix = "CALO",
-                                                   DoCutflow = doCutflow,
-                                                   OutputLevel = DEBUG)
+                                                   TheTrackExtrapolatorTool = EOPTrackToCaloExtensionTool,
+                                                   Extrapolator = EOPAtlasExtrapolator,
+                                                   DoCutflow = doCutflow)
 ToolSvc += CaloDeco
 
 #====================================================================

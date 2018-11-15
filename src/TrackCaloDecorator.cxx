@@ -63,7 +63,6 @@ namespace DerivationFramework {
 
     ATH_CHECK(m_extrapolator.retrieve());
 
-    //ATH_CHECK( m_theTrackExtrapolatorTool.setProperty("OutputLevel", msg().level() ));
     ATH_CHECK(m_theTrackExtrapolatorTool.retrieve());
 
     ATH_CHECK(m_surfaceHelper.retrieve());
