@@ -63,6 +63,7 @@ namespace DerivationFramework {
 
     ATH_CHECK(m_extrapolator.retrieve());
 
+    //ATH_CHECK( m_theTrackExtrapolatorTool.setProperty("OutputLevel", msg().level() ));
     ATH_CHECK(m_theTrackExtrapolatorTool.retrieve());
 
     ATH_CHECK(m_surfaceHelper.retrieve());
@@ -663,7 +664,7 @@ namespace DerivationFramework {
       /*get the CaloExtension object*/
       const Trk::CaloExtension* extension = 0;
 
-      if (m_theTrackExtrapolatorTool->caloExtension(*track, extension)) {
+      if (m_theTrackExtrapolatorTool->caloExtension(*track, extension, false)) {
 
         /*extract the CurvilinearParameters per each layer-track intersection*/
         const std::vector<const Trk::CurvilinearParameters*>& clParametersVector = extension->caloLayerIntersections();
@@ -692,60 +693,60 @@ namespace DerivationFramework {
         //msg(MSG::WARNING) << "TrackExtension failed for track with pt and eta " << track->pt() << " and " << track->eta() << endreq;
       }
 
-      if(!(m_theTrackExtrapolatorTool->caloExtension(*track, extension))) continue; //No valid parameters for any of the layers of interest
+      if(!(m_theTrackExtrapolatorTool->caloExtension(*track, extension, false))) continue; //No valid parameters for any of the layers of interest
       decorator_extrapolation(*track) = 1;
 
       if (m_doCutflow) m_cutflow_trk -> Fill(m_cutflow_trk_pass_extrapolation, 1);
 
       /*Decorate track with extended eta and phi coordinates at intersection layers*/
-      if(parametersMap[CaloCell_ID::CaloSample::PreSamplerB]) decorator_trkEta_PreSamplerB(*track) = parametersMap[CaloCell_ID::CaloSample::PreSamplerB]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::PreSamplerB]) decorator_trkPhi_PreSamplerB(*track) = parametersMap[CaloCell_ID::CaloSample::PreSamplerB]->momentum().phi();  
-      if(parametersMap[CaloCell_ID::CaloSample::PreSamplerE]) decorator_trkEta_PreSamplerE(*track) = parametersMap[CaloCell_ID::CaloSample::PreSamplerE]->momentum().eta();    
-      if(parametersMap[CaloCell_ID::CaloSample::PreSamplerE]) decorator_trkPhi_PreSamplerE(*track) = parametersMap[CaloCell_ID::CaloSample::PreSamplerE]->momentum().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::PreSamplerB]) decorator_trkEta_PreSamplerB(*track) = parametersMap[CaloCell_ID::CaloSample::PreSamplerB]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::PreSamplerB]) decorator_trkPhi_PreSamplerB(*track) = parametersMap[CaloCell_ID::CaloSample::PreSamplerB]->position().phi();  
+      if(parametersMap[CaloCell_ID::CaloSample::PreSamplerE]) decorator_trkEta_PreSamplerE(*track) = parametersMap[CaloCell_ID::CaloSample::PreSamplerE]->position().eta();    
+      if(parametersMap[CaloCell_ID::CaloSample::PreSamplerE]) decorator_trkPhi_PreSamplerE(*track) = parametersMap[CaloCell_ID::CaloSample::PreSamplerE]->position().phi();
 
-      if(parametersMap[CaloCell_ID::CaloSample::EMB1]) decorator_trkEta_EMB1(*track) = parametersMap[CaloCell_ID::CaloSample::EMB1]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::EMB1]) decorator_trkPhi_EMB1(*track) = parametersMap[CaloCell_ID::CaloSample::EMB1]->momentum().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::EMB2]) decorator_trkEta_EMB2(*track) = parametersMap[CaloCell_ID::CaloSample::EMB2]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::EMB2]) decorator_trkPhi_EMB2(*track) = parametersMap[CaloCell_ID::CaloSample::EMB2]->momentum().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::EMB3]) decorator_trkEta_EMB3(*track) = parametersMap[CaloCell_ID::CaloSample::EMB3]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::EMB3]) decorator_trkPhi_EMB3(*track) = parametersMap[CaloCell_ID::CaloSample::EMB3]->momentum().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::EMB1]) decorator_trkEta_EMB1(*track) = parametersMap[CaloCell_ID::CaloSample::EMB1]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::EMB1]) decorator_trkPhi_EMB1(*track) = parametersMap[CaloCell_ID::CaloSample::EMB1]->position().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::EMB2]) decorator_trkEta_EMB2(*track) = parametersMap[CaloCell_ID::CaloSample::EMB2]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::EMB2]) decorator_trkPhi_EMB2(*track) = parametersMap[CaloCell_ID::CaloSample::EMB2]->position().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::EMB3]) decorator_trkEta_EMB3(*track) = parametersMap[CaloCell_ID::CaloSample::EMB3]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::EMB3]) decorator_trkPhi_EMB3(*track) = parametersMap[CaloCell_ID::CaloSample::EMB3]->position().phi();
 
-      if(parametersMap[CaloCell_ID::CaloSample::EME1]) decorator_trkEta_EME1(*track) = parametersMap[CaloCell_ID::CaloSample::EME1]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::EME1]) decorator_trkPhi_EME1(*track) = parametersMap[CaloCell_ID::CaloSample::EME1]->momentum().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::EME2]) decorator_trkEta_EME2(*track) = parametersMap[CaloCell_ID::CaloSample::EME2]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::EME2]) decorator_trkPhi_EME2(*track) = parametersMap[CaloCell_ID::CaloSample::EME2]->momentum().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::EME3]) decorator_trkEta_EME3(*track) = parametersMap[CaloCell_ID::CaloSample::EME3]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::EME3]) decorator_trkPhi_EME3(*track) = parametersMap[CaloCell_ID::CaloSample::EME3]->momentum().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::EME1]) decorator_trkEta_EME1(*track) = parametersMap[CaloCell_ID::CaloSample::EME1]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::EME1]) decorator_trkPhi_EME1(*track) = parametersMap[CaloCell_ID::CaloSample::EME1]->position().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::EME2]) decorator_trkEta_EME2(*track) = parametersMap[CaloCell_ID::CaloSample::EME2]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::EME2]) decorator_trkPhi_EME2(*track) = parametersMap[CaloCell_ID::CaloSample::EME2]->position().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::EME3]) decorator_trkEta_EME3(*track) = parametersMap[CaloCell_ID::CaloSample::EME3]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::EME3]) decorator_trkPhi_EME3(*track) = parametersMap[CaloCell_ID::CaloSample::EME3]->position().phi();
 
-      if(parametersMap[CaloCell_ID::CaloSample::HEC0]) decorator_trkEta_HEC0 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC0]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::HEC0]) decorator_trkPhi_HEC0 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC0]->momentum().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::HEC1]) decorator_trkEta_HEC1 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC1]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::HEC1]) decorator_trkPhi_HEC1 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC1]->momentum().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::HEC2]) decorator_trkEta_HEC2 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC2]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::HEC2]) decorator_trkPhi_HEC2 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC2]->momentum().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::HEC3]) decorator_trkEta_HEC3 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC3]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::HEC3]) decorator_trkPhi_HEC3 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC3]->momentum().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::HEC0]) decorator_trkEta_HEC0 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC0]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::HEC0]) decorator_trkPhi_HEC0 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC0]->position().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::HEC1]) decorator_trkEta_HEC1 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC1]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::HEC1]) decorator_trkPhi_HEC1 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC1]->position().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::HEC2]) decorator_trkEta_HEC2 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC2]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::HEC2]) decorator_trkPhi_HEC2 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC2]->position().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::HEC3]) decorator_trkEta_HEC3 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC3]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::HEC3]) decorator_trkPhi_HEC3 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC3]->position().phi();
 
-      if(parametersMap[CaloCell_ID::CaloSample::TileBar0]) decorator_trkEta_TileBar0 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar0]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileBar0]) decorator_trkPhi_TileBar0 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar0]->momentum().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::TileBar1]) decorator_trkEta_TileBar1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar1]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileBar1]) decorator_trkPhi_TileBar1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar1]->momentum().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::TileBar2]) decorator_trkEta_TileBar2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar2]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileBar2]) decorator_trkPhi_TileBar2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar2]->momentum().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::TileBar0]) decorator_trkEta_TileBar0 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar0]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::TileBar0]) decorator_trkPhi_TileBar0 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar0]->position().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::TileBar1]) decorator_trkEta_TileBar1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar1]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::TileBar1]) decorator_trkPhi_TileBar1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar1]->position().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::TileBar2]) decorator_trkEta_TileBar2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar2]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::TileBar2]) decorator_trkPhi_TileBar2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar2]->position().phi();
 
-      if(parametersMap[CaloCell_ID::CaloSample::TileGap1]) decorator_trkEta_TileGap1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap1]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileGap1]) decorator_trkPhi_TileGap1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap1]->momentum().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::TileGap2]) decorator_trkEta_TileGap2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap2]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileGap2]) decorator_trkPhi_TileGap2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap2]->momentum().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::TileGap3]) decorator_trkEta_TileGap3 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap3]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileGap3]) decorator_trkPhi_TileGap3 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap3]->momentum().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::TileGap1]) decorator_trkEta_TileGap1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap1]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::TileGap1]) decorator_trkPhi_TileGap1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap1]->position().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::TileGap2]) decorator_trkEta_TileGap2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap2]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::TileGap2]) decorator_trkPhi_TileGap2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap2]->position().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::TileGap3]) decorator_trkEta_TileGap3 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap3]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::TileGap3]) decorator_trkPhi_TileGap3 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap3]->position().phi();
 
-      if(parametersMap[CaloCell_ID::CaloSample::TileExt0]) decorator_trkEta_TileExt0 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt0]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileExt0]) decorator_trkPhi_TileExt0 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt0]->momentum().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::TileExt1]) decorator_trkEta_TileExt1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt1]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileExt1]) decorator_trkPhi_TileExt1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt1]->momentum().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::TileExt2]) decorator_trkEta_TileExt2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt2]->momentum().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileExt2]) decorator_trkPhi_TileExt2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt2]->momentum().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::TileExt0]) decorator_trkEta_TileExt0 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt0]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::TileExt0]) decorator_trkPhi_TileExt0 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt0]->position().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::TileExt1]) decorator_trkEta_TileExt1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt1]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::TileExt1]) decorator_trkPhi_TileExt1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt1]->position().phi();
+      if(parametersMap[CaloCell_ID::CaloSample::TileExt2]) decorator_trkEta_TileExt2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt2]->position().eta();
+      if(parametersMap[CaloCell_ID::CaloSample::TileExt2]) decorator_trkPhi_TileExt2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt2]->position().phi();
 
       /*Track-cluster matching*/
       //Approach: find the most energetic layer of a cluster. Record the eta and phi coordinates of the extrapolated track at this layer//
@@ -812,8 +813,8 @@ namespace DerivationFramework {
 
         if(!parametersMap[mostEnergeticLayer]) continue;
 
-        double trackEta = parametersMap[mostEnergeticLayer]->momentum().eta();
-        double trackPhi = parametersMap[mostEnergeticLayer]->momentum().phi();
+        double trackEta = parametersMap[mostEnergeticLayer]->position().eta();
+        double trackPhi = parametersMap[mostEnergeticLayer]->position().phi();
 
         double etaDiff = clEta - trackEta;
         double phiDiff = clPhi - trackPhi;
@@ -886,8 +887,8 @@ namespace DerivationFramework {
 
         if(!parametersMap[cellLayer]) continue;
 
-        double trackEta = parametersMap[cellLayer]->momentum().eta();
-        double trackPhi = parametersMap[cellLayer]->momentum().phi();
+        double trackEta = parametersMap[cellLayer]->position().eta();
+        double trackPhi = parametersMap[cellLayer]->position().phi();
 
         double etaDiff = cellEta - trackEta;
         double phiDiff = cellPhi - trackPhi;
