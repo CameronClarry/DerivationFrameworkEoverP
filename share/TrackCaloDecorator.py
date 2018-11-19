@@ -70,6 +70,82 @@ CaloDeco = DerivationFramework__TrackCaloDecorator(name = "TrackCaloDecorator",
                                                    DoCutflow = doCutflow)
 ToolSvc += CaloDeco
 
+#--------------------------------------------------------------------
+## 2/ setup JpsiFinder tool
+##    These are general tools independent of DerivationFramework that do the 
+##    actual vertex fitting and some pre-selection.
+
+## 1/ setup vertexing tools and services
+include("JpsiUpsilonTools/configureServices.py")
+
+from JpsiUpsilonTools.JpsiUpsilonToolsConf import Analysis__JpsiFinder
+EOPJpsiFinder = Analysis__JpsiFinder(name                         = "EOPJpsiFinder",
+                                     OutputLevel                 = INFO,
+                                     muAndMu                     = False,
+                                     muAndTrack                  = False,
+                                     TrackAndTrack               = True,
+                                     assumeDiMuons               = False, 
+                                     invMassUpper                = 1125.0,
+                                     invMassLower                = 1105.0,
+                                     Chi2Cut                     = 15.,
+                                     oppChargesOnly              = True,
+                                     combOnly            	 = False,
+                                     atLeastOneComb              = False,
+                                     useCombinedMeasurement      = False, # Only takes effect if combOnly=True
+                                     muonCollectionKey           = "Muons",
+                                     TrackParticleCollection     = "InDetTrackParticles",
+                                     V0VertexFitterTool          = TrkV0Fitter,             # V0 vertex fitter
+                                     useV0Fitter                 = False,                # if False a TrkVertexFitterTool will be used
+                                     TrkVertexFitterTool         = TrkVKalVrtFitter,        # VKalVrt vertex fitter
+                                     TrackSelectorTool           = InDetTrackSelectorTool,
+                                     ConversionFinderHelperTool  = InDetConversionHelper,
+                                     VertexPointEstimator        = VtxPointEstimator,
+                                     useMCPCuts                  = False,
+                                     track1Mass                  = 938.272, # Not very important, only used to calculate inv. mass cut
+                                     track2Mass                  = 139.57)
+ToolSvc += EOPJpsiFinder
+print      EOPJpsiFinder
+
+#--------------------------------------------------------------------
+## 3/ setup the vertex reconstruction "call" tool(s). They are part of the derivation framework.
+##    These Augmentation tools add output vertex collection(s) into the StoreGate and add basic
+##    decorations which do not depend on the vertex mass hypothesis (e.g. lxy, ptError, etc).
+##    There should be one tool per topology, i.e. Jpsi and Psi(2S) do not need two instance of the
+##    Reco tool is the JpsiFinder mass window is wide enough.
+
+
+EOPRecotrktrk = DerivationFramework__Reco_mumu(
+    name                   = "EOPRecotrktrk",
+    JpsiFinder             = EOPJpsiFinder,
+    OutputVtxContainerName = "LambdaCandidates",
+    PVContainerName        = "PrimaryVertices",
+    RefPVContainerName     = "EOPLambdaRefittedPrimaryVertices",
+    RefitPV = EOPRefitPV)
+ToolSvc += EOPRecotrktrk
+
+#--------------------------------------------------------------------
+## 4/ setup the vertex selection and augmentation tool(s). These tools decorate the vertices with
+##    variables that depend on the vertex mass hypothesis, e.g. invariant mass, proper decay time, etc.
+##    Property HypothesisName is used as a prefix for these decorations.
+##    They also perform tighter selection, flagging the vertecis that passed. The flag is a Char_t branch
+##    named "passed_"+HypothesisName. It is used later by the "SelectEvent" and "Thin_vtxTrk" tools
+##    to determine which events and candidates should be kept in the output stream.
+##    Multiple instances of the Select_* tools can be used on a single input collection as long as they
+##    use different "HypothesisName" flags.
+
+
+EOPSelectLambda2trktrk = DerivationFramework__Select_onia2mumu(
+    name                  = "HIGG2D5SelectPhi2trktrk",
+    HypothesisName        = "Lambda",
+    InputVtxContainerName = EOPRecotrktrk.OutputVtxContainerName,
+    TrkMasses             = [938.272, 139.57], # Proton, pion PDG mass
+    VtxMassHypo           = 1.019461*Units.GeV, # lambda PDG mass
+    MassMin               = 1105.0,
+    MassMax               = 1125.0,
+    Chi2Max               = 15)
+ToolSvc += EOPSelectLambda2trktrk
+
+
 #====================================================================
 # CREATE THE DERIVATION KERNEL ALGORITHM AND PASS THE ABOVE TOOLS
 #====================================================================
