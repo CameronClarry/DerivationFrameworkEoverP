@@ -6,8 +6,8 @@
 // Reco_mumu.h
 ///////////////////////////////////////////////////////////////////
 
-#ifndef DERIVATIONFRAMEWORK_Reco_mumu_H
-#define DERIVATIONFRAMEWORK_Reco_mumu_H
+#ifndef __Reco_mumu_H
+#define __Reco_mumu_H
 
 #include <string>
 
@@ -61,4 +61,4 @@ namespace DerivationFramework {
   }; 
 }
 
-#endif // DERIVATIONFRAMEWORK_Reco_mumu_H
+#endif // _Reco_mumu_H

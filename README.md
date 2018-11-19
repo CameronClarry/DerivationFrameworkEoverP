@@ -25,6 +25,8 @@ lsetup git
 git atlas init-workdir https://:@gitlab.cern.ch:8443/atlas/athena.git
 cd athena
 git atlas addpkg PrimaryDPDMaker
+git atlas addpkg TrkVertexAnalysisUtils
+git atlas addpkg xAODBPhys
 git fetch upstream
 git checkout -b 21.0.74 release/21.0.74
 cd ..
@@ -35,7 +37,11 @@ Clone the Derivation Framework, and modify the PrimaryDPDFlags.py file in the Pr
 
 ```
 git clone https://github.com/luadamek/DerivationFrameworkEoverP.git
-cp DerivationFrameworkEoverP/python/PrimaryDPDFlags_mod.py athena/PhysicsAnalysis/PrimaryDPDMaker/python/PrimaryDPDFlags.py
+cp DerivationFrameworkEoverP/ModifiedAthena/PrimaryDPDFlags_mod.py athena/PhysicsAnalysis/PrimaryDPDMaker/python/PrimaryDPDFlags.py
+cp DerivationFrameworkEoverP/ModifiedAthena/V0Tools_MOD.cxx athena/Tracking/TrkVertexFitter/TrkVertexAnalysisUtils/src/V0Tools.cxx
+cp DerivationFrameworkEoverP/ModifiedAthena/V0Tools_MOD.h athena/Tracking/TrkVertexFitter/TrkVertexAnalysisUtils/TrkVertexAnalysisUtils/V0Tools.h
+cp DerivationFrameworkEoverP/ModifiedAthena/BPhysHelper_MOD.cxx athena/Event/xAOD/xAODBPhys/Root/BPhysHelper.cxx
+cp DerivationFrameworkEoverP/ModifiedAthena/BPhysHelper_MOD.h athena/Event/xAOD/xAODBPhys/xAODBPhys/BPhysHelper.h
 ```
 
 And finally, compile the project.
