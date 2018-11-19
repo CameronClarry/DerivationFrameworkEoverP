@@ -114,7 +114,7 @@ print      EOPJpsiFinder
 ##    Reco tool is the JpsiFinder mass window is wide enough.
 
 
-EOPRecotrktrk = DerivationFramework__Reco_mumu(
+EOPRecotrktrk = DerivationFrameworkEoverP__Reco_mumu(
     name                   = "EOPRecotrktrk",
     JpsiFinder             = EOPJpsiFinder,
     OutputVtxContainerName = "LambdaCandidates",
