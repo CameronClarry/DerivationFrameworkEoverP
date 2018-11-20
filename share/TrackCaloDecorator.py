@@ -19,7 +19,7 @@ if not hasattr(svcMgr, 'DecisionSvc'):
     svcMgr += CfgMgr.DecisionSvc()
 svcMgr.DecisionSvc.CalcStats = True
 
-svcMgr.MessageSvc.OutputLevel = DEBUG #Comment this out when submitting grid jobs
+#svcMgr.MessageSvc.OutputLevel = DEBUG #Comment this out when submitting grid jobs
 svcMgr.MessageSvc.defaultLimit = 9999999
 
 #====================================================================
@@ -113,8 +113,9 @@ print      EOPJpsiFinder
 ##    There should be one tool per topology, i.e. Jpsi and Psi(2S) do not need two instance of the
 ##    Reco tool is the JpsiFinder mass window is wide enough.
 
-
-EOPRecotrktrk = DerivationFrameworkEoverP__Reco_mumu(
+from DerivationFrameworkEoverP.DerivationFrameworkEoverPConf import DerivationFramework__Reco_mumu
+EOPRefitPV = False
+EOPRecotrktrk = DerivationFramework__Reco_mumu(
     name                   = "EOPRecotrktrk",
     JpsiFinder             = EOPJpsiFinder,
     OutputVtxContainerName = "LambdaCandidates",
@@ -133,7 +134,7 @@ ToolSvc += EOPRecotrktrk
 ##    Multiple instances of the Select_* tools can be used on a single input collection as long as they
 ##    use different "HypothesisName" flags.
 
-
+from DerivationFrameworkEoverP.DerivationFrameworkEoverPConf import DerivationFramework__Select_onia2mumu
 EOPSelectLambda2trktrk = DerivationFramework__Select_onia2mumu(
     name                  = "HIGG2D5SelectPhi2trktrk",
     HypothesisName        = "Lambda",
@@ -144,7 +145,6 @@ EOPSelectLambda2trktrk = DerivationFramework__Select_onia2mumu(
     MassMax               = 1125.0,
     Chi2Max               = 15)
 ToolSvc += EOPSelectLambda2trktrk
-
 
 #====================================================================
 # CREATE THE DERIVATION KERNEL ALGORITHM AND PASS THE ABOVE TOOLS

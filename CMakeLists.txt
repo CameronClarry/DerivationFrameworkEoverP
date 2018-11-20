@@ -14,7 +14,7 @@ atlas_depends_on_subdirs( PUBLIC
 			  PhysicsAnalysis/DerivationFramework/DerivationFrameworkInterfaces
 			  PhysicsAnalysis/JpsiUpsilonTools
 			  Event/xAOD/xAODTracking
-              Event/xAOD/xAODBPhys
+			  Event/xAOD/xAODBPhys
 			  Control/AthenaKernel
 			  Reconstruction/RecoTools/RecoToolInterfaces
 			  Event/EventPrimitives
@@ -62,35 +62,6 @@ atlas_depends_on_subdirs( PUBLIC
 			  InnerDetector/InDetRecAlgs/InDetV0Finder
 )
 
-# External dependencies:
-#find_package( CLHEP )
-#find_package( HepPDT )
-#find_package( ROOT COMPONENTS Core Tree MathCore Hist RIO pthread )
-
-# Component(s) in the package (stolen from DerivationFrameworkBPhys):
-#atlas_add_library( DerivationFrameworkEoverPReco_mumu DerivationFramewok/*.h src/*.cxx
-    #DerivationFramewok/*.h src/*.cxx
- #   PUBLIC_HEADERS DerivationFrameworkEoverP
- #   LINK_LIBRARIES xAODMuon DataModel AthenaBaseComps JpsiUpsilonTools
- #  xAODTracking xAODBPhysLib AthenaKernel RecoToolInterfaces EventPrimitives
- #  #BPhysToolsLib
- #  PRIVATE_LINK_LIBRARIES xAODBase xAODMetaData TrkVertexAnalysisUtils
- #  xAODEventInfo AthenaPoolUtilities xAODPrimitives CaloEvent TrackToCalo
- #  TrackToVertex TrkCaloExtension InDetBeamSpotServiceLib
-     #  InDetTrackSelectionToolLib TrigDecisionTool InDetV0FinderLib)
-# Component(s) in the package:
-
-#atlas_add_library( EoverPRecoMumuLib
-#                   src/Reco_mumu.cxx
-#                   PUBLIC_HEADERS DerivationFrameworkEoverP
-#                   INCLUDE_DIRS ${HEPPDT_INCLUDE_DIRS}
-#                   PRIVATE_INCLUDE_DIRS ${ROOT_INCLUDE_DIRS} ${CLHEP_INCLUDE_DIRS}
-#                   PRIVATE_DEFINITIONS ${CLHEP_DEFINITIONS}
-#                   LINK_LIBRARIES ${HEPPDT_LIBRARIES} AthenaBaseComps DataModel xAODMuon xAODTracking GaudiKernel InDetConversionFinderToolsLib TrkVKalVrtFitterLib TrkV0FitterLib TrkVertexAnalysisUtilsLib
-#                   PRIVATE_LINK_LIBRARIES ${ROOT_LIBRARIES} ${CLHEP_LIBRARIES} EventPrimitives TrkParametersBase VxVertex TrkToolInterfaces TrkVertexFitterInterfaces xAODBPhys )
-
-
-
 # Find the needed external(s):
 find_package( ROOT COMPONENTS Core RIO Hist Tree )
 find_package(HepPDT REQUIRED)
@@ -100,8 +71,9 @@ atlas_install_joboptions( share/*.py )
 
 atlas_add_component(DerivationFrameworkEoverP DerivationFrameworkEoverP/*.h src/*.cxx src/components/*.cxx
                    INCLUDE_DIRS ${ROOT_INCLUDE_DIRS} ${HEPPDT_INCLUDE_DIRS}
-         		   LINK_LIBRARIES  ${ROOT_LIBRARIES}  ${HEPPDT_LIBRARIES}
+      		   LINK_LIBRARIES  ${ROOT_LIBRARIES}  ${HEPPDT_LIBRARIES}
                    ${release_libs} GaudiKernel xAODEventInfo TrkExInterfaces
                    RecoToolInterfaces xAODMuon JpsiUpsilonTools DataModel EventPrimitives xAODBPhys
-                   PRIVATE_LINK_LIBRARIES TrkVertexAnalysisUtils TrackToVertex InDetV0FinderLib InDetBeamSpotServiceLib TrkVertexAnalysisUtilsLib TrkVKalVrtFitterLib
+                   PRIVATE_LINK_LIBRARIES TrkVertexAnalysisUtils TrackToVertex InDetV0FinderLib InDetBeamSpotServiceLib 
+		   TrkVertexAnalysisUtilsLib TrkVKalVrtFitterLib 
 )
