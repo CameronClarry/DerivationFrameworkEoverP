@@ -42,6 +42,8 @@ cp DerivationFrameworkEoverP/ModifiedAthena/V0Tools_MOD.cxx athena/Tracking/TrkV
 cp DerivationFrameworkEoverP/ModifiedAthena/V0Tools_MOD.h athena/Tracking/TrkVertexFitter/TrkVertexAnalysisUtils/TrkVertexAnalysisUtils/V0Tools.h
 cp DerivationFrameworkEoverP/ModifiedAthena/BPhysHelper_MOD.cxx athena/Event/xAOD/xAODBPhys/Root/BPhysHelper.cxx
 cp DerivationFrameworkEoverP/ModifiedAthena/BPhysHelper_MOD.h athena/Event/xAOD/xAODBPhys/xAODBPhys/BPhysHelper.h
+cp DerivationFrameworkEoverP/ModifiedAthena/BPhysHypoHelper_MOD.h  athena/Event/xAOD/xAODBPhys/xAODBPhys/BPhysHypoHelper.h
+cp DerivationFrameworkEoverP/ModifiedAthena/BPhysHypoHelper_MOD.cxx athena/Event/xAOD/xAODBPhys/Root/BPhysHypoHelper.cxx
 ```
 
 And finally, compile the project.

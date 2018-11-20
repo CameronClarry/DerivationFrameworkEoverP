@@ -6,8 +6,8 @@
 // Reco_mumu.h
 ///////////////////////////////////////////////////////////////////
 
-#ifndef __Reco_mumu_H
-#define __Reco_mumu_H
+#ifndef DERIVATIONFRAMEWORKEOP__Reco_mumu_H
+#define DERIVATIONFRAMEWORKEOP__Reco_mumu_H
 
 #include <string>
 
