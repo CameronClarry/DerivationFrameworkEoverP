@@ -1,5 +1,3 @@
-// f7e8cfd3048b19a98ba2121a588c6da6cd207e95
-
 /*
   Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
 */
@@ -21,18 +19,18 @@
 
 /*****************************************************************************/
 #define GET_FLOAT(name)                                    \
-  {                                                          \
+{                                                          \
   SG::AuxElement::Accessor<float> floatAcc(name);   \
   if(!floatAcc.isAvailable(*m_b)) return -9999999.;        \
   return floatAcc(*m_b);                                   \
-  }
+}
 /*****************************************************************************/
 #define SET_FLOAT( name, val)                              \
-  {                                                          \
+{                                                          \
   SG::AuxElement::Decorator<float> floatDec(name);  \
   floatDec(*m_b) = val;                                    \
   return true;                                             \
-  }
+}
 /*****************************************************************************/
 
 /** @} */
@@ -72,70 +70,141 @@ bool xAOD::BPhysHypoHelper::setMass(const std::vector<double> &trkMasses)
 float xAOD::BPhysHypoHelper::tau(const pv_type vertexType, const tau_type tauType)
 {
   switch(vertexType) {
-  case PV_MAX_SUM_PT2: {
-    switch(tauType) {
-    case TAU_CONST_MASS : GET_FLOAT(m_hypo+"_TauConstMassPVMaxSumPt2");
-    case TAU_INV_MASS   : GET_FLOAT(m_hypo+"_TauInvMassPVMaxSumPt2");
-    default: return -9999999.;
+    case PV_MAX_SUM_PT2: {
+      switch(tauType) {
+        case TAU_CONST_MASS : GET_FLOAT(m_hypo+"_TauConstMassPVMaxSumPt2");
+        case TAU_INV_MASS   : GET_FLOAT(m_hypo+"_TauInvMassPVMaxSumPt2");
+        default: return -9999999.;
+      }
     }
-  }
-  case PV_MIN_A0: {
-    switch(tauType) {
-    case TAU_CONST_MASS : GET_FLOAT(m_hypo+"_TauConstMassPVMinA0");
-    case TAU_INV_MASS   : GET_FLOAT(m_hypo+"_TauInvMassPVMinA0");
-    default: return -9999999.;
+    case PV_MIN_A0: {
+      switch(tauType) {
+        case TAU_CONST_MASS : GET_FLOAT(m_hypo+"_TauConstMassPVMinA0");
+        case TAU_INV_MASS   : GET_FLOAT(m_hypo+"_TauInvMassPVMinA0");
+        default: return -9999999.;
+      }
     }
-  }
-  case PV_MIN_Z0: {
-    switch(tauType) {
-    case TAU_CONST_MASS : GET_FLOAT(m_hypo+"_TauConstMassPVMinZ0");
-    case TAU_INV_MASS   : GET_FLOAT(m_hypo+"_TauInvMassPVMinZ0");
-    default: return -9999999.;
+    case PV_MIN_Z0: {
+      switch(tauType) {
+        case TAU_CONST_MASS : GET_FLOAT(m_hypo+"_TauConstMassPVMinZ0");
+        case TAU_INV_MASS   : GET_FLOAT(m_hypo+"_TauInvMassPVMinZ0");
+        default: return -9999999.;
+      }
     }
-  }
-  case PV_MIN_Z0_BA: {
-    switch(tauType) {
-    case TAU_CONST_MASS : GET_FLOAT(m_hypo+"_TauConstMassPVMinZ0BA");
-    case TAU_INV_MASS   : GET_FLOAT(m_hypo+"_TauInvMassPVMinZ0BA");
-    default: return -9999999.;
+    case PV_MIN_Z0_BA: {
+      switch(tauType) {
+        case TAU_CONST_MASS : GET_FLOAT(m_hypo+"_TauConstMassPVMinZ0BA");
+        case TAU_INV_MASS   : GET_FLOAT(m_hypo+"_TauInvMassPVMinZ0BA");
+        default: return -9999999.;
+      }
     }
-  }
-  default: return -9999999.;
+    default: return -9999999.;
   }  
 }
 /*****************************************************************************/              
 float xAOD::BPhysHypoHelper::tauErr(const pv_type vertexType, const tau_type tauType)
 {
   switch(vertexType) {
-  case PV_MAX_SUM_PT2: {
-    switch(tauType) {
-    case TAU_CONST_MASS : GET_FLOAT(m_hypo+"_TauErrConstMassPVMaxSumPt2");
-    case TAU_INV_MASS   : GET_FLOAT(m_hypo+"_TauErrInvMassPVMaxSumPt2");
-    default: return -9999999.;
+    case PV_MAX_SUM_PT2: {
+      switch(tauType) {
+        case TAU_CONST_MASS : GET_FLOAT(m_hypo+"_TauErrConstMassPVMaxSumPt2");
+        case TAU_INV_MASS   : GET_FLOAT(m_hypo+"_TauErrInvMassPVMaxSumPt2");
+        default: return -9999999.;
+      }
     }
-  }
-  case PV_MIN_A0: {
-    switch(tauType) {
-    case TAU_CONST_MASS : GET_FLOAT(m_hypo+"_TauErrConstMassPVMinA0");
-    case TAU_INV_MASS   : GET_FLOAT(m_hypo+"_TauErrInvMassPVMinA0");
-    default: return -9999999.;
+    case PV_MIN_A0: {
+      switch(tauType) {
+        case TAU_CONST_MASS : GET_FLOAT(m_hypo+"_TauErrConstMassPVMinA0");
+        case TAU_INV_MASS   : GET_FLOAT(m_hypo+"_TauErrInvMassPVMinA0");
+        default: return -9999999.;
+      }
     }
-  }
-  case PV_MIN_Z0: {
-    switch(tauType) {
-    case TAU_CONST_MASS : GET_FLOAT(m_hypo+"_TauErrConstMassPVMinZ0");
-    case TAU_INV_MASS   : GET_FLOAT(m_hypo+"_TauErrInvMassPVMinZ0");
-    default: return -9999999.;
+    case PV_MIN_Z0: {
+      switch(tauType) {
+        case TAU_CONST_MASS : GET_FLOAT(m_hypo+"_TauErrConstMassPVMinZ0");
+        case TAU_INV_MASS   : GET_FLOAT(m_hypo+"_TauErrInvMassPVMinZ0");
+        default: return -9999999.;
+      }
     }
-  }
-  case PV_MIN_Z0_BA: {
-    switch(tauType) {
-    case TAU_CONST_MASS : GET_FLOAT(m_hypo+"_TauErrConstMassPVMinZ0BA");
-    case TAU_INV_MASS   : GET_FLOAT(m_hypo+"_TauErrInvMassPVMinZ0BA");
-    default: return -9999999.;
+    case PV_MIN_Z0_BA: {
+      switch(tauType) {
+        case TAU_CONST_MASS : GET_FLOAT(m_hypo+"_TauErrConstMassPVMinZ0BA");
+        case TAU_INV_MASS   : GET_FLOAT(m_hypo+"_TauErrInvMassPVMinZ0BA");
+        default: return -9999999.;
+      }
     }
-  }
-  default: return -9999999.;
+    default: return -9999999.;
+  }    
+}
+/*****************************************************************************/
+bool xAOD::BPhysHypoHelper::setTau(const float val, const pv_type vertexType, const tau_type tauType)
+{
+  switch(vertexType) {
+    case PV_MAX_SUM_PT2: {
+      switch(tauType) {
+        case TAU_CONST_MASS : SET_FLOAT(m_hypo+"_TauConstMassPVMaxSumPt2", val);
+        case TAU_INV_MASS   : SET_FLOAT(m_hypo+"_TauInvMassPVMaxSumPt2", val);
+        default: return false;
+      }
+    }
+    case PV_MIN_A0: {
+      switch(tauType) {
+        case TAU_CONST_MASS : SET_FLOAT(m_hypo+"_TauConstMassPVMinA0", val);
+        case TAU_INV_MASS   : SET_FLOAT(m_hypo+"_TauInvMassPVMinA0", val);
+        default: return false;
+      }
+    }
+    case PV_MIN_Z0: {
+      switch(tauType) {
+        case TAU_CONST_MASS : SET_FLOAT(m_hypo+"_TauConstMassPVMinZ0", val);
+        case TAU_INV_MASS   : SET_FLOAT(m_hypo+"_TauInvMassPVMinZ0", val);
+        default: return false;
+      }
+    }
+    case PV_MIN_Z0_BA: {
+      switch(tauType) {
+        case TAU_CONST_MASS : SET_FLOAT(m_hypo+"_TauConstMassPVMinZ0BA", val);
+        case TAU_INV_MASS   : SET_FLOAT(m_hypo+"_TauInvMassPVMinZ0BA", val);
+        default: return false;
+      }
+    }
+    default: return false;
+  }  
+  
+}
+/*****************************************************************************/
+bool xAOD::BPhysHypoHelper::setTauErr(const float val, const pv_type vertexType, const tau_type tauType)
+{
+  switch(vertexType) {
+    case PV_MAX_SUM_PT2: {
+      switch(tauType) {
+        case TAU_CONST_MASS : SET_FLOAT(m_hypo+"_TauErrConstMassPVMaxSumPt2", val);
+        case TAU_INV_MASS   : SET_FLOAT(m_hypo+"_TauErrInvMassPVMaxSumPt2", val);
+        default: return false;
+      }
+    }
+    case PV_MIN_A0: {
+      switch(tauType) {
+        case TAU_CONST_MASS : SET_FLOAT(m_hypo+"_TauErrConstMassPVMinA0", val);
+        case TAU_INV_MASS   : SET_FLOAT(m_hypo+"_TauErrInvMassPVMinA0", val);
+        default: return false;
+      }
+    }
+    case PV_MIN_Z0: {
+      switch(tauType) {
+        case TAU_CONST_MASS : SET_FLOAT(m_hypo+"_TauErrConstMassPVMinZ0", val);
+        case TAU_INV_MASS   : SET_FLOAT(m_hypo+"_TauErrInvMassPVMinZ0", val);
+        default: return false;
+      }
+    }
+    case PV_MIN_Z0_BA: {
+      switch(tauType) {
+        case TAU_CONST_MASS : SET_FLOAT(m_hypo+"_TauErrConstMassPVMinZ0BA", val);
+        case TAU_INV_MASS   : SET_FLOAT(m_hypo+"_TauErrInvMassPVMinZ0BA", val);
+        default: return false;
+      }
+    }
+    default: return false;
   }    
 }
 
@@ -299,3 +368,4 @@ bool xAOD::BPhysHypoHelper::setPass(bool passVal)
   return true;
 }
 /*****************************************************************************/
+
