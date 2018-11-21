@@ -196,9 +196,9 @@ EOPStream.AddItem("xAOD::VertexContainer#PrimaryVertices")
 EOPStream.AddItem("xAOD::VertexAuxContainer#PrimaryVerticesAux.-vxTrackAtVertex")
 
 # Add secondary vertices
-EOPStream.AddItem("xAOD::VertexContainer#LambdaCandidates")
-EOPStream.AddItem("xAOD::VertexAuxContainer#LambdaCandidatesAux.")
-EOPStream.AddItem("xAOD::VertexAuxContainer#LambdaCandidatesAux.-vxTrackAtVertex")
+#EOPStream.AddItem("xAOD::VertexContainer#LambdaCandidates")
+#EOPStream.AddItem("xAOD::VertexAuxContainer#LambdaCandidatesAux.")
+#EOPStream.AddItem("xAOD::VertexAuxContainer#LambdaCandidatesAux.-vxTrackAtVertex")
 
 #EOPStream.AddItem("xAOD::VertexContainer#V0LambdaVertices")
 #EOPStream.AddItem("xAOD::VertexAuxContainer#V0LambdaVerticesAux.")
