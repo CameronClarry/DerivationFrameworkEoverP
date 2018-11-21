@@ -136,11 +136,11 @@ ToolSvc += EOPRecotrktrk
 
 from DerivationFrameworkEoverP.DerivationFrameworkEoverPConf import DerivationFramework__Select_onia2mumu
 EOPSelectLambda2trktrk = DerivationFramework__Select_onia2mumu(
-    name                  = "HIGG2D5SelectPhi2trktrk",
+    name                  = "EOPSelectLambda2trktrk",
     HypothesisName        = "Lambda",
     InputVtxContainerName = EOPRecotrktrk.OutputVtxContainerName,
     TrkMasses             = [938.272, 139.57], # Proton, pion PDG mass
-    VtxMassHypo           = 1.019461*Units.GeV, # lambda PDG mass
+    VtxMassHypo           = 1115.0, # lambda PDG mass
     MassMin               = 1105.0,
     MassMax               = 1125.0,
     Chi2Max               = 15)
@@ -194,6 +194,15 @@ EOPStream.AddItem("xAOD::TrackParticleAuxContainer#InDetTrackParticlesAux."+excl
 # Add vertices
 EOPStream.AddItem("xAOD::VertexContainer#PrimaryVertices")
 EOPStream.AddItem("xAOD::VertexAuxContainer#PrimaryVerticesAux.-vxTrackAtVertex")
+
+# Add secondary vertices
+EOPStream.AddItem("xAOD::VertexContainer#LambdaCandidates")
+EOPStream.AddItem("xAOD::VertexAuxContainer#LambdaCandidatesAux.")
+EOPStream.AddItem("xAOD::VertexAuxContainer#LambdaCandidatesAux.-vxTrackAtVertex")
+
+#EOPStream.AddItem("xAOD::VertexContainer#V0LambdaVertices")
+#EOPStream.AddItem("xAOD::VertexAuxContainer#V0LambdaVerticesAux.")
+#EOPStream.AddItem("xAOD::VertexAuxContainer#V0LambdaVerticesAux.-vxTrackAtVertex")
 
 # Add trigger
 EOPStream.AddMetaDataItem("xAOD::TriggerMenuContainer#TriggerMenu")
