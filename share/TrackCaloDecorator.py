@@ -1,7 +1,9 @@
 #
 # @file     TrackCaloDecorator.py
-# @author   Millie McDonald <emcdonal@cern.ch> // Main author
-# @author   Joakim Olsson <joakim.olsson@cern.ch> // Modifications and cross-checks
+# @author   Millie McDonald <emcdonal@cern.ch> // Main author, 2015
+# @author   Joakim Olsson <joakim.olsson@cern.ch> // Modifications and cross-checks, 2015
+# @author   Lukas Adamek < lukas.adamek@cern.ch> // Modifications and cross-checks, 2018 / R21
+# @author   Matt LeBlanc <matt.leblanc@cern.ch> // Modifications, 2018 / R21
 # @brief    A derivation for ATLAS Run II E/p analyses. Extrapolates all tracks to calorimeter and decorates them with cluster and cell energies.
 #
 
@@ -71,16 +73,15 @@ CaloDeco = DerivationFramework__TrackCaloDecorator(name = "TrackCaloDecorator",
 ToolSvc += CaloDeco
 
 #--------------------------------------------------------------------
-## 2/ setup JpsiFinder tool
+## setup JpsiFinder tool
 ##    These are general tools independent of DerivationFramework that do the 
 ##    actual vertex fitting and some pre-selection.
 
-## 1/ setup vertexing tools and services
+## setup vertexing tools and services
 include("JpsiUpsilonTools/configureServices.py")
 
 from JpsiUpsilonTools.JpsiUpsilonToolsConf import Analysis__JpsiFinder
 EOPJpsiFinder = Analysis__JpsiFinder(name                         = "EOPJpsiFinder",
-                                     OutputLevel                 = INFO,
                                      muAndMu                     = False,
                                      muAndTrack                  = False,
                                      TrackAndTrack               = True,
@@ -107,7 +108,7 @@ ToolSvc += EOPJpsiFinder
 print      EOPJpsiFinder
 
 #--------------------------------------------------------------------
-## 3/ setup the vertex reconstruction "call" tool(s). They are part of the derivation framework.
+## setup the vertex reconstruction "call" tool(s). They are part of the derivation framework.
 ##    These Augmentation tools add output vertex collection(s) into the StoreGate and add basic
 ##    decorations which do not depend on the vertex mass hypothesis (e.g. lxy, ptError, etc).
 ##    There should be one tool per topology, i.e. Jpsi and Psi(2S) do not need two instance of the
@@ -123,9 +124,10 @@ EOPRecotrktrk = DerivationFramework__Reco_mumu(
     RefPVContainerName     = "EOPLambdaRefittedPrimaryVertices",
     RefitPV = EOPRefitPV)
 ToolSvc += EOPRecotrktrk
+print EOPRecotrktrk
 
 #--------------------------------------------------------------------
-## 4/ setup the vertex selection and augmentation tool(s). These tools decorate the vertices with
+## setup the vertex selection and augmentation tool(s). These tools decorate the vertices with
 ##    variables that depend on the vertex mass hypothesis, e.g. invariant mass, proper decay time, etc.
 ##    Property HypothesisName is used as a prefix for these decorations.
 ##    They also perform tighter selection, flagging the vertecis that passed. The flag is a Char_t branch
@@ -145,12 +147,16 @@ EOPSelectLambda2trktrk = DerivationFramework__Select_onia2mumu(
     MassMax               = 1125.0,
     Chi2Max               = 15)
 ToolSvc += EOPSelectLambda2trktrk
+print EOPSelectLambda2trktrk
 
 #====================================================================
 # CREATE THE DERIVATION KERNEL ALGORITHM AND PASS THE ABOVE TOOLS
 #====================================================================
 from DerivationFrameworkCore.DerivationFrameworkCoreConf import DerivationFramework__DerivationKernel
-DerivationFrameworkJob += CfgMgr.DerivationFramework__DerivationKernel("TrackCaloDecorator_KERN", AugmentationTools = [CaloDeco])
+DerivationFrameworkJob += CfgMgr.DerivationFramework__DerivationKernel("TrackCaloDecorator_KERN",
+                                                                       AugmentationTools = [CaloDeco,
+                                                                                            EOPRecotrktrk,
+                                                                                            EOPSelectLambda2trktrk])
 topSequence += DerivationFrameworkJob
 EOPStream.AcceptAlgs(["TrackCaloDecorator_KERN"])
 
@@ -196,13 +202,9 @@ EOPStream.AddItem("xAOD::VertexContainer#PrimaryVertices")
 EOPStream.AddItem("xAOD::VertexAuxContainer#PrimaryVerticesAux.-vxTrackAtVertex")
 
 # Add secondary vertices
-#EOPStream.AddItem("xAOD::VertexContainer#LambdaCandidates")
-#EOPStream.AddItem("xAOD::VertexAuxContainer#LambdaCandidatesAux.")
-#EOPStream.AddItem("xAOD::VertexAuxContainer#LambdaCandidatesAux.-vxTrackAtVertex")
-
-#EOPStream.AddItem("xAOD::VertexContainer#V0LambdaVertices")
-#EOPStream.AddItem("xAOD::VertexAuxContainer#V0LambdaVerticesAux.")
-#EOPStream.AddItem("xAOD::VertexAuxContainer#V0LambdaVerticesAux.-vxTrackAtVertex")
+EOPStream.AddItem("xAOD::VertexContainer#LambdaCandidates")
+EOPStream.AddItem("xAOD::VertexAuxContainer#LambdaCandidatesAux.")
+EOPStream.AddItem("xAOD::VertexAuxContainer#LambdaCandidatesAux.-vxTrackAtVertex")
 
 # Add trigger
 EOPStream.AddMetaDataItem("xAOD::TriggerMenuContainer#TriggerMenu")
