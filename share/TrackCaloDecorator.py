@@ -112,8 +112,8 @@ EOPKsFinder = Analysis__JpsiFinder(name                        = "EOPKsFinder",
                                    muAndTrack                  = False,
                                    TrackAndTrack               = True,
                                    assumeDiMuons               = False,
-                                   invMassUpper                = 480.0,
-                                   invMassLower                = 520.0,
+                                   invMassUpper                = 520.0,
+                                   invMassLower                = 480.0,
                                    Chi2Cut                     = 15.,
                                    oppChargesOnly              = True,
                                    combOnly                    = False,
@@ -139,7 +139,7 @@ EOPPhiFinder = Analysis__JpsiFinder(name                       = "EOPPhiFinder",
                                    TrackAndTrack               = True,
                                    assumeDiMuons               = False,
                                    invMassUpper                = 1200.0,
-                                   invMassLower                = 2493.677,
+                                   invMassLower                = 987.354, # taken from HIGG2D5
                                    Chi2Cut                     = 15.,
                                    oppChargesOnly              = True,
                                    combOnly                    = False,
@@ -189,7 +189,7 @@ ToolSvc += EOPKsRecotrktrk
 print EOPKsRecotrktrk
 
 EOPPhiRecotrktrk = DerivationFramework__Reco_mumu(
-    name                   = "EOPKsRecotrktrk",
+    name                   = "EOPPhiRecotrktrk",
     JpsiFinder             = EOPPhiFinder,
     OutputVtxContainerName = "PhiCandidates",
     PVContainerName        = "PrimaryVertices",
@@ -225,10 +225,10 @@ EOPSelectKs2trktrk = DerivationFramework__Select_onia2mumu(
     name                  = "EOPSelectKs2trktrk",
     HypothesisName        = "Ks",
     InputVtxContainerName = EOPKsRecotrktrk.OutputVtxContainerName,
-    TrkMasses             = [938.272, 139.57], # Proton, pion PDG mass
-    VtxMassHypo           = 1115.0, # lambda PDG mass
-    MassMin               = 1105.0,
-    MassMax               = 1125.0,
+    TrkMasses             = [139.57, 139.57], 
+    VtxMassHypo           = 497.611, # k_s PDG mass
+    MassMin               = 480.0,
+    MassMax               = 520.0,
     Chi2Max               = 15)
 ToolSvc += EOPSelectKs2trktrk
 print EOPSelectKs2trktrk
@@ -237,10 +237,10 @@ EOPSelectPhi2trktrk = DerivationFramework__Select_onia2mumu(
     name                  = "EOPSelectPhi2trktrk",
     HypothesisName        = "Phi",
     InputVtxContainerName = EOPPhiRecotrktrk.OutputVtxContainerName,
-    TrkMasses             = [938.272, 139.57], # Proton, pion PDG mass
-    VtxMassHypo           = 1115.0, # lambda PDG mass
-    MassMin               = 1105.0,
-    MassMax               = 1125.0,
+    TrkMasses             = [493.677, 493.677], # Proton, pion PDG mass
+    VtxMassHypo           = 1019.445,
+    MassMin               = 987.354,
+    MassMax               = 1200.0,
     Chi2Max               = 15)
 ToolSvc += EOPSelectPhi2trktrk
 print EOPSelectPhi2trktrk
@@ -252,7 +252,11 @@ from DerivationFrameworkCore.DerivationFrameworkCoreConf import DerivationFramew
 DerivationFrameworkJob += CfgMgr.DerivationFramework__DerivationKernel("TrackCaloDecorator_KERN",
                                                                        AugmentationTools = [CaloDeco,
                                                                                             EOPLambdaRecotrktrk,
-                                                                                            EOPSelectLambda2trktrk])
+                                                                                            EOPSelectLambda2trktrk,
+                                                                                            EOPKsRecotrktrk,
+                                                                                            EOPSelectKs2trktrk,
+                                                                                            EOPPhiRecotrktrk,
+                                                                                            EOPSelectPhi2trktrk])
 topSequence += DerivationFrameworkJob
 EOPStream.AcceptAlgs(["TrackCaloDecorator_KERN"])
 
@@ -301,6 +305,14 @@ EOPStream.AddItem("xAOD::VertexAuxContainer#PrimaryVerticesAux.-vxTrackAtVertex"
 EOPStream.AddItem("xAOD::VertexContainer#LambdaCandidates")
 EOPStream.AddItem("xAOD::VertexAuxContainer#LambdaCandidatesAux.")
 EOPStream.AddItem("xAOD::VertexAuxContainer#LambdaCandidatesAux.-vxTrackAtVertex")
+
+EOPStream.AddItem("xAOD::VertexContainer#KsCandidates")
+EOPStream.AddItem("xAOD::VertexAuxContainer#KsCandidatesAux.")
+EOPStream.AddItem("xAOD::VertexAuxContainer#KsCandidatesAux.-vxTrackAtVertex")
+
+EOPStream.AddItem("xAOD::VertexContainer#PhiCandidates")
+EOPStream.AddItem("xAOD::VertexAuxContainer#PhiCandidatesAux.")
+EOPStream.AddItem("xAOD::VertexAuxContainer#PhiCandidatesAux.-vxTrackAtVertex")
 
 # Add trigger
 EOPStream.AddMetaDataItem("xAOD::TriggerMenuContainer#TriggerMenu")
