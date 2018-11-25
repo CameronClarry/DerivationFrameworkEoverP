@@ -4,7 +4,7 @@ A derivation for ATLAS Run II E/p analyses. Extrapolates all tracks to calorimet
 
 Package created by: Millie McDonald
 
-Modifications by: Joakim Olsson
+Modifications by: Joakim Olsson, Lukas Adamek, Matt Leblanc
 
 Port to release 21: Lukas Adamek
 
