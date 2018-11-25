@@ -81,7 +81,7 @@ ToolSvc += CaloDeco
 include("JpsiUpsilonTools/configureServices.py")
 
 from JpsiUpsilonTools.JpsiUpsilonToolsConf import Analysis__JpsiFinder
-EOPJpsiFinder = Analysis__JpsiFinder(name                         = "EOPJpsiFinder",
+EOPLambdaFinder = Analysis__JpsiFinder(name                      = "EOPLambdaFinder",
                                      muAndMu                     = False,
                                      muAndTrack                  = False,
                                      TrackAndTrack               = True,
@@ -92,7 +92,7 @@ EOPJpsiFinder = Analysis__JpsiFinder(name                         = "EOPJpsiFind
                                      oppChargesOnly              = True,
                                      combOnly            	 = False,
                                      atLeastOneComb              = False,
-                                     useCombinedMeasurement      = False, # Only takes effect if combOnly=True
+                                     useCombinedMeasurement      = False, 
                                      muonCollectionKey           = "Muons",
                                      TrackParticleCollection     = "InDetTrackParticles",
                                      V0VertexFitterTool          = TrkV0Fitter,             # V0 vertex fitter
@@ -104,8 +104,60 @@ EOPJpsiFinder = Analysis__JpsiFinder(name                         = "EOPJpsiFind
                                      useMCPCuts                  = False,
                                      track1Mass                  = 938.272, # Not very important, only used to calculate inv. mass cut
                                      track2Mass                  = 139.57)
-ToolSvc += EOPJpsiFinder
-print      EOPJpsiFinder
+ToolSvc += EOPLambdaFinder
+print      EOPLambdaFinder
+
+EOPKsFinder = Analysis__JpsiFinder(name                        = "EOPKsFinder",
+                                   muAndMu                     = False,
+                                   muAndTrack                  = False,
+                                   TrackAndTrack               = True,
+                                   assumeDiMuons               = False,
+                                   invMassUpper                = 480.0,
+                                   invMassLower                = 520.0,
+                                   Chi2Cut                     = 15.,
+                                   oppChargesOnly              = True,
+                                   combOnly                    = False,
+                                   atLeastOneComb              = False,
+                                   useCombinedMeasurement      = False, 
+                                   muonCollectionKey           = "Muons",
+                                   TrackParticleCollection     = "InDetTrackParticles",
+                                   V0VertexFitterTool          = TrkV0Fitter,  
+                                   useV0Fitter                 = False,        
+                                   TrkVertexFitterTool         = TrkVKalVrtFitter, 
+                                   TrackSelectorTool           = InDetTrackSelectorTool,
+                                   ConversionFinderHelperTool  = InDetConversionHelper,
+                                   VertexPointEstimator        = VtxPointEstimator,
+                                   useMCPCuts                  = False,
+                                   track1Mass                  = 139.57, 
+                                   track2Mass                  = 139.57)
+ToolSvc += EOPKsFinder
+print      EOPKsFinder
+
+EOPPhiFinder = Analysis__JpsiFinder(name                       = "EOPPhiFinder",
+                                   muAndMu                     = False,
+                                   muAndTrack                  = False,
+                                   TrackAndTrack               = True,
+                                   assumeDiMuons               = False,
+                                   invMassUpper                = 1200.0,
+                                   invMassLower                = 2493.677,
+                                   Chi2Cut                     = 15.,
+                                   oppChargesOnly              = True,
+                                   combOnly                    = False,
+                                   atLeastOneComb              = False,
+                                   useCombinedMeasurement      = False, 
+                                   muonCollectionKey           = "Muons",
+                                   TrackParticleCollection     = "InDetTrackParticles",
+                                   V0VertexFitterTool          = TrkV0Fitter, 
+                                   useV0Fitter                 = False,       
+                                   TrkVertexFitterTool         = TrkVKalVrtFitter,  
+                                   TrackSelectorTool           = InDetTrackSelectorTool,
+                                   ConversionFinderHelperTool  = InDetConversionHelper,
+                                   VertexPointEstimator        = VtxPointEstimator,
+                                   useMCPCuts                  = False,
+                                   track1Mass                  = 493.677, 
+                                   track2Mass                  = 493.677)
+ToolSvc += EOPPhiFinder
+print      EOPPhiFinder
 
 #--------------------------------------------------------------------
 ## setup the vertex reconstruction "call" tool(s). They are part of the derivation framework.
@@ -116,15 +168,35 @@ print      EOPJpsiFinder
 
 from DerivationFrameworkEoverP.DerivationFrameworkEoverPConf import DerivationFramework__Reco_mumu
 EOPRefitPV = False
-EOPRecotrktrk = DerivationFramework__Reco_mumu(
-    name                   = "EOPRecotrktrk",
-    JpsiFinder             = EOPJpsiFinder,
+EOPLambdaRecotrktrk = DerivationFramework__Reco_mumu(
+    name                   = "EOPLambdaRecotrktrk",
+    JpsiFinder             = EOPLambdaFinder,
     OutputVtxContainerName = "LambdaCandidates",
     PVContainerName        = "PrimaryVertices",
     RefPVContainerName     = "EOPLambdaRefittedPrimaryVertices",
     RefitPV = EOPRefitPV)
-ToolSvc += EOPRecotrktrk
-print EOPRecotrktrk
+ToolSvc += EOPLambdaRecotrktrk
+print EOPLambdaRecotrktrk
+
+EOPKsRecotrktrk = DerivationFramework__Reco_mumu(
+    name                   = "EOPKsRecotrktrk",
+    JpsiFinder             = EOPKsFinder,
+    OutputVtxContainerName = "KsCandidates",
+    PVContainerName        = "PrimaryVertices",
+    RefPVContainerName     = "EOPKsRefittedPrimaryVertices",
+    RefitPV = EOPRefitPV)
+ToolSvc += EOPKsRecotrktrk
+print EOPKsRecotrktrk
+
+EOPPhiRecotrktrk = DerivationFramework__Reco_mumu(
+    name                   = "EOPKsRecotrktrk",
+    JpsiFinder             = EOPPhiFinder,
+    OutputVtxContainerName = "PhiCandidates",
+    PVContainerName        = "PrimaryVertices",
+    RefPVContainerName     = "EOPPhiRefittedPrimaryVertices",
+    RefitPV = EOPRefitPV)
+ToolSvc += EOPPhiRecotrktrk
+print EOPPhiRecotrktrk
 
 #--------------------------------------------------------------------
 ## setup the vertex selection and augmentation tool(s). These tools decorate the vertices with
@@ -140,7 +212,7 @@ from DerivationFrameworkEoverP.DerivationFrameworkEoverPConf import DerivationFr
 EOPSelectLambda2trktrk = DerivationFramework__Select_onia2mumu(
     name                  = "EOPSelectLambda2trktrk",
     HypothesisName        = "Lambda",
-    InputVtxContainerName = EOPRecotrktrk.OutputVtxContainerName,
+    InputVtxContainerName = EOPLambdaRecotrktrk.OutputVtxContainerName,
     TrkMasses             = [938.272, 139.57], # Proton, pion PDG mass
     VtxMassHypo           = 1115.0, # lambda PDG mass
     MassMin               = 1105.0,
@@ -149,13 +221,37 @@ EOPSelectLambda2trktrk = DerivationFramework__Select_onia2mumu(
 ToolSvc += EOPSelectLambda2trktrk
 print EOPSelectLambda2trktrk
 
+EOPSelectKs2trktrk = DerivationFramework__Select_onia2mumu(
+    name                  = "EOPSelectKs2trktrk",
+    HypothesisName        = "Ks",
+    InputVtxContainerName = EOPKsRecotrktrk.OutputVtxContainerName,
+    TrkMasses             = [938.272, 139.57], # Proton, pion PDG mass
+    VtxMassHypo           = 1115.0, # lambda PDG mass
+    MassMin               = 1105.0,
+    MassMax               = 1125.0,
+    Chi2Max               = 15)
+ToolSvc += EOPSelectKs2trktrk
+print EOPSelectKs2trktrk
+
+EOPSelectPhi2trktrk = DerivationFramework__Select_onia2mumu(
+    name                  = "EOPSelectPhi2trktrk",
+    HypothesisName        = "Phi",
+    InputVtxContainerName = EOPPhiRecotrktrk.OutputVtxContainerName,
+    TrkMasses             = [938.272, 139.57], # Proton, pion PDG mass
+    VtxMassHypo           = 1115.0, # lambda PDG mass
+    MassMin               = 1105.0,
+    MassMax               = 1125.0,
+    Chi2Max               = 15)
+ToolSvc += EOPSelectPhi2trktrk
+print EOPSelectPhi2trktrk
+
 #====================================================================
 # CREATE THE DERIVATION KERNEL ALGORITHM AND PASS THE ABOVE TOOLS
 #====================================================================
 from DerivationFrameworkCore.DerivationFrameworkCoreConf import DerivationFramework__DerivationKernel
 DerivationFrameworkJob += CfgMgr.DerivationFramework__DerivationKernel("TrackCaloDecorator_KERN",
                                                                        AugmentationTools = [CaloDeco,
-                                                                                            EOPRecotrktrk,
+                                                                                            EOPLambdaRecotrktrk,
                                                                                             EOPSelectLambda2trktrk])
 topSequence += DerivationFrameworkJob
 EOPStream.AcceptAlgs(["TrackCaloDecorator_KERN"])
