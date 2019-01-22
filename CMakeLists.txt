@@ -41,6 +41,7 @@ atlas_depends_on_subdirs( PUBLIC
 			  InnerDetector/InDetRecTools/InDetTrackSelectionTool
                           Event/xAOD/xAODEventInfo
                           Calorimeter/CaloEvent
+                          Calorimeter/CaloSimEvent
                           Calorimeter/CaloUtils
 			  PhysicsAnalysis/JpsiUpsilonTools
 			  TrkVKalVrtFitter/TrkVKalVrtFitter
@@ -75,5 +76,5 @@ atlas_add_component(DerivationFrameworkEoverP DerivationFrameworkEoverP/*.h src/
                    ${release_libs} GaudiKernel xAODEventInfo TrkExInterfaces
                    RecoToolInterfaces xAODMuon JpsiUpsilonTools DataModel EventPrimitives xAODBPhys
                    PRIVATE_LINK_LIBRARIES TrkVertexAnalysisUtils TrackToVertex InDetV0FinderLib InDetBeamSpotServiceLib 
-		   TrkVertexAnalysisUtilsLib TrkVKalVrtFitterLib 
+                   TrkVertexAnalysisUtilsLib TrkVKalVrtFitterLib CaloSimEvent
 )
