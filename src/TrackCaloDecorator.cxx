@@ -1,10 +1,13 @@
 #include "DerivationFrameworkEoverP/TrackCaloDecorator.h"
+#include "CaloSimEvent/CaloCalibrationHitContainer.h"  
 
 // tracks
 #include "TrkTrack/Track.h"
 #include "TrkParameters/TrackParameters.h"
 #include "TrkExInterfaces/IExtrapolator.h"
 #include "xAODTracking/TrackParticleContainer.h"
+#include <xAODTracking/VertexContainer.h>
+#include <xAODTracking/Vertex.h>
 
 // extrapolation to the calo
 #include "TrkCaloExtension/CaloExtension.h"
@@ -53,6 +56,15 @@ namespace DerivationFramework {
       declareProperty("Extrapolator", m_extrapolator);
       declareProperty("TheTrackExtrapolatorTool", m_theTrackExtrapolatorTool);
       declareProperty("DoCutflow", m_doCutflow);
+
+
+    m_tileActiveHitCnt   = "TileCalibHitActiveCell";
+    m_tileInactiveHitCnt = "TileCalibHitInactiveCell";
+    m_tileDMHitCnt       = "TileCalibHitDeadMaterial";
+    m_larActHitCnt   = "LArCalibrationHitActive";
+    m_larInactHitCnt = "LArCalibrationHitInactive";
+    m_larDMHitCnt    = "LArCalibrationHitDeadMaterial";
+
     }
 
   StatusCode TrackCaloDecorator::initialize()
@@ -62,9 +74,7 @@ namespace DerivationFramework {
     }
 
     ATH_CHECK(m_extrapolator.retrieve());
-
     ATH_CHECK(m_theTrackExtrapolatorTool.retrieve());
-
     ATH_CHECK(m_surfaceHelper.retrieve());
 
     // Get the test beam identifier for the MBTS
@@ -397,6 +407,33 @@ namespace DerivationFramework {
 
     const CaloCellContainer *caloCellContainer = 0; //ESD object used to create decorations
     CHECK(evtStore()->retrieve(caloCellContainer, "AllCalo"));
+
+    // INPUT CONTAINERS
+    const CaloCalibrationHitContainer* tile_actHitCnt = 0;
+    const CaloCalibrationHitContainer* tile_inactHitCnt = 0;
+    const CaloCalibrationHitContainer* tile_dmHitCnt = 0;
+    const CaloCalibrationHitContainer* lar_actHitCnt = 0; 
+    const CaloCalibrationHitContainer* lar_inactHitCnt = 0;
+    const CaloCalibrationHitContainer* lar_dmHitCnt = 0;
+    
+    //retrieving input Calibhit containers
+    ATH_CHECK( evtStore()->retrieve(tile_actHitCnt, m_tileActiveHitCnt) );
+    ATH_CHECK( evtStore()->retrieve(tile_inactHitCnt, m_tileInactiveHitCnt) );
+    ATH_CHECK( evtStore()->retrieve(tile_dmHitCnt,    m_tileDMHitCnt) );
+    ATH_CHECK( evtStore()->retrieve(lar_actHitCnt,    m_larActHitCnt) );
+    ATH_CHECK( evtStore()->retrieve(lar_inactHitCnt,  m_larInactHitCnt) );
+    ATH_CHECK( evtStore()->retrieve(lar_dmHitCnt,     m_larDMHitCnt) );
+
+    ATH_MSG_DEBUG("CaloCalibrationHitContainers retrieved successfuly" );
+
+    //Get the primary vertex
+    const xAOD::VertexContainer *vtxs(nullptr);
+    CHECK(evtStore()->retrieve(vtxs, "PrimaryVertices"));
+    const xAOD::Vertex *primaryVertex(nullptr);
+    for( auto vtx_itr : *vtxs )
+    {
+      if(vtx_itr->vertexType() != xAOD::VxType::VertexType::PriVtx) { primaryVertex = vtx_itr;}
+    }
 
     bool evt_pass_all = false;
     int ntrks_all = 0;
@@ -782,6 +819,75 @@ namespace DerivationFramework {
       std::vector<float> CellEnergy_firstEnergyDensity;
       std::vector<float> CellEnergy_emProbability;
       std::vector<int> CellEnergy_maxEnergyLayer;
+
+    ////Extrapolation to EMB Cal Layer 2
+    //std::cout<<"================================================================"<<std::endl;
+    //std::cout<<"Dumping track parameters"<<std::endl;
+    //std::cout<<"The track parameters."<<std::endl;
+    //std::cout<<"Track pT "<<track->pt()<<" MeV"<<std::endl;
+    //std::cout<<"eta "<<track->eta()<<std::endl;
+    //std::cout<<"phi "<<track->phi()<<std::endl;
+    //std::cout<<std::endl;
+
+    //xAOD::CaloCluster::CaloSample EMBCalLayerTwo = (xAOD::CaloCluster::CaloSample) 3;
+    //if (parametersMap[EMBCalLayerTwo]){
+    //double trackEta = parametersMap[EMBCalLayerTwo]->position().eta();
+    //double trackPhi = parametersMap[EMBCalLayerTwo]->position().phi();
+
+    //double trackEta_wrong = parametersMap[EMBCalLayerTwo]->momentum().eta();
+    //double trackPhi_wrong = parametersMap[EMBCalLayerTwo]->momentum().phi();
+
+    //double vtx_z = -99999999.0;
+
+    //if (primaryVertex != nullptr) {vtx_z = primaryVertex->z();}
+    //std::cout<<"The track momenum in EMB Layer Two. (the wrong extrapolated coordinates)"<<std::endl;
+    //std::cout<<"eta "<<trackEta_wrong<<std::endl;
+    //std::cout<<"phi "<<trackPhi_wrong<<std::endl;
+    //std::cout<<std::endl;
+    //std::cout<<"The track position in EMB Layer Two."<<std::endl;
+    //std::cout<<"eta "<<trackEta<<std::endl;
+    //std::cout<<"phi "<<trackPhi<<std::endl;
+    //std::cout<<std::endl;
+    //std::cout<<"The difference between the momentum (wrong) and position (right)"<<std::endl;
+    //std::cout<<"delta eta "<<trackEta_wrong - trackEta<<std::endl;
+    //std::cout<<"delta phi "<<trackPhi_wrong - trackPhi<<std::endl;
+    //std::cout<<std::endl;
+    //std::cout<<"The z-coordinate of the PV"<<std::endl;
+    //if (primaryVertex != nullptr) {std::cout<<vtx_z<<std::endl;}
+    //else {std::cout<<"No PV"<<std::endl;}
+    //std::cout<<std::endl;
+    //}
+
+    ////Extrapolation to EME Cal Layer Two
+
+    //xAOD::CaloCluster::CaloSample EMECalLayerTwo = (xAOD::CaloCluster::CaloSample)6;
+    //if (parametersMap[EMECalLayerTwo]){
+    //double trackEta = parametersMap[EMECalLayerTwo]->position().eta();
+    //double trackPhi = parametersMap[EMECalLayerTwo]->position().phi();
+
+    //double trackEta_wrong = parametersMap[EMECalLayerTwo]->momentum().eta();
+    //double trackPhi_wrong = parametersMap[EMECalLayerTwo]->momentum().phi();
+
+    //double vtx_z = -99999999.0;
+    //if (primaryVertex != nullptr) {vtx_z = primaryVertex->z();}
+
+    //std::cout<<"The track momenum in EME Layer Two. (the wrong extrapolated coordinates)"<<std::endl;
+    //std::cout<<"eta "<<trackEta_wrong<<std::endl;
+    //std::cout<<"phi "<<trackPhi_wrong<<std::endl;
+    //std::cout<<std::endl;
+    //std::cout<<"The track position in EME Layer Two."<<std::endl;
+    //std::cout<<"eta "<<trackEta<<std::endl;
+    //std::cout<<"phi "<<trackPhi<<std::endl;
+    //std::cout<<std::endl;
+    //std::cout<<"The difference between the momentum (wrong) and position (right)"<<std::endl;
+    //std::cout<<"delta eta "<<trackEta_wrong - trackEta<<std::endl;
+    //std::cout<<"delta phi "<<trackPhi_wrong - trackPhi<<std::endl;
+    //std::cout<<std::endl;
+    //std::cout<<"The z-coordinate of the PV"<<std::endl;
+    //if (primaryVertex != nullptr) {std::cout<<vtx_z<<std::endl;}
+    //else {std::cout<<"No PV"<<std::endl;}
+    //std::cout<<std::endl;
+    //}
 
       for (const auto& cluster : *clusterContainer) {
 

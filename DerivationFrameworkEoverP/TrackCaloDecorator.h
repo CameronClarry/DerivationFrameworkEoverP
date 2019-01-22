@@ -50,6 +50,15 @@ namespace DerivationFramework {
       std::string m_trackContainerName;
       std::string m_caloClusterContainerName;
 
+
+      std::string m_tileActiveHitCnt;
+      std::string m_tileInactiveHitCnt;
+      std::string m_tileDMHitCnt;
+      std::string m_larInactHitCnt;
+      std::string m_larActHitCnt;
+      std::string m_larDMHitCnt;
+
+
       ToolHandle<Trk::IExtrapolator> m_extrapolator;
       ToolHandle<Trk::IParticleCaloExtensionTool> m_theTrackExtrapolatorTool;
       Trk::TrackParametersIdHelper* m_trackParametersIdHelper;
