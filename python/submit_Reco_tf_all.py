@@ -4,10 +4,10 @@ import subprocess as sp
 
 # Joakim Olsson <joakim.olsson@cern.ch>
 
-tag = '20180724_alpha1'
+tag = '070119_secondaries1'
 user = 'luadamek'
 
-nFilesPerJob = 2
+nFilesPerJob = 1
 
 # If sub-jobs exceed the walltime limit, they will get killed. When you want to submit long running jobs (e.g., customized G4 simulation), submit them to sites where longer walltime limit is available by specifying the expected execution time (in second) to the --maxCpuCount option.
 maxCpuCount = 252000 # 70 hrs ##172800 # 48 hrs
@@ -39,20 +39,27 @@ doBuildAll = True
 #inDSs = ["mc15_13TeV.361020.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ0W.recon.ESD.e3569_s2832_r7968"]
          #"mc15_13TeV.361021.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ1W.recon.ESD.e3569_s2832_r7968"
 
-inDSs = ["mc16_13TeV.361020.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ0W.recon.ESD.e3569_s3170_r10572",\
-         "mc16_13TeV.361021.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ1W.recon.ESD.e3569_s3170_r10572",\
-         "mc16_13TeV.361022.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ2W.recon.ESD.e3668_s3170_r10572"]
+inDSs = [\
+"data17_13TeV.00341294.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
+"data17_13TeV.00341312.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
+"data17_13TeV.00341419.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
+"data17_13TeV.00341534.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
+"data17_13TeV.00341615.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
+"data17_13TeV.00341649.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
+"mc16_13TeV.361020.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ0W.recon.ESD.e3569_s3170_r10572",\
+"mc16_13TeV.361021.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ1W.recon.ESD.e3569_s3170_r10572",\
+"mc16_13TeV.361022.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ2W.recon.ESD.e3668_s3170_r10572"]
 
-# outDSs = ['mc15_13TeV.361203.Pythia8_A2_MSTW2008LO_ND_minbias.DAOD_EOP.e3639_s2601_s2132_r7728',
-#           'mc15_13TeV.361204.Pythia8_A2_MSTW2008LO_SD_minbias.DAOD_EOP.e3639_s2601_s2132_r7728',
-#           'mc15_13TeV.361205.Pythia8_A2_MSTW2008LO_DD_minbias.DAOD_EOP.e3639_s2601_s2132_r7728']
-
-#outDSs = ["mc15_13TeV.361020.JZ0W.DAOD_EOP.e3569_s2832_r7968"]
-         # "mc15_13TeV.361020.JZ1W.DAOD_EOP.e3569_s2832_r7968"
-
-outDSs = ["mc16_13TeV.361020.jetjet.DAOD_EOP.e3569_s3170_r10572",\
-         "mc16_13TeV.361021.jetjet.DAOD_EOP.e3569_s3170_r10572",\
-         "mc16_13TeV.361022.jetjet.DAOD_EOP.e3668_s3170_r10572"]
+outDSs = [\
+"data17_13TeV.00341294.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
+"data17_13TeV.00341312.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
+"data17_13TeV.00341419.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
+"data17_13TeV.00341534.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
+"data17_13TeV.00341615.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
+"data17_13TeV.00341649.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
+"mc16_13TeV.361020.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ0W.deriv.DAOD_EOP.e3569_s3170_r10572",\
+"mc16_13TeV.361021.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ1W.deriv.DAOD_EOP.e3569_s3170_r10572",\
+"mc16_13TeV.361022.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ2W.deriv.DAOD_EOP.e3668_s3170_r10572"]
 
 setup = '--nFilesPerJob '+str(nFilesPerJob)+' --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputDAOD_EOPFile=%OUT.pool.root --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything" --extOutFile cutflow.root --individualOutDS'
 print 'setup: '+setup
