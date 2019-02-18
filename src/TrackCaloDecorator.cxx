@@ -417,14 +417,27 @@ namespace DerivationFramework {
     const CaloCalibrationHitContainer* lar_dmHitCnt = 0;
     
     //retrieving input Calibhit containers
-    ATH_CHECK( evtStore()->retrieve(tile_actHitCnt, m_tileActiveHitCnt) );
-    ATH_CHECK( evtStore()->retrieve(tile_inactHitCnt, m_tileInactiveHitCnt) );
-    ATH_CHECK( evtStore()->retrieve(tile_dmHitCnt,    m_tileDMHitCnt) );
-    ATH_CHECK( evtStore()->retrieve(lar_actHitCnt,    m_larActHitCnt) );
-    ATH_CHECK( evtStore()->retrieve(lar_inactHitCnt,  m_larInactHitCnt) );
-    ATH_CHECK( evtStore()->retrieve(lar_dmHitCnt,     m_larDMHitCnt) );
-
-    ATH_MSG_DEBUG("CaloCalibrationHitContainers retrieved successfuly" );
+    bool hasCalibrationHits = true;
+    if (!evtStore()->retrieve(tile_actHitCnt, m_tileActiveHitCnt).isSuccess()) {
+          hasCalibrationHits = false;
+    }
+    if (!evtStore()->retrieve(tile_inactHitCnt, m_tileInactiveHitCnt).isSuccess()) {
+          hasCalibrationHits = false;
+    }
+    if (!evtStore()->retrieve(tile_dmHitCnt,    m_tileDMHitCnt).isSuccess()) {
+          hasCalibrationHits = false;
+    }
+    if (!evtStore()->retrieve(lar_actHitCnt,    m_larActHitCnt).isSuccess()) {
+          hasCalibrationHits = false;
+    }
+    if (!evtStore()->retrieve(lar_inactHitCnt,  m_larInactHitCnt).isSuccess()) {
+          hasCalibrationHits = false;
+    }
+    if (!evtStore()->retrieve(lar_dmHitCnt,     m_larDMHitCnt).isSuccess()) {
+          hasCalibrationHits = false;
+    }
+    if (hasCalibrationHits) ATH_MSG_DEBUG("CaloCalibrationHitContainers retrieved successfuly" );
+    else ATH_MSG_DEBUG("Could not retrieve CaloCalibrationHitContainers" );
 
     //Get the primary vertex
     const xAOD::VertexContainer *vtxs(nullptr);

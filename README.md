@@ -84,8 +84,8 @@ Download an example esd, and run over it
 ```
 mkdir run && cd run
 voms-proxy-init -voms atlas
-rucio download ESD.08262627._002558.pool.root.1
-Reco_tf.py --autoConfiguration='everything' --maxEvents 10 --inputESDFile data15_13TeV/ESD.08262627._002558.pool.root.1 --outputDAOD_EOPFile output_DAOD_EOP.root
+rucio download data17_13TeV:DESDM_EOVERP.16059171._000170.pool.root.1
+Reco_tf.py --autoConfiguration='everything' --maxEvents 100 --inputESDFile data17_13TeV/DESDM_EOVERP.16059171._000170.pool.root.1 --outputDAOD_EOPFile output_DAOD_EOP.root
 ```
 
 
