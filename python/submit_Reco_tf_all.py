@@ -3,6 +3,7 @@ import commands
 import subprocess as sp
 
 # Joakim Olsson <joakim.olsson@cern.ch>
+# Lukas Adamek <Lukas.adamek@cern.ch>
 
 tag = '070119_secondaries1'
 user = 'luadamek'
