@@ -77,5 +77,5 @@ atlas_add_component(DerivationFrameworkEoverP DerivationFrameworkEoverP/*.h src/
                    ${release_libs} GaudiKernel xAODEventInfo TrkExInterfaces
                    RecoToolInterfaces xAODMuon JpsiUpsilonTools DataModel EventPrimitives xAODBPhys
                    PRIVATE_LINK_LIBRARIES TrkVertexAnalysisUtils TrackToVertex InDetV0FinderLib InDetBeamSpotServiceLib 
-                   TrkVertexAnalysisUtilsLib TrkVKalVrtFitterLib CaloSimEvent MCTruthClassifier
+                   TrkVertexAnalysisUtilsLib TrkVKalVrtFitterLib CaloSimEvent MCTruthClassifierLib
 )
