@@ -1,5 +1,6 @@
 #include "DerivationFrameworkEoverP/TrackCaloDecorator.h"
 #include "CaloSimEvent/CaloCalibrationHitContainer.h"  
+#include "MCTruthClassifier/IMCTruthClassifier.h"
 
 // tracks
 #include "TrkTrack/Track.h"
