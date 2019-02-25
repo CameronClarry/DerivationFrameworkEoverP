@@ -1,11 +1,13 @@
 #include "DerivationFrameworkEoverP/TrackCaloDecorator.h"
 #include "CaloSimEvent/CaloCalibrationHitContainer.h"  
 #include "MCTruthClassifier/IMCTruthClassifier.h"
+#include "MCTruthClassifier/MCTruthClassifierDefs.h"
 
 // tracks
 #include "TrkTrack/Track.h"
 #include "TrkParameters/TrackParameters.h"
 #include "TrkExInterfaces/IExtrapolator.h"
+#include "xAODTruth/TruthParticleContainer.h"
 #include "xAODTracking/TrackParticleContainer.h"
 #include <xAODTracking/VertexContainer.h>
 #include <xAODTracking/Vertex.h>
@@ -47,12 +49,14 @@ namespace DerivationFramework {
     m_theTrackExtrapolatorTool("Trk::ParticleCaloExtensionTool"),
     m_trackParametersIdHelper(new Trk::TrackParametersIdHelper),
     m_surfaceHelper("CaloSurfaceHelper/CaloSurfaceHelper"),
+    m_truthClassifier("MCTruthClassifier/MCTruthClassifier"),
     m_tileTBID(0),
     m_doCutflow{false}{
       declareInterface<DerivationFramework::IAugmentationTool>(this);
       declareProperty("DecorationPrefix", m_sgName);
       declareProperty("EventContainer", m_eventInfoContainerName);
       declareProperty("TrackContainer", m_trackContainerName);
+      declareProperty("MCTruthClassifier", m_truthClassifier);
       declareProperty("CaloClusterContainer", m_caloClusterContainerName);
       declareProperty("Extrapolator", m_extrapolator);
       declareProperty("TheTrackExtrapolatorTool", m_theTrackExtrapolatorTool);
@@ -455,7 +459,63 @@ namespace DerivationFramework {
     if (m_doCutflow) {
       m_cutflow_evt -> Fill(m_cutflow_evt_all, 1);
     }
+    std::pair<unsigned int, unsigned int> res;
+    MCTruthPartClassifier::ParticleDef partDef;
+
     for (const auto& track : *trackContainer) {
+      //Create a calo calibration hit container for this matched particle
+      //Create empty calocalibration hits containers
+      std::vector<CaloCalibrationHit*> tile_actHitCnt_part;
+      std::vector<CaloCalibrationHit*> tile_inactHitCnt_part;
+      std::vector<CaloCalibrationHit*> tile_dmHitCnt_part;
+      std::vector<CaloCalibrationHit*> lar_actHitCnt_part; 
+      std::vector<CaloCalibrationHit*> lar_inactHitCnt_part;
+      std::vector<CaloCalibrationHit*> lar_dmHitCnt_part;
+
+      res = m_truthClassifier->particleTruthClassifier(track);
+      const xAOD::TruthParticle* thePart = m_truthClassifier->getGenPart();
+
+      if (thePart != NULL){
+          unsigned int iTypeOfPart = res.first;
+          unsigned int iPartOrig   = res.second;
+          MCTruthPartClassifier::ParticleOutCome iPartOutCome = m_truthClassifier->getParticleOutCome();
+
+          // just to print results
+          std::cout<<" pdg  "<<thePart->pdgId()<<" particle  type        "<<partDef.sParticleType[iTypeOfPart]
+                                             <<"  particle origin      "<<partDef.sParticleOrigin[iPartOrig]
+                                             <<"  particle outcome "<<partDef.sParticleOutCome[iPartOutCome]<<std::endl;
+          // Print out the barcode of the particle
+          std::cout<<" barcode "<<thePart->barcode()<<std::endl;
+          unsigned int particleBarcode = thePart->barcode();
+          //Loop through all of the calibration hits and match them to the truth particle
+          CaloCalibrationHitContainer::const_iterator it;
+          for(it = tile_actHitCnt->begin(); it!=tile_actHitCnt->end(); it++) {
+              unsigned int barcode = (*it)->particleID();
+              if (barcode == particleBarcode) std::cout<<"Found a hit!"<<std::endl;
+          }
+          for(it = tile_inactHitCnt->begin(); it!=tile_inactHitCnt->end(); it++) {
+              unsigned int barcode = (*it)->particleID();
+              if (barcode == particleBarcode) std::cout<<"Found a hit!"<<std::endl;
+          }
+          for(it = tile_dmHitCnt->begin(); it!=tile_dmHitCnt->end(); it++) {
+              unsigned int barcode = (*it)->particleID();
+              if (barcode == particleBarcode) std::cout<<"Found a hit!"<<std::endl;
+          }
+          for(it = lar_actHitCnt->begin(); it!=lar_actHitCnt->end(); it++) {
+              unsigned int barcode = (*it)->particleID();
+              if (barcode == particleBarcode) std::cout<<"Found a hit!"<<std::endl;
+          }
+          for(it = lar_inactHitCnt->begin(); it!=lar_inactHitCnt->end(); it++) {
+              unsigned int barcode = (*it)->particleID();
+              if (barcode == particleBarcode) std::cout<<"Found a hit!"<<std::endl;
+          }
+          for(it = lar_dmHitCnt->begin(); it!=lar_dmHitCnt->end(); it++) {
+              unsigned int barcode = (*it)->particleID();
+              if (barcode == particleBarcode) std::cout<<"Found a hit!"<<std::endl;
+          }
+      }
+
+
       if (m_doCutflow) {
         ntrks_all++;
         m_cutflow_trk -> Fill(m_cutflow_trk_all, 1);

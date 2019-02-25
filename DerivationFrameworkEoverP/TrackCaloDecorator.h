@@ -16,6 +16,7 @@
 #include "TTree.h"
 
 #include "AthenaBaseComps/AthAlgTool.h"
+#include "MCTruthClassifier/IMCTruthClassifier.h"
 #include "DerivationFrameworkInterfaces/IAugmentationTool.h"
 #include "GaudiKernel/ToolHandle.h"
 #include "GaudiKernel/ServiceHandle.h"
@@ -61,6 +62,7 @@ namespace DerivationFramework {
 
       ToolHandle<Trk::IExtrapolator> m_extrapolator;
       ToolHandle<Trk::IParticleCaloExtensionTool> m_theTrackExtrapolatorTool;
+      ToolHandle<IMCTruthClassifier> m_truthClassifier;
       Trk::TrackParametersIdHelper* m_trackParametersIdHelper;
       ToolHandle<ICaloSurfaceHelper> m_surfaceHelper;
 
