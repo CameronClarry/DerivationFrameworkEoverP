@@ -5,6 +5,7 @@
 
 // tracks
 #include "TrkTrack/Track.h"
+#include "AthContainers/ConstDataVector.h"
 #include "TrkParameters/TrackParameters.h"
 #include "TrkExInterfaces/IExtrapolator.h"
 #include "xAODTruth/TruthParticleContainer.h"
@@ -413,7 +414,15 @@ namespace DerivationFramework {
     const CaloCellContainer *caloCellContainer = 0; //ESD object used to create decorations
     CHECK(evtStore()->retrieve(caloCellContainer, "AllCalo"));
 
-    // INPUT CONTAINERS
+    const CaloClusterCellLinkContainer* cclptr=0;
+    if (evtStore()->contains<CaloClusterCellLinkContainer>(m_caloClusterContainerName+"_links")) {
+      CHECK(evtStore()->retrieve(cclptr,m_caloClusterContainerName+"_links"));
+      ATH_MSG_INFO("Found corresponding cell-link container with size " << cclptr->size());
+    }
+    else {ATH_MSG_INFO("Did not find corresponding cell-link container");}
+
+
+    // Calibration hit containers
     const CaloCalibrationHitContainer* tile_actHitCnt = 0;
     const CaloCalibrationHitContainer* tile_inactHitCnt = 0;
     const CaloCalibrationHitContainer* tile_dmHitCnt = 0;
@@ -459,67 +468,24 @@ namespace DerivationFramework {
     if (m_doCutflow) {
       m_cutflow_evt -> Fill(m_cutflow_evt_all, 1);
     }
+
     std::pair<unsigned int, unsigned int> res;
     MCTruthPartClassifier::ParticleDef partDef;
 
     for (const auto& track : *trackContainer) {
       //Create a calo calibration hit container for this matched particle
       //Create empty calocalibration hits containers
-      std::vector<CaloCalibrationHit*> tile_actHitCnt_part;
-      std::vector<CaloCalibrationHit*> tile_inactHitCnt_part;
-      std::vector<CaloCalibrationHit*> tile_dmHitCnt_part;
-      std::vector<CaloCalibrationHit*> lar_actHitCnt_part; 
-      std::vector<CaloCalibrationHit*> lar_inactHitCnt_part;
-      std::vector<CaloCalibrationHit*> lar_dmHitCnt_part;
-
-      res = m_truthClassifier->particleTruthClassifier(track);
-      const xAOD::TruthParticle* thePart = m_truthClassifier->getGenPart();
-
-      if (thePart != NULL){
-          unsigned int iTypeOfPart = res.first;
-          unsigned int iPartOrig   = res.second;
-          MCTruthPartClassifier::ParticleOutCome iPartOutCome = m_truthClassifier->getParticleOutCome();
-
-          // just to print results
-          std::cout<<" pdg  "<<thePart->pdgId()<<" particle  type        "<<partDef.sParticleType[iTypeOfPart]
-                                             <<"  particle origin      "<<partDef.sParticleOrigin[iPartOrig]
-                                             <<"  particle outcome "<<partDef.sParticleOutCome[iPartOutCome]<<std::endl;
-          // Print out the barcode of the particle
-          std::cout<<" barcode "<<thePart->barcode()<<std::endl;
-          unsigned int particleBarcode = thePart->barcode();
-          //Loop through all of the calibration hits and match them to the truth particle
-          CaloCalibrationHitContainer::const_iterator it;
-          for(it = tile_actHitCnt->begin(); it!=tile_actHitCnt->end(); it++) {
-              unsigned int barcode = (*it)->particleID();
-              if (barcode == particleBarcode) std::cout<<"Found a hit!"<<std::endl;
-          }
-          for(it = tile_inactHitCnt->begin(); it!=tile_inactHitCnt->end(); it++) {
-              unsigned int barcode = (*it)->particleID();
-              if (barcode == particleBarcode) std::cout<<"Found a hit!"<<std::endl;
-          }
-          for(it = tile_dmHitCnt->begin(); it!=tile_dmHitCnt->end(); it++) {
-              unsigned int barcode = (*it)->particleID();
-              if (barcode == particleBarcode) std::cout<<"Found a hit!"<<std::endl;
-          }
-          for(it = lar_actHitCnt->begin(); it!=lar_actHitCnt->end(); it++) {
-              unsigned int barcode = (*it)->particleID();
-              if (barcode == particleBarcode) std::cout<<"Found a hit!"<<std::endl;
-          }
-          for(it = lar_inactHitCnt->begin(); it!=lar_inactHitCnt->end(); it++) {
-              unsigned int barcode = (*it)->particleID();
-              if (barcode == particleBarcode) std::cout<<"Found a hit!"<<std::endl;
-          }
-          for(it = lar_dmHitCnt->begin(); it!=lar_dmHitCnt->end(); it++) {
-              unsigned int barcode = (*it)->particleID();
-              if (barcode == particleBarcode) std::cout<<"Found a hit!"<<std::endl;
-          }
-      }
-
-
       if (m_doCutflow) {
         ntrks_all++;
         m_cutflow_trk -> Fill(m_cutflow_trk_all, 1);
       }
+
+      res = m_truthClassifier->particleTruthClassifier(track);
+      const xAOD::TruthParticle* thePart = m_truthClassifier->getGenPart();
+      bool hasTruthPart = (thePart != NULL);
+      unsigned int particle_barcode = 0;
+      if (hasTruthPart) {particle_barcode = thePart->barcode();}
+      else {particle_barcode = 0;}
 
       // Need to record a value for every track, so using -999999999 as an invalid code
       decorator_extrapolation (*track) = 0;
@@ -864,8 +830,8 @@ namespace DerivationFramework {
 
       int matchedClusterCounter_200 = 0;
       int matchedClusterCounter_100 = 0;
-      std::vector<xAOD::CaloCluster*> matchedClusters_200; //clusters within DeltaR < 0.2 of the track, reinitialised for each layer
-      std::vector<xAOD::CaloCluster*> matchedClusters_100; //clusters within DeltaR < 0.1 of the track
+      ConstDataVector<xAOD::CaloClusterContainer> matchedClusters_200(SG::VIEW_ELEMENTS); //clusters within DeltaR < 0.2 of the track, reinitialised for each layer
+      ConstDataVector<xAOD::CaloClusterContainer> matchedClusters_100(SG::VIEW_ELEMENTS); //clusters within DeltaR < 0.1 of the track
 
       std::vector<float> ClusterEnergy_Energy;
       std::vector<float> ClusterEnergy_Eta;
@@ -894,75 +860,6 @@ namespace DerivationFramework {
       std::vector<float> CellEnergy_emProbability;
       std::vector<int> CellEnergy_maxEnergyLayer;
 
-    ////Extrapolation to EMB Cal Layer 2
-    //std::cout<<"================================================================"<<std::endl;
-    //std::cout<<"Dumping track parameters"<<std::endl;
-    //std::cout<<"The track parameters."<<std::endl;
-    //std::cout<<"Track pT "<<track->pt()<<" MeV"<<std::endl;
-    //std::cout<<"eta "<<track->eta()<<std::endl;
-    //std::cout<<"phi "<<track->phi()<<std::endl;
-    //std::cout<<std::endl;
-
-    //xAOD::CaloCluster::CaloSample EMBCalLayerTwo = (xAOD::CaloCluster::CaloSample) 3;
-    //if (parametersMap[EMBCalLayerTwo]){
-    //double trackEta = parametersMap[EMBCalLayerTwo]->position().eta();
-    //double trackPhi = parametersMap[EMBCalLayerTwo]->position().phi();
-
-    //double trackEta_wrong = parametersMap[EMBCalLayerTwo]->momentum().eta();
-    //double trackPhi_wrong = parametersMap[EMBCalLayerTwo]->momentum().phi();
-
-    //double vtx_z = -99999999.0;
-
-    //if (primaryVertex != nullptr) {vtx_z = primaryVertex->z();}
-    //std::cout<<"The track momenum in EMB Layer Two. (the wrong extrapolated coordinates)"<<std::endl;
-    //std::cout<<"eta "<<trackEta_wrong<<std::endl;
-    //std::cout<<"phi "<<trackPhi_wrong<<std::endl;
-    //std::cout<<std::endl;
-    //std::cout<<"The track position in EMB Layer Two."<<std::endl;
-    //std::cout<<"eta "<<trackEta<<std::endl;
-    //std::cout<<"phi "<<trackPhi<<std::endl;
-    //std::cout<<std::endl;
-    //std::cout<<"The difference between the momentum (wrong) and position (right)"<<std::endl;
-    //std::cout<<"delta eta "<<trackEta_wrong - trackEta<<std::endl;
-    //std::cout<<"delta phi "<<trackPhi_wrong - trackPhi<<std::endl;
-    //std::cout<<std::endl;
-    //std::cout<<"The z-coordinate of the PV"<<std::endl;
-    //if (primaryVertex != nullptr) {std::cout<<vtx_z<<std::endl;}
-    //else {std::cout<<"No PV"<<std::endl;}
-    //std::cout<<std::endl;
-    //}
-
-    ////Extrapolation to EME Cal Layer Two
-
-    //xAOD::CaloCluster::CaloSample EMECalLayerTwo = (xAOD::CaloCluster::CaloSample)6;
-    //if (parametersMap[EMECalLayerTwo]){
-    //double trackEta = parametersMap[EMECalLayerTwo]->position().eta();
-    //double trackPhi = parametersMap[EMECalLayerTwo]->position().phi();
-
-    //double trackEta_wrong = parametersMap[EMECalLayerTwo]->momentum().eta();
-    //double trackPhi_wrong = parametersMap[EMECalLayerTwo]->momentum().phi();
-
-    //double vtx_z = -99999999.0;
-    //if (primaryVertex != nullptr) {vtx_z = primaryVertex->z();}
-
-    //std::cout<<"The track momenum in EME Layer Two. (the wrong extrapolated coordinates)"<<std::endl;
-    //std::cout<<"eta "<<trackEta_wrong<<std::endl;
-    //std::cout<<"phi "<<trackPhi_wrong<<std::endl;
-    //std::cout<<std::endl;
-    //std::cout<<"The track position in EME Layer Two."<<std::endl;
-    //std::cout<<"eta "<<trackEta<<std::endl;
-    //std::cout<<"phi "<<trackPhi<<std::endl;
-    //std::cout<<std::endl;
-    //std::cout<<"The difference between the momentum (wrong) and position (right)"<<std::endl;
-    //std::cout<<"delta eta "<<trackEta_wrong - trackEta<<std::endl;
-    //std::cout<<"delta phi "<<trackPhi_wrong - trackPhi<<std::endl;
-    //std::cout<<std::endl;
-    //std::cout<<"The z-coordinate of the PV"<<std::endl;
-    //if (primaryVertex != nullptr) {std::cout<<vtx_z<<std::endl;}
-    //else {std::cout<<"No PV"<<std::endl;}
-    //std::cout<<std::endl;
-    //}
-
       for (const auto& cluster : *clusterContainer) {
 
         /*Finding the most energetic layer of the cluster*/
@@ -970,10 +867,8 @@ namespace DerivationFramework {
         double maxLayerClusterEnergy = -999999999; //Some extremely low value
 
         for (int i=0; i<xAOD::CaloCluster::CaloSample::TileExt2+1; i++) {
-
           xAOD::CaloCluster::CaloSample sampleLayer = (xAOD::CaloCluster::CaloSample)(i);
           double clusterLayerEnergy = cluster->eSample(sampleLayer);
-
           if(clusterLayerEnergy > maxLayerClusterEnergy) {
             maxLayerClusterEnergy = clusterLayerEnergy;
             mostEnergeticLayer = sampleLayer;
@@ -1004,7 +899,7 @@ namespace DerivationFramework {
 
         if(deltaR < 0.2){
           matchedClusterCounter_200++;
-          matchedClusters_200.push_back(const_cast<xAOD::CaloCluster*>(cluster));
+          matchedClusters_200.push_back(cluster);
 
           //decorate with EM-scale quanitities.
           double lambda_center;
@@ -1036,7 +931,7 @@ namespace DerivationFramework {
 
         if(deltaR < 0.1){
           matchedClusterCounter_100++;
-          matchedClusters_100.push_back(const_cast<xAOD::CaloCluster*>(cluster));
+          matchedClusters_100.push_back(cluster);
         }
       }
 
@@ -1048,8 +943,8 @@ namespace DerivationFramework {
 
       int matchedCellCounter_200 = 0;
       int matchedCellCounter_100 = 0;
-      std::vector<CaloCell*> matchedCells_200;
-      std::vector<CaloCell*> matchedCells_100;
+      ConstDataVector<CaloCellContainer> matchedCells_200(SG::VIEW_ELEMENTS);
+      ConstDataVector<CaloCellContainer> matchedCells_100(SG::VIEW_ELEMENTS);
 
       for (const auto& cell : *caloCellContainer) {
 
@@ -1078,25 +973,19 @@ namespace DerivationFramework {
 
         if (deltaR < 0.2){
           matchedCellCounter_200++;
-          matchedCells_200.push_back(const_cast<CaloCell*>(cell));
-          //We want to include information about these clusters in the derivation output
-          //CellEnergy_Energy.push_back(cell->e()); This is too much information to include in the output derivation
-          //CellEnergy_Eta.push_back(cellEta);
-          //CellEnergy_Phi.push_back(cellPhi);
-          //CellEnergy_dRToTrack.push_back(deltaR);
-          //CellEnergy_MaxEnergyLayer.push_back(cellLayer);
+          matchedCells_200.push_back(cell);
         }
 
         if (deltaR < 0.1){
           matchedCellCounter_100++;
-          matchedCells_100.push_back(const_cast<CaloCell*>(cell));
+          matchedCells_100.push_back(cell);
         }
       }
 
       if (m_doCutflow) m_cutflow_trk -> Fill(m_cutflow_trk_pass_cell_matching, 1);
 
       /*Populating cluster decorations*/
-      std::vector<std::vector<xAOD::CaloCluster*>> matchedClusters;
+      std::vector<ConstDataVector<xAOD::CaloClusterContainer> > matchedClusters;
       matchedClusters.push_back(matchedClusters_200);
       matchedClusters.push_back(matchedClusters_100);
 
@@ -1106,6 +995,16 @@ namespace DerivationFramework {
       for (int j=0; j < scales; j++) {
 
         double clusterEnergy[2][21] = {{0}};
+
+        double clusterEnergy_Active_EM[2][21] = {{0}};
+        double clusterEnergy_Active_NonEM[2][21] = {{0}};
+        double clusterEnergy_Active_Escaped[2][21] = {{0}};
+        double clusterEnergy_Active_Invisible[2][21] = {{0}};
+
+        double clusterEnergy_Inactive_EM[2][21] = {{0}};
+        double clusterEnergy_Inactive_NonEM[2][21] = {{0}};
+        double clusterEnergy_Inactive_Escaped[2][21] = {{0}};
+        double clusterEnergy_Inactive_Invisible[2][21] = {{0}};
 
         double totalEMBClusterEnergy[2] = {};
         double totalEMEClusterEnergy[2] = {};
@@ -1124,37 +1023,43 @@ namespace DerivationFramework {
 
           double totalEnergy = 0;
 
-          std::vector<xAOD::CaloCluster*>::iterator firstMatchedClus = matchedClusters[i].begin();
-          std::vector<xAOD::CaloCluster*>::iterator lastMatchedClus = matchedClusters[i].end();
+          ConstDataVector<xAOD::CaloClusterContainer>::iterator firstMatchedClus = matchedClusters[i].begin();
+          ConstDataVector<xAOD::CaloClusterContainer>::iterator lastMatchedClus = matchedClusters[i].end();
 
           /*Loop over matched clusters for a given cone dimension*/
           for (; firstMatchedClus != lastMatchedClus; ++firstMatchedClus) {
 
-            xAOD::CaloCluster& cl = **firstMatchedClus;
+            const xAOD::CaloCluster* cl = *firstMatchedClus;
             double energy_EM = -999999999;
             double energy_LCW = -999999999;
 
-            energy_EM = cl.rawE();
-            energy_LCW = cl.calE();
+            energy_EM = cl->rawE();
+            energy_LCW = cl->calE();
 
             if(energy_EM == -999999999 || energy_LCW == -999999999) continue;
 
             double cluster_weight = energy_LCW/energy_EM;
 
-            if(j==0) totalEnergy += (*firstMatchedClus)->rawE(); //EM scale energy
-            if(j==1) totalEnergy += (*firstMatchedClus)->e(); //LCW scale energy
+            if(j==0) totalEnergy += cl->rawE(); //EM scale energy
+            if(j==1) totalEnergy += cl->e(); //LCW scale energy
 
             for(unsigned int m=0; m<CaloCell_ID::CaloSample::TileExt2+1; m++) {
 
               xAOD::CaloCluster::CaloSample clusterLayer = (xAOD::CaloCluster::CaloSample)(m);
 
               if(j==0) {
-                clusterEnergy[i][m] += (*firstMatchedClus)->eSample(clusterLayer); //eSample returns EM scale energy only
+                clusterEnergy[i][m] += cl->eSample(clusterLayer); //eSample returns EM scale energy only
               }
               if(j==1) {
-                clusterEnergy[i][m] += cluster_weight*((*firstMatchedClus)->eSample(clusterLayer)); 
+                clusterEnergy[i][m] += cluster_weight*(cl->eSample(clusterLayer)); 
               }
-            }  
+            }
+
+            std::cout<<"Getting energy deposits associated with particle "<<particle_barcode<<std::endl;
+            std::map<unsigned int, float> histSumLarActive = getHitsSum(lar_actHitCnt, cl, particle_barcode);
+            std::map<unsigned int, float> histSumLarInactive = getHitsSum(lar_inactHitCnt, cl, particle_barcode);
+            std::map<unsigned int, float> histSumTileActive = getHitsSum(tile_actHitCnt, cl, particle_barcode);
+            std::map<unsigned int, float> histSumTileInactive = getHitsSum(tile_inactHitCnt, cl, particle_barcode);
           }
 
           totalEMBClusterEnergy[i] = clusterEnergy[i][1] + clusterEnergy[i][2] + clusterEnergy[i][3];
@@ -1293,7 +1198,7 @@ namespace DerivationFramework {
       if (m_doCutflow) m_cutflow_trk -> Fill(m_cutflow_trk_pass_loop_matched_clusters, 1);
 
       /*Populate cell decorations*/
-      std::vector<std::vector<CaloCell*>> matchedCells;
+      std::vector<ConstDataVector<CaloCellContainer> > matchedCells;
       matchedCells.push_back(matchedCells_200);
       matchedCells.push_back(matchedCells_100);
 
@@ -1315,8 +1220,8 @@ namespace DerivationFramework {
 
         double summedCellEnergy = 0;
 
-        std::vector<CaloCell*>::iterator firstMatchedCell = matchedCells[i].begin();
-        std::vector<CaloCell*>::iterator lastMatchedCell = matchedCells[i].end();
+        ConstDataVector<CaloCellContainer>::iterator firstMatchedCell = matchedCells[i].begin();
+        ConstDataVector<CaloCellContainer>::iterator lastMatchedCell = matchedCells[i].end();
 
         for (; firstMatchedCell != lastMatchedCell; ++firstMatchedCell) {
 
@@ -1455,5 +1360,47 @@ namespace DerivationFramework {
 
     return StatusCode::SUCCESS;
   }
-} // Derivation Framework
 
+  std::map<unsigned int, float> TrackCaloDecorator::getHitsSum(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode) const
+  {
+    //Sum all of the calibration hits in all of the layers, and return a map of calo layer to energy sum
+    //Gather all of the information pertaining to the total energy deposited in the cells of this cluster
+    std::map<unsigned int, float> hitsSum;
+    for(unsigned int m=0; m<CaloCell_ID::CaloSample::TileExt2+1; m++) {
+        hitsSum[m] = 0.0;
+    }
+    if (particle_barcode == 0)
+    {
+        return hitsSum;
+    }
+    if (hits == NULL)
+    {
+        std::cout<<"hits container was null"<<std::endl;
+        return hitsSum;
+    }
+    std::cout<<"Getting cells inside this cluster"<<std::endl;
+    const CaloClusterCellLink* cellLinks=cl->getCellLinks();
+    if ((cellLinks != NULL)){
+      CaloClusterCellLink::const_iterator lnk_it=cellLinks->begin();
+      CaloClusterCellLink::const_iterator lnk_it_e=cellLinks->end();
+      for (;lnk_it!=lnk_it_e;++lnk_it) {
+          const CaloCell* cell=*lnk_it;
+          CaloCell_ID::CaloSample cellLayer = cell->caloDDE()->getSampling();
+          std::cout<< "   ID=" << std::hex << cell->ID() << std::dec << ", E=" << cell->e() << ", weight=" << lnk_it.weight() << std::endl;
+          CaloCalibrationHitContainer::const_iterator it;
+          const CaloCalibrationHit* hit = nullptr;
+          //Can we find a corresponding calibration hit for this cell?
+          for(it = hits->begin(); it!=hits->end(); it++) {
+              hit = *it;
+              if ((cell->ID() == hit->cellID()) and (particle_barcode == hit->particleID())){
+                  hitsSum[cellLayer] += hit->energyEM();
+                  hitsSum[cellLayer] += hit->energyNonEM();
+                  hitsSum[cellLayer] += hit->energyEscaped();
+                  hitsSum[cellLayer] += hit->energyInvisible();
+              }
+          }
+       }
+    }
+  return hitsSum;
+  }
+} // Derivation Framework

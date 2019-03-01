@@ -25,6 +25,7 @@
 #include "RecoToolInterfaces/IParticleCaloExtensionTool.h"
 #include "xAODCaloEvent/CaloClusterContainer.h"
 #include "xAODCaloEvent/CaloClusterChangeSignalState.h"
+#include "CaloSimEvent/CaloCalibrationHitContainer.h"  
 
 class TileTBID;
 class ICaloSurfaceHelper;
@@ -39,6 +40,7 @@ namespace DerivationFramework {
   class TrackCaloDecorator : public AthAlgTool, public IAugmentationTool {
     public: 
       TrackCaloDecorator(const std::string& t, const std::string& n, const IInterface* p);
+      std::map<unsigned int, float> getHitsSum(const CaloCalibrationHitContainer* hits,const  xAOD::CaloCluster* cl,  unsigned int particle_barcode) const;
 
       StatusCode initialize();
       StatusCode finalize();
