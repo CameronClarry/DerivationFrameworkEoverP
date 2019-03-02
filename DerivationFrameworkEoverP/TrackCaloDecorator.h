@@ -2,6 +2,7 @@
  * @file     TrackCaloDecorator.h
  * @author   Millie McDonald <emcdonal@cern.ch> // Main author
  * @author   Joakim Olsson <joakim.olsson@cern.ch> // Modifications and cross-checks
+ * @author   Lukas Adamek <Lukas.Adamek@cern.ch> //Modifications to include calibration hit information
  * @brief    A derivation for ATLAS Run II E/p analyses. Extrapolates all tracks to calorimeter and decorates them with cluster and cell energies.
  * Updated: 2 December 2015, Millie McDonald
  * Updated: 12 December 2016, Joakim Olsson
@@ -25,6 +26,7 @@
 #include "RecoToolInterfaces/IParticleCaloExtensionTool.h"
 #include "xAODCaloEvent/CaloClusterContainer.h"
 #include "xAODCaloEvent/CaloClusterChangeSignalState.h"
+#include "xAODTruth/TruthParticleContainer.h"
 #include "CaloSimEvent/CaloCalibrationHitContainer.h"  
 
 class TileTBID;
@@ -40,7 +42,8 @@ namespace DerivationFramework {
   class TrackCaloDecorator : public AthAlgTool, public IAugmentationTool {
     public: 
       TrackCaloDecorator(const std::string& t, const std::string& n, const IInterface* p);
-      std::map<unsigned int, float> getHitsSum(const CaloCalibrationHitContainer* hits,const  xAOD::CaloCluster* cl,  unsigned int particle_barcode) const;
+      std::map<std::string, std::map<unsigned int, float> > getHitsSum(const CaloCalibrationHitContainer* hits,const  xAOD::CaloCluster* cl,  unsigned int particle_barcode) const;
+      std::map< std::string, std::map<int, std::map<unsigned int, float> > > getHitsSumAllBackground(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode, const xAOD::TruthParticleContainer* truthParticles) const;
 
       StatusCode initialize();
       StatusCode finalize();

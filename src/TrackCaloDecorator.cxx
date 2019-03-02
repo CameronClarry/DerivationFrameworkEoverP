@@ -414,6 +414,9 @@ namespace DerivationFramework {
     const CaloCellContainer *caloCellContainer = 0; //ESD object used to create decorations
     CHECK(evtStore()->retrieve(caloCellContainer, "AllCalo"));
 
+    const xAOD::TruthParticleContainer* truthParticles = 0;
+    CHECK(evtStore()->retrieve(truthParticles, "TruthParticles"));
+
     const CaloClusterCellLinkContainer* cclptr=0;
     if (evtStore()->contains<CaloClusterCellLinkContainer>(m_caloClusterContainerName+"_links")) {
       CHECK(evtStore()->retrieve(cclptr,m_caloClusterContainerName+"_links"));
@@ -481,7 +484,7 @@ namespace DerivationFramework {
       }
 
       res = m_truthClassifier->particleTruthClassifier(track);
-      const xAOD::TruthParticle* thePart = m_truthClassifier->getGenPart();
+      const xAOD::TruthParticle_v1* thePart = m_truthClassifier->getGenPart();
       bool hasTruthPart = (thePart != NULL);
       unsigned int particle_barcode = 0;
       if (hasTruthPart) {particle_barcode = thePart->barcode();}
@@ -1056,10 +1059,18 @@ namespace DerivationFramework {
             }
 
             std::cout<<"Getting energy deposits associated with particle "<<particle_barcode<<std::endl;
-            std::map<unsigned int, float> histSumLarActive = getHitsSum(lar_actHitCnt, cl, particle_barcode);
-            std::map<unsigned int, float> histSumLarInactive = getHitsSum(lar_inactHitCnt, cl, particle_barcode);
-            std::map<unsigned int, float> histSumTileActive = getHitsSum(tile_actHitCnt, cl, particle_barcode);
-            std::map<unsigned int, float> histSumTileInactive = getHitsSum(tile_inactHitCnt, cl, particle_barcode);
+            //The map is hit type -> energy type (EM,nonEM,Invisible,Escaped) -> unsigned int CalorimeterLayer -> energy sum
+            std::map<std::string, std::map< std::string, std::map<unsigned int, float> > > hitsMap;
+            std::map<std::string, std::map< std::string, std::map<int, std::map<unsigned int, float> > > > bkgHitsMap;
+            hitsMap["LarAct"] = getHitsSum(lar_actHitCnt, cl, particle_barcode);
+            hitsMap["LarInact"] = getHitsSum(lar_inactHitCnt, cl, particle_barcode);
+            hitsMap["TileAct"] = getHitsSum(tile_actHitCnt, cl, particle_barcode);
+            hitsMap["TileInact"]= getHitsSum(tile_inactHitCnt, cl, particle_barcode);
+
+            bkgHitsMap["LarAct"] = getHitsSumAllBackground(lar_actHitCnt ,cl, particle_barcode, truthParticles);
+            bkgHitsMap["LarInact"] = getHitsSumAllBackground(lar_inactHitCnt ,cl, particle_barcode, truthParticles);
+            bkgHitsMap["TileAct"] = getHitsSumAllBackground(tile_actHitCnt ,cl, particle_barcode, truthParticles);
+            bkgHitsMap["TileInact"] = getHitsSumAllBackground(tile_inactHitCnt ,cl, particle_barcode, truthParticles);
           }
 
           totalEMBClusterEnergy[i] = clusterEnergy[i][1] + clusterEnergy[i][2] + clusterEnergy[i][3];
@@ -1361,17 +1372,114 @@ namespace DerivationFramework {
     return StatusCode::SUCCESS;
   }
 
-  std::map<unsigned int, float> TrackCaloDecorator::getHitsSum(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode) const
+   std::map< std::string, std::map<int, std::map<unsigned int, float> > > TrackCaloDecorator::getHitsSumAllBackground(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode, const xAOD::TruthParticleContainer* truthParticles) const
   {
     //Sum all of the calibration hits in all of the layers, and return a map of calo layer to energy sum
     //Gather all of the information pertaining to the total energy deposited in the cells of this cluster
-    std::map<unsigned int, float> hitsSum;
-    for(unsigned int m=0; m<CaloCell_ID::CaloSample::TileExt2+1; m++) {
-        hitsSum[m] = 0.0;
+    
+    //a std::map of energy type -> pdgID -> calocelllayer -> total energy deposited
+    std::map<std::string, std::map<int, std::map<unsigned int, float> > >hitsSum;
+
+    hitsSum["EM"] = std::map<int, std::map<unsigned int, float> >();
+    hitsSum["NonEM"] = std::map<int, std::map<unsigned int, float> >();
+    hitsSum["Escaped"] = std::map<int, std::map<unsigned int, float> >();
+    hitsSum["Invisible"]= std::map< int, std::map<unsigned int, float> >();
+
+    //Loop though all of the truth particles in the event, and make sure that the std::map has an entry for it
+    for(const auto& truthPart: *truthParticles){
+        int pdgID = truthPart->pdgId();
+        if (hitsSum["EM"].find( pdgID) == hitsSum["EM"].end()){
+            hitsSum["EM"][pdgID] = std::map<unsigned int, float>();
+            hitsSum["NonEM"][pdgID] = std::map<unsigned int, float>();
+            hitsSum["Escaped"][pdgID] = std::map<unsigned int, float>();
+            hitsSum["Invisible"][pdgID] = std::map<unsigned int, float>();
+            for(unsigned int m=0; m<CaloCell_ID::CaloSample::TileExt2+1; m++) {
+                hitsSum["EM"][pdgID][m] = 0.0;
+                hitsSum["NonEM"][pdgID][m] = 0.0;
+                hitsSum["Escaped"][pdgID][m] = 0.0;
+                hitsSum["Invisible"][pdgID][m] = 0.0;
+            }
+        }
     }
-    if (particle_barcode == 0)
+
+    for(unsigned int m=0; m<CaloCell_ID::CaloSample::TileExt2+1; m++) {
+        //Sum the energy from all particles 
+        hitsSum["EM"][0][m] = 0.0;
+        hitsSum["NonEM"][0][m] = 0.0;
+        hitsSum["EscapedEM"][0][m] = 0.0;
+        hitsSum["InvisibleEM"][0][m] = 0.0;
+    }
+
+    if (hits == NULL)
     {
+        std::cout<<"hits container was null"<<std::endl;
         return hitsSum;
+    }
+
+    std::cout<<"Getting background hits in cells of this cluster"<<std::endl;
+    const CaloClusterCellLink* cellLinks=cl->getCellLinks();
+    if ((cellLinks != NULL)){
+       CaloCalibrationHitContainer::const_iterator it;
+       const CaloCalibrationHit* hit = nullptr;
+
+       for(it = hits->begin(); it!=hits->end(); it++) {
+           hit = *it;
+
+           //check if the hit is for the track particle. then it isn't a background. Don't sum for it.
+           //check that we can find a truth particle for the hit. If we can, then sum the background for this pdgID. Else sum the energy into the background hits
+           int pdgIDHit = 0;
+           bool hitIsForTrackParticle = false;
+           unsigned int hitID = hit->particleID();
+           for(const auto& truthPart: *truthParticles){
+
+               unsigned int truthPartBarcode = truthPart->barcode();
+
+               if (hitID == truthPartBarcode){pdgIDHit = truthPart->pdgId(); break;}
+               if (hitID == particle_barcode){hitIsForTrackParticle = true; break;}
+           }
+
+           //continue because the hit isn't background
+           if (hitIsForTrackParticle) continue;
+
+           //All hits are associated with a truth particle.
+           //if (pdgIDHit == 0){std::cout<<"Found a hit without a truth particle"<<std::endl;}
+           //std::cout<<"The particle barcode"<<particle_barcode<<std::endl;
+           //std::cout<<"The hit barcode"<<hitID<<std::endl;
+
+           CaloClusterCellLink::const_iterator lnk_it=cellLinks->begin();
+           CaloClusterCellLink::const_iterator lnk_it_e=cellLinks->end();
+           for (;lnk_it!=lnk_it_e;++lnk_it) {
+               const CaloCell* cell=*lnk_it;
+               CaloCell_ID::CaloSample cellLayer = cell->caloDDE()->getSampling();
+               if (cell->ID() == hit->cellID()){
+                   //std::cout<<"PDG ID = "<<pdgIDHit<< "   ID=" << std::hex << cell->ID() << std::dec << ", E=" << cell->e() << ", weight=" << lnk_it.weight() << std::endl;
+                   hitsSum["EM"][pdgIDHit][cellLayer] += hit->energyEM();
+                   hitsSum["NonEM"][pdgIDHit][cellLayer] += hit->energyNonEM();
+                   hitsSum["Escaped"][pdgIDHit][cellLayer] += hit->energyEscaped();
+                   hitsSum["Invisible"][pdgIDHit][cellLayer] += hit->energyInvisible();
+               }
+           }
+       }
+    }
+    return hitsSum;
+  }
+
+  std::map< std::string, std::map<unsigned int, float> > TrackCaloDecorator::getHitsSum(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode) const
+  {
+    //Sum all of the calibration hits in all of the layers, and return a map of calo layer to energy sum
+    //Gather all of the information pertaining to the total energy deposited in the cells of this cluster
+    std::map<std::string, std::map<unsigned int, float> > hitsSum;
+
+    hitsSum["EM"] = std::map<unsigned int, float>();
+    hitsSum["NonEM"] = std::map<unsigned int, float>();
+    hitsSum["Escaped"] = std::map<unsigned int, float>();
+    hitsSum["Invisible"]= std::map<unsigned int, float>();
+
+    for(unsigned int m=0; m<CaloCell_ID::CaloSample::TileExt2+1; m++) {
+        hitsSum["EM"][m] = 0.0;
+        hitsSum["NonEM"][m] = 0.0;
+        hitsSum["Escaped"][m] = 0.0;
+        hitsSum["Invisible"][m] = 0.0;
     }
     if (hits == NULL)
     {
@@ -1386,17 +1494,17 @@ namespace DerivationFramework {
       for (;lnk_it!=lnk_it_e;++lnk_it) {
           const CaloCell* cell=*lnk_it;
           CaloCell_ID::CaloSample cellLayer = cell->caloDDE()->getSampling();
-          std::cout<< "   ID=" << std::hex << cell->ID() << std::dec << ", E=" << cell->e() << ", weight=" << lnk_it.weight() << std::endl;
+          //std::cout<< "   ID=" << std::hex << cell->ID() << std::dec << ", E=" << cell->e() << ", weight=" << lnk_it.weight() << std::endl;
           CaloCalibrationHitContainer::const_iterator it;
           const CaloCalibrationHit* hit = nullptr;
           //Can we find a corresponding calibration hit for this cell?
           for(it = hits->begin(); it!=hits->end(); it++) {
               hit = *it;
               if ((cell->ID() == hit->cellID()) and (particle_barcode == hit->particleID())){
-                  hitsSum[cellLayer] += hit->energyEM();
-                  hitsSum[cellLayer] += hit->energyNonEM();
-                  hitsSum[cellLayer] += hit->energyEscaped();
-                  hitsSum[cellLayer] += hit->energyInvisible();
+                  hitsSum["EM"][cellLayer] += hit->energyEM();
+                  hitsSum["NonEM"][cellLayer] += hit->energyNonEM();
+                  hitsSum["Escaped"][cellLayer] += hit->energyEscaped();
+                  hitsSum["Invisible"][cellLayer] += hit->energyInvisible();
               }
           }
        }
