@@ -42,8 +42,19 @@ namespace DerivationFramework {
   class TrackCaloDecorator : public AthAlgTool, public IAugmentationTool {
     public: 
       TrackCaloDecorator(const std::string& t, const std::string& n, const IInterface* p);
-      std::map<std::string, std::map<unsigned int, float> > getHitsSum(const CaloCalibrationHitContainer* hits,const  xAOD::CaloCluster* cl,  unsigned int particle_barcode) const;
-      std::map< std::string, std::map<int, std::map<unsigned int, float> > > getHitsSumAllBackground(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode, const xAOD::TruthParticleContainer* truthParticles) const;
+      std::map<std::string, std::map<CaloSampling::CaloSample, float> > getHitsSum(const CaloCalibrationHitContainer* hits,const  xAOD::CaloCluster* cl,  unsigned int particle_barcode) const;
+      std::map< std::string, std::map<int, std::map<CaloSampling::CaloSample, float> > > getHitsSumAllBackground(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode, const xAOD::TruthParticleContainer* truthParticles) const;
+
+     std::vector<std::string> m_cutNames;
+     std::map<std::string, float> m_stringToCut;
+     std::vector<CaloSampling::CaloSample> m_caloSamplingNumbers;
+
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_CellEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_LCWClusterEnergy;
+
+      std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > >  m_caloSamplingNumberToDecorator_extrapolTrackEta;
+      std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > >  m_caloSamplingNumberToDecorator_extrapolTrackPhi;
 
       StatusCode initialize();
       StatusCode finalize();

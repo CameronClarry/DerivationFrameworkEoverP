@@ -2,6 +2,7 @@
 #include "CaloSimEvent/CaloCalibrationHitContainer.h"  
 #include "MCTruthClassifier/IMCTruthClassifier.h"
 #include "MCTruthClassifier/MCTruthClassifierDefs.h"
+#include "CaloUtils/CaloClusterSignalState.h"
 
 // tracks
 #include "TrkTrack/Track.h"
@@ -33,10 +34,7 @@
 #include "CaloEvent/CaloClusterCellLinkContainer.h"
 #include "xAODCaloEvent/CaloClusterChangeSignalState.h"
 
-#include <utility>
-#include <vector>
-#include <cmath>
-#include <limits>
+#include <map>
 
 namespace DerivationFramework {
 
@@ -78,6 +76,63 @@ namespace DerivationFramework {
     if (m_sgName=="") {
       ATH_MSG_WARNING("No decoration prefix name provided for the output of TrackCaloDecorator!");
     }
+
+    //OK initialize all of the radii that we want to use for track-to-cluster matching
+    m_stringToCut["025"] = 0.025;
+    m_stringToCut["050"] = 0.050;
+    m_stringToCut["075"] = 0.075;
+    m_stringToCut["100"] = 0.100;
+    m_stringToCut["125"] = 0.125;
+    m_stringToCut["150"] = 0.150;
+    m_stringToCut["175"] = 0.175;
+    m_stringToCut["125"] = 0.125;
+    m_stringToCut["150"] = 0.150;
+    m_stringToCut["175"] = 0.175;
+    m_stringToCut["200"] = 0.200;
+    m_stringToCut["225"] = 0.225;
+    m_stringToCut["250"] = 0.250;
+    m_stringToCut["275"] = 0.275;
+    m_stringToCut["300"] = 0.300;
+
+    //Get a list of all of the sampling numbers for the calorimeter
+    ATH_MSG_INFO("Summing energy deposit info for layers: ");
+    for (unsigned int i =0; i < CaloSampling::getNumberOfSamplings(); i++){
+        m_caloSamplingNumbers.push_back((CaloSampling::CaloSample)(i));
+        ATH_MSG_INFO(CaloSampling::getSamplingName(i));
+    }
+
+    //Get a list of strings for each of the cuts:
+    ATH_MSG_INFO("Summing energy deposits at the following radii: ");
+    for(std::map<std::string,float>::iterator it = m_stringToCut.begin(); it != m_stringToCut.end(); ++it) {
+          m_cutNames.push_back(it->first);
+          ATH_MSG_INFO(it->first);
+    }
+
+    //For each of the dR cuts and m_caloSamplingNumbers, create a decoration for the tracks
+    ATH_MSG_INFO("Preparing Energy Deposit Decorators");
+    for(std::string cutName : m_cutNames){
+        ATH_MSG_INFO(cutName);
+        //Create decorators for the total energy summed at different scales
+        for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
+            const std::string caloSamplingName = CaloSampling::getSamplingName(caloSamplingNumber);
+            SG::AuxElement::Decorator< float > cellDecorator(m_sgName + "_CellEnergy_" + caloSamplingName + "_" + cutName);
+            SG::AuxElement::Decorator< float > clusterDecorator(m_sgName + "_ClusterEnergy_" + caloSamplingName + "_" + cutName);
+            SG::AuxElement::Decorator< float > lcwClusterDecorator(m_sgName + "_LCWClusterEnergy_" + caloSamplingName + "_" + cutName);
+            m_cutToCaloSamplingNumberToDecorator_CellEnergy[cutName].insert(std::make_pair(caloSamplingNumber, cellDecorator));
+            m_cutToCaloSamplingNumberToDecorator_ClusterEnergy[cutName].insert(std::make_pair(caloSamplingNumber,clusterDecorator));
+            m_cutToCaloSamplingNumberToDecorator_LCWClusterEnergy[cutName].insert(std::make_pair(caloSamplingNumber,lcwClusterDecorator));
+        }
+    }
+
+    //Create the decorators for the extrapolated track coordinates
+    ATH_MSG_INFO("Perparing Decorators for the extrapolated track coordinates");
+    for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
+        const std::string caloSamplingName = CaloSampling::getSamplingName(caloSamplingNumber);
+        ATH_MSG_INFO(caloSamplingName);
+        m_caloSamplingNumberToDecorator_extrapolTrackEta.insert(std::make_pair(caloSamplingNumber, SG::AuxElement::Decorator< float >(m_sgName + "_trkEta_" + caloSamplingName)));
+        m_caloSamplingNumberToDecorator_extrapolTrackPhi.insert(std::make_pair(caloSamplingNumber, SG::AuxElement::Decorator< float >(m_sgName + "_trkPhi_" + caloSamplingName)));
+    }
+
 
     ATH_CHECK(m_extrapolator.retrieve());
     ATH_CHECK(m_theTrackExtrapolatorTool.retrieve());
@@ -133,276 +188,6 @@ namespace DerivationFramework {
 
   StatusCode TrackCaloDecorator::addBranches() const {
 
-    /*---------E/p Decorators---------*/
-    /*---------Calo Sample layer Variables---------*/
-    // PreSamplerB=0, EMB1, EMB2, EMB3,       // LAr barrel
-    // PreSamplerE, EME1, EME2, EME3,         // LAr EM endcap
-    // HEC0, HEC1, HEC2, HEC3,                // Hadronic end cap cal.
-    // TileBar0, TileBar1, TileBar2,          // Tile barrel
-    // TileGap1, TileGap2, TileGap3,          // Tile gap (ITC & scint)
-    // TileExt0, TileExt1, TileExt2,          // Tile extended barrel
-    // FCAL0, FCAL1, FCAL2,                   // Forward EM endcap (excluded)
-    // Unknown
-
-    //Building decorators this way instead of using auxdecor<> saves time//  
-    static SG::AuxElement::Decorator<int> decorator_extrapolation (m_sgName + "_extrapolation");
-
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_Energy (m_sgName + "_ClusterEnergy_Energy");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_Eta (m_sgName + "_ClusterEnergy_Eta");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_Phi (m_sgName + "_ClusterEnergy_Phi");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_dRToTrack (m_sgName + "_ClusterEnergy_dRToTrack");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_lambdaCenter (m_sgName + "_ClusterEnergy_lambdaCenter");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_emProbability (m_sgName + "_ClusterEnergy_emProbability");
-    static SG::AuxElement::Decorator< std::vector<int> > decorator_ClusterEnergy_maxEnergyLayer (m_sgName + "_ClusterEnergy_maxEnergyLayer");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_firstEnergyDensity (m_sgName + "_ClusterEnergy_firstEnergyDensity");
-
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_Energy (m_sgName + "_ClusterEnergyLCW_Energy");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_Eta (m_sgName + "_ClusterEnergyLCW_Eta");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_Phi (m_sgName + "_ClusterEnergyLCW_Phi");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_dRToTrack (m_sgName + "_ClusterEnergyLCW_dRToTrack");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_lambdaCenter (m_sgName + "_ClusterEnergyLCW_lambdaCenter");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_emProbability (m_sgName + "_ClusterEnergyLCW_emProbability");
-    static SG::AuxElement::Decorator< std::vector<int> > decorator_ClusterEnergyLCW_maxEnergyLayer (m_sgName + "_ClusterEnergyLCW_maxEnergyLayer");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_firstEnergyDensity (m_sgName + "_ClusterEnergyLCW_firstEnergyDensity");
-
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_CellEnergy_Energy (m_sgName + "_CellEnergy_Energy");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_CellEnergy_Eta (m_sgName + "_CellEnergy_Eta");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_CellEnergy_Phi (m_sgName + "_CellEnergy_Phi");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_CellEnergy_dRToTrack (m_sgName + "_CellEnergy_dRToTrack");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_CellEnergy_lambdaCenter (m_sgName + "_CellEnergy_lambdaCenter");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_CellEnergy_emProbability (m_sgName + "_CellEnergy_emProbability");
-    static SG::AuxElement::Decorator< std::vector<int> > decorator_CellEnergy_maxEnergyLayer (m_sgName + "_CellEnergy_maxEnergyLayer");
-    static SG::AuxElement::Decorator< std::vector<float> > decorator_CellEnergy_firstEnergyDensity (m_sgName + "_CellEnergy_firstEnergyDensity");
-
-    ///////////////Presamplers///////////////
-    static SG::AuxElement::Decorator<float> decorator_trkEta_PreSamplerB (m_sgName + "_trkEta_PreSamplerB");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_PreSamplerB (m_sgName + "_trkPhi_PreSamplerB");
-    static SG::AuxElement::Decorator<float> decorator_trkEta_PreSamplerE (m_sgName + "_trkEta_PreSamplerE");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_PreSamplerE (m_sgName + "_trkPhi_PreSamplerE");
-
-    /*---------EM LAYER Variables---------*/
-    ///////////LAr EM Barrel layers///////////
-    static SG::AuxElement::Decorator<float> decorator_trkEta_EMB1 (m_sgName + "_trkEta_EMB1");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_EMB1 (m_sgName + "_trkPhi_EMB1");
-    static SG::AuxElement::Decorator<float> decorator_trkEta_EMB2 (m_sgName + "_trkEta_EMB2");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_EMB2 (m_sgName + "_trkPhi_EMB2");
-    static SG::AuxElement::Decorator<float> decorator_trkEta_EMB3 (m_sgName + "_trkEta_EMB3");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_EMB3 (m_sgName + "_trkPhi_EMB3");
-    ///////////LAr EM Endcap layers///////////
-    static SG::AuxElement::Decorator<float> decorator_trkEta_EME1 (m_sgName + "_trkEta_EME1");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_EME1 (m_sgName + "_trkPhi_EME1");
-    static SG::AuxElement::Decorator<float> decorator_trkEta_EME2 (m_sgName + "_trkEta_EME2");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_EME2 (m_sgName + "_trkPhi_EME2");
-    static SG::AuxElement::Decorator<float> decorator_trkEta_EME3 (m_sgName + "_trkEta_EME3");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_EME3 (m_sgName + "_trkPhi_EME3");
-
-    /*---------HAD LAYER Variables---------*/
-    ///////////Hadronic Endcap layers/////////
-    static SG::AuxElement::Decorator<float> decorator_trkEta_HEC0 (m_sgName + "_trkEta_HEC0");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_HEC0 (m_sgName + "_trkPhi_HEC0");
-    static SG::AuxElement::Decorator<float> decorator_trkEta_HEC1 (m_sgName + "_trkEta_HEC1");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_HEC1 (m_sgName + "_trkPhi_HEC1");
-    static SG::AuxElement::Decorator<float> decorator_trkEta_HEC2 (m_sgName + "_trkEta_HEC2");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_HEC2 (m_sgName + "_trkPhi_HEC2");
-    static SG::AuxElement::Decorator<float> decorator_trkEta_HEC3 (m_sgName + "_trkEta_HEC3");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_HEC3 (m_sgName + "_trkPhi_HEC3");
-    ///////////Tile Barrel layers///////////
-    static SG::AuxElement::Decorator<float> decorator_trkEta_TileBar0 (m_sgName + "_trkEta_TileBar0");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_TileBar0 (m_sgName + "_trkPhi_TileBar0");
-    static SG::AuxElement::Decorator<float> decorator_trkEta_TileBar1 (m_sgName + "_trkEta_TileBar1");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_TileBar1 (m_sgName + "_trkPhi_TileBar1");
-    static SG::AuxElement::Decorator<float> decorator_trkEta_TileBar2 (m_sgName + "_trkEta_TileBar2");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_TileBar2 (m_sgName + "_trkPhi_TileBar2");
-    ////////////Tile Gap layers////////////
-    static SG::AuxElement::Decorator<float> decorator_trkEta_TileGap1 (m_sgName + "_trkEta_TileGap1");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_TileGap1 (m_sgName + "_trkPhi_TileGap1");
-    static SG::AuxElement::Decorator<float> decorator_trkEta_TileGap2 (m_sgName + "_trkEta_TileGap2");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_TileGap2 (m_sgName + "_trkPhi_TileGap2");
-    static SG::AuxElement::Decorator<float> decorator_trkEta_TileGap3 (m_sgName + "_trkEta_TileGap3");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_TileGap3 (m_sgName + "_trkPhi_TileGap3");
-    //////Tile Extended Barrel layers//////
-    static SG::AuxElement::Decorator<float> decorator_trkEta_TileExt0 (m_sgName + "_trkEta_TileExt0");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_TileExt0 (m_sgName + "_trkPhi_TileExt0");
-    static SG::AuxElement::Decorator<float> decorator_trkEta_TileExt1 (m_sgName + "_trkEta_TileExt1");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_TileExt1 (m_sgName + "_trkPhi_TileExt1");
-    static SG::AuxElement::Decorator<float> decorator_trkEta_TileExt2 (m_sgName + "_trkEta_TileExt2");
-    static SG::AuxElement::Decorator<float> decorator_trkPhi_TileExt2 (m_sgName + "_trkPhi_TileExt2");
-
-    /*FCAL and MINIFCAL layers excluded as tracking acceptance does not extend to these*/
-
-    /*EM scale cluster energy within a cone of DeltraR = 0.2 (200) / 0.1 (100) around the extrapolated tracks*/
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_PreSamplerB_200 (m_sgName + "_ClusterEnergy_PreSamplerB_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_PreSamplerB_100 (m_sgName + "_ClusterEnergy_PreSamplerB_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_PreSamplerE_200 (m_sgName + "_ClusterEnergy_PreSamplerE_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_PreSamplerE_100 (m_sgName + "_ClusterEnergy_PreSamplerE_100");
-
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_EMB1_200 (m_sgName + "_ClusterEnergy_EMB1_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_EMB1_100 (m_sgName + "_ClusterEnergy_EMB1_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_EMB2_200 (m_sgName + "_ClusterEnergy_EMB2_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_EMB2_100 (m_sgName + "_ClusterEnergy_EMB2_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_EMB3_200 (m_sgName + "_ClusterEnergy_EMB3_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_EMB3_100 (m_sgName + "_ClusterEnergy_EMB3_100");
-
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_EME1_200 (m_sgName + "_ClusterEnergy_EME1_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_EME1_100 (m_sgName + "_ClusterEnergy_EME1_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_EME2_200 (m_sgName + "_ClusterEnergy_EME2_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_EME2_100 (m_sgName + "_ClusterEnergy_EME2_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_EME3_200 (m_sgName + "_ClusterEnergy_EME3_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_EME3_100 (m_sgName + "_ClusterEnergy_EME3_100");
-
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_HEC0_200 (m_sgName + "_ClusterEnergy_HEC0_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_HEC0_100 (m_sgName + "_ClusterEnergy_HEC0_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_HEC1_200 (m_sgName + "_ClusterEnergy_HEC1_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_HEC1_100 (m_sgName + "_ClusterEnergy_HEC1_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_HEC2_200 (m_sgName + "_ClusterEnergy_HEC2_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_HEC2_100 (m_sgName + "_ClusterEnergy_HEC2_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_HEC3_200 (m_sgName + "_ClusterEnergy_HEC3_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_HEC3_100 (m_sgName + "_ClusterEnergy_HEC3_100");
-
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileBar0_200 (m_sgName + "_ClusterEnergy_TileBar0_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileBar0_100 (m_sgName + "_ClusterEnergy_TileBar0_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileBar1_200 (m_sgName + "_ClusterEnergy_TileBar1_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileBar1_100 (m_sgName + "_ClusterEnergy_TileBar1_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileBar2_200 (m_sgName + "_ClusterEnergy_TileBar2_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileBar2_100 (m_sgName + "_ClusterEnergy_TileBar2_100");
-
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileGap1_200 (m_sgName + "_ClusterEnergy_TileGap1_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileGap1_100 (m_sgName + "_ClusterEnergy_TileGap1_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileGap2_200 (m_sgName + "_ClusterEnergy_TileGap2_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileGap2_100 (m_sgName + "_ClusterEnergy_TileGap2_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileGap3_200 (m_sgName + "_ClusterEnergy_TileGap3_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileGap3_100 (m_sgName + "_ClusterEnergy_TileGap3_100");
-
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileExt0_200 (m_sgName + "_ClusterEnergy_TileExt0_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileExt0_100 (m_sgName + "_ClusterEnergy_TileExt0_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileExt1_200 (m_sgName + "_ClusterEnergy_TileExt1_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileExt1_100 (m_sgName + "_ClusterEnergy_TileExt1_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileExt2_200 (m_sgName + "_ClusterEnergy_TileExt2_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergy_TileExt2_100 (m_sgName + "_ClusterEnergy_TileExt2_100");
-
-    /*Total EM scale cluster energy for the EM and/or HAD calorimeters*/
-    static SG::AuxElement::Decorator<float> decorator_EM_ClusterEnergy_0_200 (m_sgName + "_EM_ClusterEnergy_0_200"); //Capital lettering is to match Run 1 designations
-    static SG::AuxElement::Decorator<float> decorator_HAD_ClusterEnergy_0_200 (m_sgName + "_HAD_ClusterEnergy_0_200");
-    static SG::AuxElement::Decorator<float> decorator_EM_ClusterEnergy_0_100 (m_sgName + "_EM_ClusterEnergy_0_100");
-    static SG::AuxElement::Decorator<float> decorator_HAD_ClusterEnergy_0_100 (m_sgName + "_HAD_ClusterEnergy_0_100");
-    static SG::AuxElement::Decorator<float> decorator_Total_ClusterEnergy_0_200 (m_sgName + "_Total_ClusterEnergy_0_200");
-    static SG::AuxElement::Decorator<float> decorator_Total_ClusterEnergy_0_100 (m_sgName + "_Total_ClusterEnergy_0_100");
-
-    /*LCW scale cluster energy within a cone of DeltraR = 0.2 (200) / 0.1 (100) around the extrapolated tracks*/
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_PreSamplerB_200 (m_sgName + "_ClusterEnergyLCW_PreSamplerB_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_PreSamplerB_100 (m_sgName + "_ClusterEnergyLCW_PreSamplerB_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_PreSamplerE_200 (m_sgName + "_ClusterEnergyLCW_PreSamplerE_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_PreSamplerE_100 (m_sgName + "_ClusterEnergyLCW_PreSamplerE_100");
-
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_EMB1_200 (m_sgName + "_ClusterEnergyLCW_EMB1_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_EMB1_100 (m_sgName + "_ClusterEnergyLCW_EMB1_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_EMB2_200 (m_sgName + "_ClusterEnergyLCW_EMB2_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_EMB2_100 (m_sgName + "_ClusterEnergyLCW_EMB2_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_EMB3_200 (m_sgName + "_ClusterEnergyLCW_EMB3_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_EMB3_100 (m_sgName + "_ClusterEnergyLCW_EMB3_100");
-
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_EME1_200 (m_sgName + "_ClusterEnergyLCW_EME1_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_EME1_100 (m_sgName + "_ClusterEnergyLCW_EME1_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_EME2_200 (m_sgName + "_ClusterEnergyLCW_EME2_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_EME2_100 (m_sgName + "_ClusterEnergyLCW_EME2_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_EME3_200 (m_sgName + "_ClusterEnergyLCW_EME3_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_EME3_100 (m_sgName + "_ClusterEnergyLCW_EME3_100");
-
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_HEC0_200 (m_sgName + "_ClusterEnergyLCW_HEC0_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_HEC0_100 (m_sgName + "_ClusterEnergyLCW_HEC0_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_HEC1_200 (m_sgName + "_ClusterEnergyLCW_HEC1_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_HEC1_100 (m_sgName + "_ClusterEnergyLCW_HEC1_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_HEC2_200 (m_sgName + "_ClusterEnergyLCW_HEC2_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_HEC2_100 (m_sgName + "_ClusterEnergyLCW_HEC2_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_HEC3_200 (m_sgName + "_ClusterEnergyLCW_HEC3_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_HEC3_100 (m_sgName + "_ClusterEnergyLCW_HEC3_100");
-
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileBar0_200 (m_sgName + "_ClusterEnergyLCW_TileBar0_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileBar0_100 (m_sgName + "_ClusterEnergyLCW_TileBar0_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileBar1_200 (m_sgName + "_ClusterEnergyLCW_TileBar1_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileBar1_100 (m_sgName + "_ClusterEnergyLCW_TileBar1_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileBar2_200 (m_sgName + "_ClusterEnergyLCW_TileBar2_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileBar2_100 (m_sgName + "_ClusterEnergyLCW_TileBar2_100");
-
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileGap1_200 (m_sgName + "_ClusterEnergyLCW_TileGap1_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileGap1_100 (m_sgName + "_ClusterEnergyLCW_TileGap1_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileGap2_200 (m_sgName + "_ClusterEnergyLCW_TileGap2_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileGap2_100 (m_sgName + "_ClusterEnergyLCW_TileGap2_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileGap3_200 (m_sgName + "_ClusterEnergyLCW_TileGap3_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileGap3_100 (m_sgName + "_ClusterEnergyLCW_TileGap3_100");
-
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileExt0_200 (m_sgName + "_ClusterEnergyLCW_TileExt0_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileExt0_100 (m_sgName + "_ClusterEnergyLCW_TileExt0_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileExt1_200 (m_sgName + "_ClusterEnergyLCW_TileExt1_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileExt1_100 (m_sgName + "_ClusterEnergyLCW_TileExt1_100");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileExt2_200 (m_sgName + "_ClusterEnergyLCW_TileExt2_200");
-    static SG::AuxElement::Decorator<float> decorator_ClusterEnergyLCW_TileExt2_100 (m_sgName + "_ClusterEnergyLCW_TileExt2_100");
-
-    /*Total LCW scale cluster energy for the EM and/or HAD calorimeters*/
-    static SG::AuxElement::Decorator<float> decorator_EM_ClusterEnergyLCW_0_200 (m_sgName + "_EM_ClusterEnergyLCW_0_200"); //Capital lettering is to match Run 1 designations
-    static SG::AuxElement::Decorator<float> decorator_HAD_ClusterEnergyLCW_0_200 (m_sgName + "_HAD_ClusterEnergyLCW_0_200");
-    static SG::AuxElement::Decorator<float> decorator_EM_ClusterEnergyLCW_0_100 (m_sgName + "_EM_ClusterEnergyLCW_0_100");
-    static SG::AuxElement::Decorator<float> decorator_HAD_ClusterEnergyLCW_0_100 (m_sgName + "_HAD_ClusterEnergyLCW_0_100");
-    static SG::AuxElement::Decorator<float> decorator_Total_ClusterEnergyLCW_0_200 (m_sgName + "_Total_ClusterEnergyLCW_0_200");
-    static SG::AuxElement::Decorator<float> decorator_Total_ClusterEnergyLCW_0_100 (m_sgName + "_Total_ClusterEnergyLCW_0_100");
-
-    /*Cell energy within a cone of DeltraR = 0.2 (200) / 0.1 (100) around the extrapolated tracks*/
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_PreSamplerB_200 (m_sgName + "_CellEnergy_PreSamplerB_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_PreSamplerB_100 (m_sgName + "_CellEnergy_PreSamplerB_100");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_PreSamplerE_200 (m_sgName + "_CellEnergy_PreSamplerE_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_PreSamplerE_100 (m_sgName + "_CellEnergy_PreSamplerE_100");
-
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_EMB1_200 (m_sgName + "_CellEnergy_EMB1_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_EMB1_100 (m_sgName + "_CellEnergy_EMB1_100");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_EMB2_200 (m_sgName + "_CellEnergy_EMB2_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_EMB2_100 (m_sgName + "_CellEnergy_EMB2_100");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_EMB3_200 (m_sgName + "_CellEnergy_EMB3_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_EMB3_100 (m_sgName + "_CellEnergy_EMB3_100");
-
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_EME1_200 (m_sgName + "_CellEnergy_EME1_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_EME1_100 (m_sgName + "_CellEnergy_EME1_100");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_EME2_200 (m_sgName + "_CellEnergy_EME2_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_EME2_100 (m_sgName + "_CellEnergy_EME2_100");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_EME3_200 (m_sgName + "_CellEnergy_EME3_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_EME3_100 (m_sgName + "_CellEnergy_EME3_100");
-
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_HEC0_200 (m_sgName + "_CellEnergy_HEC0_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_HEC0_100 (m_sgName + "_CellEnergy_HEC0_100");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_HEC1_200 (m_sgName + "_CellEnergy_HEC1_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_HEC1_100 (m_sgName + "_CellEnergy_HEC1_100");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_HEC2_200 (m_sgName + "_CellEnergy_HEC2_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_HEC2_100 (m_sgName + "_CellEnergy_HEC2_100");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_HEC3_200 (m_sgName + "_CellEnergy_HEC3_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_HEC3_100 (m_sgName + "_CellEnergy_HEC3_100");
-
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileBar0_200 (m_sgName + "_CellEnergy_TileBar0_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileBar0_100 (m_sgName + "_CellEnergy_TileBar0_100");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileBar1_200 (m_sgName + "_CellEnergy_TileBar1_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileBar1_100 (m_sgName + "_CellEnergy_TileBar1_100");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileBar2_200 (m_sgName + "_CellEnergy_TileBar2_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileBar2_100 (m_sgName + "_CellEnergy_TileBar2_100");
-
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileGap1_200 (m_sgName + "_CellEnergy_TileGap1_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileGap1_100 (m_sgName + "_CellEnergy_TileGap1_100");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileGap2_200 (m_sgName + "_CellEnergy_TileGap2_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileGap2_100 (m_sgName + "_CellEnergy_TileGap2_100");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileGap3_200 (m_sgName + "_CellEnergy_TileGap3_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileGap3_100 (m_sgName + "_CellEnergy_TileGap3_100");
-
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileExt0_200 (m_sgName + "_CellEnergy_TileExt0_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileExt0_100 (m_sgName + "_CellEnergy_TileExt0_100");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileExt1_200 (m_sgName + "_CellEnergy_TileExt1_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileExt1_100 (m_sgName + "_CellEnergy_TileExt1_100");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileExt2_200 (m_sgName + "_CellEnergy_TileExt2_200");
-    static SG::AuxElement::Decorator<float> decorator_CellEnergy_TileExt2_100 (m_sgName + "_CellEnergy_TileExt2_100");
-
-    /*Total cell energy for the EM and/or HAD calorimeters*/
-    static SG::AuxElement::Decorator<float> decorator_EM_CellEnergy_0_200 (m_sgName + "_EM_CellEnergy_0_200");
-    static SG::AuxElement::Decorator<float> decorator_HAD_CellEnergy_0_200 (m_sgName + "_HAD_CellEnergy_0_200");
-    static SG::AuxElement::Decorator<float> decorator_EM_CellEnergy_0_100 (m_sgName + "_EM_CellEnergy_0_100");
-    static SG::AuxElement::Decorator<float> decorator_HAD_CellEnergy_0_100 (m_sgName + "_HAD_CellEnergy_0_100");
-    static SG::AuxElement::Decorator<float> decorator_Total_CellEnergy_0_200 (m_sgName + "_Total_CellEnergy_0_200");
-    static SG::AuxElement::Decorator<float> decorator_Total_CellEnergy_0_100 (m_sgName + "_Total_CellEnergy_0_100");
 
     // Retrieve track container, Cluster container and Cell container
     const xAOD::TrackParticleContainer* trackContainer = 0;
@@ -423,6 +208,30 @@ namespace DerivationFramework {
       ATH_MSG_INFO("Found corresponding cell-link container with size " << cclptr->size());
     }
     else {ATH_MSG_INFO("Did not find corresponding cell-link container");}
+
+    //Create the decorators for the eta, phi, energy, etc of clusters
+    //We'll cut these at dR = 0.3
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_Energy (m_sgName + "_ClusterEnergy_Energy");
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_Eta (m_sgName + "_ClusterEnergy_Eta");
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_Phi (m_sgName + "_ClusterEnergy_Phi");
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_dRToTrack (m_sgName + "_ClusterEnergy_dRToTrack");
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_lambdaCenter (m_sgName + "_ClusterEnergy_lambdaCenter");
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_emProbability (m_sgName + "_ClusterEnergy_emProbability");
+   SG::AuxElement::Decorator< std::vector<int> > decorator_ClusterEnergy_maxEnergyLayer (m_sgName + "_ClusterEnergy_maxEnergyLayer");
+   SG::AuxElement::Decorator< std::vector<int> > decorator_ClusterEnergy_IDNumber (m_sgName + "_ClusterEnergy_IDNumber");
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_firstEnergyDensity (m_sgName + "_ClusterEnergy_firstEnergyDensity");
+
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_Energy (m_sgName + "_ClusterEnergyLCW_Energy");
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_Eta (m_sgName + "_ClusterEnergyLCW_Eta");
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_Phi (m_sgName + "_ClusterEnergyLCW_Phi");
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_dRToTrack (m_sgName + "_ClusterEnergyLCW_dRToTrack");
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_lambdaCenter (m_sgName + "_ClusterEnergyLCW_lambdaCenter");
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_emProbability (m_sgName + "_ClusterEnergyLCW_emProbability");
+   SG::AuxElement::Decorator< std::vector<int> > decorator_ClusterEnergyLCW_maxEnergyLayer (m_sgName + "_ClusterEnergyLCW_maxEnergyLayer");
+   SG::AuxElement::Decorator< std::vector<int> > decorator_ClusterEnergyLCW_IDNumber (m_sgName + "_ClusterEnergyLCW_IDNumber");
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_firstEnergyDensity (m_sgName + "_ClusterEnergyLCW_firstEnergyDensity");
+
+   SG::AuxElement::Decorator<int> decorator_extrapolation (m_sgName + "_extrapolation");
 
 
     // Calibration hit containers
@@ -501,15 +310,7 @@ namespace DerivationFramework {
       decorator_ClusterEnergy_firstEnergyDensity (*track) = std::vector<float>();
       decorator_ClusterEnergy_lambdaCenter (*track) = std::vector<float>();
       decorator_ClusterEnergy_maxEnergyLayer (*track) = std::vector<int>();
-
-      decorator_CellEnergy_Energy (*track) = std::vector<float>();
-      decorator_CellEnergy_Eta (*track) = std::vector<float>();
-      decorator_CellEnergy_Phi (*track) = std::vector<float>();
-      decorator_CellEnergy_emProbability (*track) = std::vector<float>();
-      decorator_CellEnergy_firstEnergyDensity (*track) = std::vector<float>();
-      decorator_CellEnergy_dRToTrack (*track) = std::vector<float>();
-      decorator_CellEnergy_lambdaCenter (*track) = std::vector<float>();
-      decorator_CellEnergy_maxEnergyLayer (*track) = std::vector<int>();
+      decorator_ClusterEnergy_IDNumber (*track) = std::vector<int>();
 
       decorator_ClusterEnergyLCW_Energy (*track) = std::vector<float>();
       decorator_ClusterEnergyLCW_Eta (*track) = std::vector<float>();
@@ -519,226 +320,23 @@ namespace DerivationFramework {
       decorator_ClusterEnergyLCW_dRToTrack (*track) = std::vector<float>();
       decorator_ClusterEnergyLCW_lambdaCenter (*track) = std::vector<float>();
       decorator_ClusterEnergyLCW_maxEnergyLayer (*track) = std::vector<int>();
+      decorator_ClusterEnergyLCW_IDNumber (*track) = std::vector<int>();
 
-      decorator_trkEta_PreSamplerB (*track) = -999999999;
-      decorator_trkPhi_PreSamplerB (*track) = -999999999;
-      decorator_trkEta_PreSamplerE (*track) = -999999999;
-      decorator_trkPhi_PreSamplerE (*track) = -999999999;
+      for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
+          m_caloSamplingNumberToDecorator_extrapolTrackEta.at(caloSamplingNumber)(*track) = -999999999;
+          m_caloSamplingNumberToDecorator_extrapolTrackPhi.at(caloSamplingNumber)(*track) = -999999999;
+      }
 
-      decorator_trkEta_EMB1 (*track) = -999999999;
-      decorator_trkPhi_EMB1 (*track) = -999999999;
-      decorator_trkEta_EMB2 (*track) = -999999999;
-      decorator_trkPhi_EMB2 (*track) = -999999999;
-      decorator_trkEta_EMB3 (*track) = -999999999;
-      decorator_trkPhi_EMB3 (*track) = -999999999;
-
-      decorator_trkEta_EME1 (*track) = -999999999;
-      decorator_trkPhi_EME1 (*track) = -999999999;
-      decorator_trkEta_EME2 (*track) = -999999999;
-      decorator_trkPhi_EME2 (*track) = -999999999;
-      decorator_trkEta_EME3 (*track) = -999999999;
-      decorator_trkPhi_EME3 (*track) = -999999999;
-
-      decorator_trkEta_HEC0 (*track) = -999999999;
-      decorator_trkPhi_HEC0 (*track) = -999999999;
-      decorator_trkEta_HEC1 (*track) = -999999999;
-      decorator_trkPhi_HEC1 (*track) = -999999999;
-      decorator_trkEta_HEC2 (*track) = -999999999;
-      decorator_trkPhi_HEC2 (*track) = -999999999;
-      decorator_trkEta_HEC3 (*track) = -999999999;
-      decorator_trkPhi_HEC3 (*track) = -999999999;
-
-      decorator_trkEta_TileBar0 (*track) = -999999999;
-      decorator_trkPhi_TileBar0 (*track) = -999999999; 
-      decorator_trkEta_TileBar1 (*track) = -999999999;
-      decorator_trkPhi_TileBar1 (*track) = -999999999;
-      decorator_trkEta_TileBar2 (*track) = -999999999;
-      decorator_trkPhi_TileBar2 (*track) = -999999999;
-
-      decorator_trkEta_TileGap1 (*track) = -999999999;
-      decorator_trkPhi_TileGap1 (*track) = -999999999;
-      decorator_trkEta_TileGap2 (*track) = -999999999;
-      decorator_trkPhi_TileGap2 (*track) = -999999999;
-      decorator_trkEta_TileGap3 (*track) = -999999999;
-      decorator_trkPhi_TileGap3 (*track) = -999999999;
-
-      decorator_trkEta_TileExt0 (*track) = -999999999;
-      decorator_trkPhi_TileExt0 (*track) = -999999999;
-      decorator_trkEta_TileExt1 (*track) = -999999999;
-      decorator_trkPhi_TileExt1 (*track) = -999999999;
-      decorator_trkEta_TileExt2 (*track) = -999999999;
-      decorator_trkPhi_TileExt2 (*track) = -999999999;
-
-      decorator_ClusterEnergy_PreSamplerB_200 (*track) = -999999999;
-      decorator_ClusterEnergy_PreSamplerB_100 (*track) = -999999999;
-      decorator_ClusterEnergy_PreSamplerE_200 (*track) = -999999999;
-      decorator_ClusterEnergy_PreSamplerE_100 (*track) = -999999999;
-
-      decorator_ClusterEnergy_EMB1_200 (*track) = -999999999;
-      decorator_ClusterEnergy_EMB1_100 (*track) = -999999999;
-      decorator_ClusterEnergy_EMB2_200 (*track) = -999999999;
-      decorator_ClusterEnergy_EMB2_100 (*track) = -999999999;
-      decorator_ClusterEnergy_EMB3_200 (*track) = -999999999;
-      decorator_ClusterEnergy_EMB3_100 (*track) = -999999999;
-
-      decorator_ClusterEnergy_EME1_200(*track) = -999999999;
-      decorator_ClusterEnergy_EME1_100(*track) = -999999999;
-      decorator_ClusterEnergy_EME2_200(*track) = -999999999;
-      decorator_ClusterEnergy_EME2_100(*track) = -999999999;
-      decorator_ClusterEnergy_EME3_200(*track) = -999999999;
-      decorator_ClusterEnergy_EME3_100(*track) = -999999999;
-
-      decorator_ClusterEnergy_HEC0_200(*track) = -999999999;
-      decorator_ClusterEnergy_HEC0_100(*track) = -999999999;
-      decorator_ClusterEnergy_HEC1_200(*track) = -999999999;
-      decorator_ClusterEnergy_HEC1_100(*track) = -999999999;
-      decorator_ClusterEnergy_HEC2_200(*track) = -999999999;
-      decorator_ClusterEnergy_HEC2_100(*track) = -999999999;
-      decorator_ClusterEnergy_HEC3_200(*track) = -999999999;
-      decorator_ClusterEnergy_HEC3_100(*track) = -999999999;
-
-      decorator_ClusterEnergy_TileBar0_200(*track) = -999999999;
-      decorator_ClusterEnergy_TileBar0_100(*track) = -999999999;
-      decorator_ClusterEnergy_TileBar1_200(*track) = -999999999;
-      decorator_ClusterEnergy_TileBar1_100(*track) = -999999999;
-      decorator_ClusterEnergy_TileBar2_200(*track) = -999999999;
-      decorator_ClusterEnergy_TileBar2_100(*track) = -999999999;
-
-      decorator_ClusterEnergy_TileGap1_200(*track) = -999999999;
-      decorator_ClusterEnergy_TileGap1_100(*track) = -999999999;
-      decorator_ClusterEnergy_TileGap2_200(*track) = -999999999;
-      decorator_ClusterEnergy_TileGap2_100(*track) = -999999999;
-      decorator_ClusterEnergy_TileGap3_200(*track) = -999999999;
-      decorator_ClusterEnergy_TileGap3_100(*track) = -999999999;
-
-      decorator_ClusterEnergy_TileExt0_200(*track) = -999999999;
-      decorator_ClusterEnergy_TileExt0_100(*track) = -999999999;
-      decorator_ClusterEnergy_TileExt1_200(*track) = -999999999;
-      decorator_ClusterEnergy_TileExt1_100(*track) = -999999999;
-      decorator_ClusterEnergy_TileExt2_200(*track) = -999999999;
-      decorator_ClusterEnergy_TileExt2_100(*track) = -999999999;
-
-      decorator_EM_ClusterEnergy_0_200(*track) = -999999999;
-      decorator_EM_ClusterEnergy_0_100(*track) = -999999999;
-      decorator_HAD_ClusterEnergy_0_200(*track) = -999999999;
-      decorator_HAD_ClusterEnergy_0_100(*track) = -999999999;
-      decorator_Total_ClusterEnergy_0_200(*track) = -999999999;
-      decorator_Total_ClusterEnergy_0_100(*track) = -999999999;
-
-      decorator_ClusterEnergyLCW_PreSamplerB_200 (*track) = -999999999;
-      decorator_ClusterEnergyLCW_PreSamplerB_100 (*track) = -999999999;
-      decorator_ClusterEnergyLCW_PreSamplerE_200 (*track) = -999999999;
-      decorator_ClusterEnergyLCW_PreSamplerE_100 (*track) = -999999999;
-
-      decorator_ClusterEnergyLCW_EMB1_200 (*track) = -999999999;
-      decorator_ClusterEnergyLCW_EMB1_100 (*track) = -999999999;
-      decorator_ClusterEnergyLCW_EMB2_200 (*track) = -999999999;
-      decorator_ClusterEnergyLCW_EMB2_100 (*track) = -999999999;
-      decorator_ClusterEnergyLCW_EMB3_200 (*track) = -999999999;
-      decorator_ClusterEnergyLCW_EMB3_100 (*track) = -999999999;
-
-      decorator_ClusterEnergyLCW_EME1_200(*track) = -999999999;
-      decorator_ClusterEnergyLCW_EME1_100(*track) = -999999999;
-      decorator_ClusterEnergyLCW_EME2_200(*track) = -999999999;
-      decorator_ClusterEnergyLCW_EME2_100(*track) = -999999999;
-      decorator_ClusterEnergyLCW_EME3_200(*track) = -999999999;
-      decorator_ClusterEnergyLCW_EME3_100(*track) = -999999999;
-
-      decorator_ClusterEnergyLCW_HEC0_200(*track) = -999999999;
-      decorator_ClusterEnergyLCW_HEC0_100(*track) = -999999999;
-      decorator_ClusterEnergyLCW_HEC1_200(*track) = -999999999;
-      decorator_ClusterEnergyLCW_HEC1_100(*track) = -999999999;
-      decorator_ClusterEnergyLCW_HEC2_200(*track) = -999999999;
-      decorator_ClusterEnergyLCW_HEC2_100(*track) = -999999999;
-      decorator_ClusterEnergyLCW_HEC3_200(*track) = -999999999;
-      decorator_ClusterEnergyLCW_HEC3_100(*track) = -999999999;
-
-      decorator_ClusterEnergyLCW_TileBar0_200(*track) = -999999999;
-      decorator_ClusterEnergyLCW_TileBar0_100(*track) = -999999999;
-      decorator_ClusterEnergyLCW_TileBar1_200(*track) = -999999999;
-      decorator_ClusterEnergyLCW_TileBar1_100(*track) = -999999999;
-      decorator_ClusterEnergyLCW_TileBar2_200(*track) = -999999999;
-      decorator_ClusterEnergyLCW_TileBar2_100(*track) = -999999999;
-
-      decorator_ClusterEnergyLCW_TileGap1_200(*track) = -999999999;
-      decorator_ClusterEnergyLCW_TileGap1_100(*track) = -999999999;
-      decorator_ClusterEnergyLCW_TileGap2_200(*track) = -999999999;
-      decorator_ClusterEnergyLCW_TileGap2_100(*track) = -999999999;
-      decorator_ClusterEnergyLCW_TileGap3_200(*track) = -999999999;
-      decorator_ClusterEnergyLCW_TileGap3_100(*track) = -999999999;
-
-      decorator_ClusterEnergyLCW_TileExt0_200(*track) = -999999999;
-      decorator_ClusterEnergyLCW_TileExt0_100(*track) = -999999999;
-      decorator_ClusterEnergyLCW_TileExt1_200(*track) = -999999999;
-      decorator_ClusterEnergyLCW_TileExt1_100(*track) = -999999999;
-      decorator_ClusterEnergyLCW_TileExt2_200(*track) = -999999999;
-      decorator_ClusterEnergyLCW_TileExt2_100(*track) = -999999999;
-
-      decorator_EM_ClusterEnergyLCW_0_200(*track) = -999999999;
-      decorator_EM_ClusterEnergyLCW_0_100(*track) = -999999999;
-      decorator_HAD_ClusterEnergyLCW_0_200(*track) = -999999999;
-      decorator_HAD_ClusterEnergyLCW_0_100(*track) = -999999999;
-      decorator_Total_ClusterEnergyLCW_0_200(*track) = -999999999;
-      decorator_Total_ClusterEnergyLCW_0_100(*track) = -999999999;
-
-      decorator_CellEnergy_PreSamplerB_200 (*track) = -999999999;
-      decorator_CellEnergy_PreSamplerB_100 (*track) = -999999999;
-      decorator_CellEnergy_PreSamplerE_200 (*track) = -999999999;
-      decorator_CellEnergy_PreSamplerE_100 (*track) = -999999999;
-
-      decorator_CellEnergy_EMB1_200 (*track) = -999999999;
-      decorator_CellEnergy_EMB1_100 (*track) = -999999999;
-      decorator_CellEnergy_EMB2_200 (*track) = -999999999;
-      decorator_CellEnergy_EMB2_100 (*track) = -999999999;
-      decorator_CellEnergy_EMB3_200 (*track) = -999999999;
-      decorator_CellEnergy_EMB3_100 (*track) = -999999999;
-
-      decorator_CellEnergy_EME1_200(*track) = -999999999;
-      decorator_CellEnergy_EME1_100(*track) = -999999999;
-      decorator_CellEnergy_EME2_200(*track) = -999999999;
-      decorator_CellEnergy_EME2_100(*track) = -999999999;
-      decorator_CellEnergy_EME3_200(*track) = -999999999;
-      decorator_CellEnergy_EME3_100(*track) = -999999999;
-
-      decorator_CellEnergy_HEC0_200(*track) = -999999999;
-      decorator_CellEnergy_HEC0_100(*track) = -999999999;
-      decorator_CellEnergy_HEC1_200(*track) = -999999999;
-      decorator_CellEnergy_HEC1_100(*track) = -999999999;
-      decorator_CellEnergy_HEC2_200(*track) = -999999999;
-      decorator_CellEnergy_HEC2_100(*track) = -999999999;
-      decorator_CellEnergy_HEC3_200(*track) = -999999999;
-      decorator_CellEnergy_HEC3_100(*track) = -999999999;
-
-      decorator_CellEnergy_TileBar0_200(*track) = -999999999;
-      decorator_CellEnergy_TileBar0_100(*track) = -999999999;
-      decorator_CellEnergy_TileBar1_200(*track) = -999999999;
-      decorator_CellEnergy_TileBar1_100(*track) = -999999999;
-      decorator_CellEnergy_TileBar2_200(*track) = -999999999;
-      decorator_CellEnergy_TileBar2_100(*track) = -999999999;
-
-      decorator_CellEnergy_TileGap1_200(*track) = -999999999;
-      decorator_CellEnergy_TileGap1_100(*track) = -999999999;
-      decorator_CellEnergy_TileGap2_200(*track) = -999999999;
-      decorator_CellEnergy_TileGap2_100(*track) = -999999999;
-      decorator_CellEnergy_TileGap3_200(*track) = -999999999;
-      decorator_CellEnergy_TileGap3_100(*track) = -999999999;
-
-      decorator_CellEnergy_TileExt0_200(*track) = -999999999;
-      decorator_CellEnergy_TileExt0_100(*track) = -999999999;
-      decorator_CellEnergy_TileExt1_200(*track) = -999999999;
-      decorator_CellEnergy_TileExt1_100(*track) = -999999999;
-      decorator_CellEnergy_TileExt2_200(*track) = -999999999;
-      decorator_CellEnergy_TileExt2_100(*track) = -999999999;
-
-      decorator_EM_CellEnergy_0_200(*track) = -999999999;
-      decorator_EM_CellEnergy_0_100(*track) = -999999999;
-      decorator_HAD_CellEnergy_0_200(*track) = -999999999;
-      decorator_HAD_CellEnergy_0_100(*track) = -999999999;
-      decorator_Total_CellEnergy_0_200(*track) = -999999999;
-      decorator_Total_CellEnergy_0_100(*track) = -999999999;
+      for (std::string cutName : m_cutNames){
+          for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
+              (m_cutToCaloSamplingNumberToDecorator_ClusterEnergy.at(cutName).at(caloSamplingNumber))(*track) = -999999999;
+              (m_cutToCaloSamplingNumberToDecorator_LCWClusterEnergy.at(cutName).at(caloSamplingNumber))(*track) = -999999999;
+              (m_cutToCaloSamplingNumberToDecorator_CellEnergy.at(cutName).at(caloSamplingNumber))(*track) = -999999999;
+          }
+      }
 
       /*a map to store the track parameters associated with the different layers of the calorimeter system */
-      std::map<CaloCell_ID::CaloSample, const Trk::TrackParameters*> parametersMap;
+      std::map<CaloSampling::CaloSample, const Trk::TrackParameters*> parametersMap;
 
       /*get the CaloExtension object*/
       const Trk::CaloExtension* extension = 0;
@@ -751,13 +349,13 @@ namespace DerivationFramework {
         for (auto clParameter : clParametersVector) {
 
           unsigned int parametersIdentifier = clParameter->cIdentifier();
-          CaloCell_ID::CaloSample intLayer;
+          CaloSampling::CaloSample intLayer;
 
           if (!m_trackParametersIdHelper->isValid(parametersIdentifier)) {
             std::cout << "Invalid Track Identifier"<< std::endl;
-            intLayer = CaloCell_ID::CaloSample::Unknown;
+            intLayer = CaloSampling::CaloSample::Unknown;
           } else {
-            intLayer = m_trackParametersIdHelper->caloSample(parametersIdentifier);
+            intLayer = (CaloSampling::CaloSample)(m_trackParametersIdHelper->caloSample(parametersIdentifier));
           }
 
           if (parametersMap[intLayer] == NULL) {
@@ -775,66 +373,27 @@ namespace DerivationFramework {
       if(!(m_theTrackExtrapolatorTool->caloExtension(*track, extension, false))) continue; //No valid parameters for any of the layers of interest
       decorator_extrapolation(*track) = 1;
 
+      //Decorate the tracks with their extrapolated coordinates
+      for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
+          if (parametersMap[caloSamplingNumber]){
+              (m_caloSamplingNumberToDecorator_extrapolTrackPhi.at(caloSamplingNumber))(*track) = parametersMap[caloSamplingNumber]->position().phi();
+              (m_caloSamplingNumberToDecorator_extrapolTrackEta.at(caloSamplingNumber))(*track) = parametersMap[caloSamplingNumber]->position().eta();
+          }
+      }
+
       if (m_doCutflow) m_cutflow_trk -> Fill(m_cutflow_trk_pass_extrapolation, 1);
 
       /*Decorate track with extended eta and phi coordinates at intersection layers*/
-      if(parametersMap[CaloCell_ID::CaloSample::PreSamplerB]) decorator_trkEta_PreSamplerB(*track) = parametersMap[CaloCell_ID::CaloSample::PreSamplerB]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::PreSamplerB]) decorator_trkPhi_PreSamplerB(*track) = parametersMap[CaloCell_ID::CaloSample::PreSamplerB]->position().phi();  
-      if(parametersMap[CaloCell_ID::CaloSample::PreSamplerE]) decorator_trkEta_PreSamplerE(*track) = parametersMap[CaloCell_ID::CaloSample::PreSamplerE]->position().eta();    
-      if(parametersMap[CaloCell_ID::CaloSample::PreSamplerE]) decorator_trkPhi_PreSamplerE(*track) = parametersMap[CaloCell_ID::CaloSample::PreSamplerE]->position().phi();
-
-      if(parametersMap[CaloCell_ID::CaloSample::EMB1]) decorator_trkEta_EMB1(*track) = parametersMap[CaloCell_ID::CaloSample::EMB1]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::EMB1]) decorator_trkPhi_EMB1(*track) = parametersMap[CaloCell_ID::CaloSample::EMB1]->position().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::EMB2]) decorator_trkEta_EMB2(*track) = parametersMap[CaloCell_ID::CaloSample::EMB2]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::EMB2]) decorator_trkPhi_EMB2(*track) = parametersMap[CaloCell_ID::CaloSample::EMB2]->position().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::EMB3]) decorator_trkEta_EMB3(*track) = parametersMap[CaloCell_ID::CaloSample::EMB3]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::EMB3]) decorator_trkPhi_EMB3(*track) = parametersMap[CaloCell_ID::CaloSample::EMB3]->position().phi();
-
-      if(parametersMap[CaloCell_ID::CaloSample::EME1]) decorator_trkEta_EME1(*track) = parametersMap[CaloCell_ID::CaloSample::EME1]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::EME1]) decorator_trkPhi_EME1(*track) = parametersMap[CaloCell_ID::CaloSample::EME1]->position().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::EME2]) decorator_trkEta_EME2(*track) = parametersMap[CaloCell_ID::CaloSample::EME2]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::EME2]) decorator_trkPhi_EME2(*track) = parametersMap[CaloCell_ID::CaloSample::EME2]->position().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::EME3]) decorator_trkEta_EME3(*track) = parametersMap[CaloCell_ID::CaloSample::EME3]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::EME3]) decorator_trkPhi_EME3(*track) = parametersMap[CaloCell_ID::CaloSample::EME3]->position().phi();
-
-      if(parametersMap[CaloCell_ID::CaloSample::HEC0]) decorator_trkEta_HEC0 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC0]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::HEC0]) decorator_trkPhi_HEC0 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC0]->position().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::HEC1]) decorator_trkEta_HEC1 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC1]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::HEC1]) decorator_trkPhi_HEC1 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC1]->position().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::HEC2]) decorator_trkEta_HEC2 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC2]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::HEC2]) decorator_trkPhi_HEC2 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC2]->position().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::HEC3]) decorator_trkEta_HEC3 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC3]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::HEC3]) decorator_trkPhi_HEC3 (*track) = parametersMap[CaloCell_ID::CaloSample::HEC3]->position().phi();
-
-      if(parametersMap[CaloCell_ID::CaloSample::TileBar0]) decorator_trkEta_TileBar0 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar0]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileBar0]) decorator_trkPhi_TileBar0 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar0]->position().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::TileBar1]) decorator_trkEta_TileBar1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar1]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileBar1]) decorator_trkPhi_TileBar1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar1]->position().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::TileBar2]) decorator_trkEta_TileBar2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar2]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileBar2]) decorator_trkPhi_TileBar2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileBar2]->position().phi();
-
-      if(parametersMap[CaloCell_ID::CaloSample::TileGap1]) decorator_trkEta_TileGap1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap1]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileGap1]) decorator_trkPhi_TileGap1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap1]->position().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::TileGap2]) decorator_trkEta_TileGap2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap2]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileGap2]) decorator_trkPhi_TileGap2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap2]->position().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::TileGap3]) decorator_trkEta_TileGap3 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap3]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileGap3]) decorator_trkPhi_TileGap3 (*track) = parametersMap[CaloCell_ID::CaloSample::TileGap3]->position().phi();
-
-      if(parametersMap[CaloCell_ID::CaloSample::TileExt0]) decorator_trkEta_TileExt0 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt0]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileExt0]) decorator_trkPhi_TileExt0 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt0]->position().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::TileExt1]) decorator_trkEta_TileExt1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt1]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileExt1]) decorator_trkPhi_TileExt1 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt1]->position().phi();
-      if(parametersMap[CaloCell_ID::CaloSample::TileExt2]) decorator_trkEta_TileExt2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt2]->position().eta();
-      if(parametersMap[CaloCell_ID::CaloSample::TileExt2]) decorator_trkPhi_TileExt2 (*track) = parametersMap[CaloCell_ID::CaloSample::TileExt2]->position().phi();
 
       /*Track-cluster matching*/
       //Approach: find the most energetic layer of a cluster. Record the eta and phi coordinates of the extrapolated track at this layer//
       //Perform the matching between these track eta and phi coordinates and the energy-weighted (bary)centre eta and phi of the cluster//
 
-      int matchedClusterCounter_200 = 0;
-      int matchedClusterCounter_100 = 0;
-      ConstDataVector<xAOD::CaloClusterContainer> matchedClusters_200(SG::VIEW_ELEMENTS); //clusters within DeltaR < 0.2 of the track, reinitialised for each layer
-      ConstDataVector<xAOD::CaloClusterContainer> matchedClusters_100(SG::VIEW_ELEMENTS); //clusters within DeltaR < 0.1 of the track
+      //create a const data vector for each dR cut
+      std::map<std::string, ConstDataVector<xAOD::CaloClusterContainer> > matchedClusterMap;
+      for (std::string cutName : m_cutNames){
+          matchedClusterMap[cutName] = ConstDataVector<xAOD::CaloClusterContainer>(SG::VIEW_ELEMENTS);
+      }
 
       std::vector<float> ClusterEnergy_Energy;
       std::vector<float> ClusterEnergy_Eta;
@@ -843,6 +402,7 @@ namespace DerivationFramework {
       std::vector<float> ClusterEnergy_lambdaCenter;
       std::vector<float> ClusterEnergy_firstEnergyDensity;
       std::vector<float> ClusterEnergy_emProbability;
+      std::vector<int> ClusterEnergy_IDNumber;
       std::vector<int> ClusterEnergy_maxEnergyLayer;
 
       std::vector<float> ClusterEnergyLCW_Energy;
@@ -852,18 +412,12 @@ namespace DerivationFramework {
       std::vector<float> ClusterEnergyLCW_lambdaCenter;
       std::vector<float> ClusterEnergyLCW_firstEnergyDensity;
       std::vector<float> ClusterEnergyLCW_emProbability;
+      std::vector<int> ClusterEnergyLCW_IDNumber;
       std::vector<int> ClusterEnergyLCW_maxEnergyLayer;
 
-      std::vector<float> CellEnergy_Energy;
-      std::vector<float> CellEnergy_Eta;
-      std::vector<float> CellEnergy_Phi;
-      std::vector<float> CellEnergy_dRToTrack;
-      std::vector<float> CellEnergy_lambdaCenter;
-      std::vector<float> CellEnergy_firstEnergyDensity;
-      std::vector<float> CellEnergy_emProbability;
-      std::vector<int> CellEnergy_maxEnergyLayer;
-
+      int clusterID = 0;
       for (const auto& cluster : *clusterContainer) {
+        clusterID += 1;
 
         /*Finding the most energetic layer of the cluster*/
         xAOD::CaloCluster::CaloSample mostEnergeticLayer = xAOD::CaloCluster::CaloSample::Unknown;
@@ -900,11 +454,14 @@ namespace DerivationFramework {
 
         double deltaR = std::sqrt((etaDiff*etaDiff) + (phiDiff*phiDiff));
 
-        if(deltaR < 0.2){
-          matchedClusterCounter_200++;
-          matchedClusters_200.push_back(cluster);
+        //Loop through the different dR Cuts, and push to the matched cluster container
+        for (std::string cutName : m_cutNames){
+            float cut = m_stringToCut.at(cutName);
+            if (deltaR < cut) matchedClusterMap.at(cutName).push_back(cluster);
+        }
 
-          //decorate with EM-scale quanitities.
+        if(deltaR < 0.3){
+          //push back the vector-like quantities that we want
           double lambda_center;
           double em_probability;
           double first_energy_density;
@@ -920,21 +477,21 @@ namespace DerivationFramework {
           ClusterEnergy_lambdaCenter.push_back(lambda_center);
           ClusterEnergy_maxEnergyLayer.push_back(mostEnergeticLayer);
           ClusterEnergy_emProbability.push_back(em_probability);
+          ClusterEnergy_IDNumber.push_back(clusterID);
           ClusterEnergy_firstEnergyDensity.push_back(first_energy_density);
           
+          if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 501, lambda_center)) {ATH_MSG_WARNING("Couldn't retrieve the cluster lambda center");}
+          if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 900, em_probability)) {ATH_MSG_WARNING("Couldn't rertieve the EM Probability");}
+          if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 804, first_energy_density)) {ATH_MSG_WARNING("Couldn't rertieve the first energy density moment");}
           ClusterEnergyLCW_Energy.push_back(cluster->e());   //LCW Energy
-          ClusterEnergyLCW_Eta.push_back(cluster->calEta()); // Eta and phi at LCW scaleScale
-          ClusterEnergyLCW_Phi.push_back(cluster->calPhi()); 
+          ClusterEnergyLCW_Eta.push_back(cluster->calEta()); // Eta and phi at LCW Scale
+          ClusterEnergyLCW_Phi.push_back(cluster->calPhi()); // Eta and phi at LCW Scale
           ClusterEnergyLCW_dRToTrack.push_back(deltaR);
           ClusterEnergyLCW_lambdaCenter.push_back(lambda_center);
           ClusterEnergyLCW_maxEnergyLayer.push_back(mostEnergeticLayer);
           ClusterEnergyLCW_emProbability.push_back(em_probability);
+          ClusterEnergyLCW_IDNumber.push_back(clusterID);
           ClusterEnergyLCW_firstEnergyDensity.push_back(first_energy_density);
-        }
-
-        if(deltaR < 0.1){
-          matchedClusterCounter_100++;
-          matchedClusters_100.push_back(cluster);
         }
       }
 
@@ -943,11 +500,11 @@ namespace DerivationFramework {
       /*Track-cell matching*/
       //Approach: loop over cell container, getting the eta and phi coordinates of each cell for each layer.//
       //Perform a match between the cell and the track eta and phi coordinates in the cell's sampling layer.//
-
-      int matchedCellCounter_200 = 0;
-      int matchedCellCounter_100 = 0;
-      ConstDataVector<CaloCellContainer> matchedCells_200(SG::VIEW_ELEMENTS);
-      ConstDataVector<CaloCellContainer> matchedCells_100(SG::VIEW_ELEMENTS);
+      //
+      std::map<std::string, ConstDataVector<CaloCellContainer> > matchedCellMap;
+      for (std::string cutName :  m_cutNames){
+          matchedCellMap[cutName] = ConstDataVector<CaloCellContainer>(SG::VIEW_ELEMENTS);
+      }
 
       for (const auto& cell : *caloCellContainer) {
 
@@ -973,350 +530,93 @@ namespace DerivationFramework {
         if (phiDiff > TMath::Pi()) phiDiff = 2*TMath::Pi() - phiDiff;
 
         double deltaR = std::sqrt((etaDiff*etaDiff) + (phiDiff*phiDiff));
-
-        if (deltaR < 0.2){
-          matchedCellCounter_200++;
-          matchedCells_200.push_back(cell);
-        }
-
-        if (deltaR < 0.1){
-          matchedCellCounter_100++;
-          matchedCells_100.push_back(cell);
+        
+        for (std::string cutName : m_cutNames){
+            float cut = m_stringToCut.at(cutName);
+            if (deltaR < cut) matchedCellMap.at(cutName).push_back(cell);
         }
       }
 
       if (m_doCutflow) m_cutflow_trk -> Fill(m_cutflow_trk_pass_cell_matching, 1);
 
-      /*Populating cluster decorations*/
-      std::vector<ConstDataVector<xAOD::CaloClusterContainer> > matchedClusters;
-      matchedClusters.push_back(matchedClusters_200);
-      matchedClusters.push_back(matchedClusters_100);
+      for (std::string cutName : m_cutNames){
 
-      int scales = 2;
+        //create std::maps of std::string CaloRegion -> float Energy Sum
+        std::map<CaloSampling::CaloSample, float> caloSamplingNumberToEnergySum_EMScale;
+        std::map<CaloSampling::CaloSample, float> caloSamplingNumberToEnergySum_LCWScale;
 
-      /*Loop over scales, where j=0 is the EM scale and j=1 is the LCW scale*/
-      for (int j=0; j < scales; j++) {
-
-        double clusterEnergy[2][21] = {{0}};
-
-        double clusterEnergy_Active_EM[2][21] = {{0}};
-        double clusterEnergy_Active_NonEM[2][21] = {{0}};
-        double clusterEnergy_Active_Escaped[2][21] = {{0}};
-        double clusterEnergy_Active_Invisible[2][21] = {{0}};
-
-        double clusterEnergy_Inactive_EM[2][21] = {{0}};
-        double clusterEnergy_Inactive_NonEM[2][21] = {{0}};
-        double clusterEnergy_Inactive_Escaped[2][21] = {{0}};
-        double clusterEnergy_Inactive_Invisible[2][21] = {{0}};
-
-        double totalEMBClusterEnergy[2] = {};
-        double totalEMEClusterEnergy[2] = {};
-        double totalEMClusterEnergy[2] = {};
-
-        double totalHECClusterEnergy[2] = {};
-        double totalTileBarClusterEnergy[2] = {};
-        double totalTileGapClusterEnergy[2] = {};
-        double totalTileExtClusterEnergy[2] = {};
-        double totalHADClusterEnergy[2] = {};
-
-        double totalClusterEnergy[2] = {};
-
-        /*Loop over cone dimensions, where i=0 is DeltaR < 0.2 and i=1 is DeltaR < 0.1*/
-        for (unsigned int i=0; i < matchedClusters.size(); i++) {
-
-          double totalEnergy = 0;
-
-          ConstDataVector<xAOD::CaloClusterContainer>::iterator firstMatchedClus = matchedClusters[i].begin();
-          ConstDataVector<xAOD::CaloClusterContainer>::iterator lastMatchedClus = matchedClusters[i].end();
-
-          /*Loop over matched clusters for a given cone dimension*/
-          for (; firstMatchedClus != lastMatchedClus; ++firstMatchedClus) {
-
-            const xAOD::CaloCluster* cl = *firstMatchedClus;
-            double energy_EM = -999999999;
-            double energy_LCW = -999999999;
-
-            energy_EM = cl->rawE();
-            energy_LCW = cl->calE();
-
-            if(energy_EM == -999999999 || energy_LCW == -999999999) continue;
-
-            double cluster_weight = energy_LCW/energy_EM;
-
-            if(j==0) totalEnergy += cl->rawE(); //EM scale energy
-            if(j==1) totalEnergy += cl->e(); //LCW scale energy
-
-            for(unsigned int m=0; m<CaloCell_ID::CaloSample::TileExt2+1; m++) {
-
-              xAOD::CaloCluster::CaloSample clusterLayer = (xAOD::CaloCluster::CaloSample)(m);
-
-              if(j==0) {
-                clusterEnergy[i][m] += cl->eSample(clusterLayer); //eSample returns EM scale energy only
-              }
-              if(j==1) {
-                clusterEnergy[i][m] += cluster_weight*(cl->eSample(clusterLayer)); 
-              }
-            }
-
-            std::cout<<"Getting energy deposits associated with particle "<<particle_barcode<<std::endl;
-            //The map is hit type -> energy type (EM,nonEM,Invisible,Escaped) -> unsigned int CalorimeterLayer -> energy sum
-            std::map<std::string, std::map< std::string, std::map<unsigned int, float> > > hitsMap;
-            std::map<std::string, std::map< std::string, std::map<int, std::map<unsigned int, float> > > > bkgHitsMap;
-            hitsMap["LarAct"] = getHitsSum(lar_actHitCnt, cl, particle_barcode);
-            hitsMap["LarInact"] = getHitsSum(lar_inactHitCnt, cl, particle_barcode);
-            hitsMap["TileAct"] = getHitsSum(tile_actHitCnt, cl, particle_barcode);
-            hitsMap["TileInact"]= getHitsSum(tile_inactHitCnt, cl, particle_barcode);
-
-            bkgHitsMap["LarAct"] = getHitsSumAllBackground(lar_actHitCnt ,cl, particle_barcode, truthParticles);
-            bkgHitsMap["LarInact"] = getHitsSumAllBackground(lar_inactHitCnt ,cl, particle_barcode, truthParticles);
-            bkgHitsMap["TileAct"] = getHitsSumAllBackground(tile_actHitCnt ,cl, particle_barcode, truthParticles);
-            bkgHitsMap["TileInact"] = getHitsSumAllBackground(tile_inactHitCnt ,cl, particle_barcode, truthParticles);
-          }
-
-          totalEMBClusterEnergy[i] = clusterEnergy[i][1] + clusterEnergy[i][2] + clusterEnergy[i][3];
-          totalEMEClusterEnergy[i] = clusterEnergy[i][5] + clusterEnergy[i][6] + clusterEnergy[i][7];
-          totalEMClusterEnergy[i] = totalEMBClusterEnergy[i] + totalEMEClusterEnergy[i];
-
-          totalHECClusterEnergy[i] = clusterEnergy[i][8] + clusterEnergy[i][9] + clusterEnergy[i][10] + clusterEnergy[i][11];
-          totalTileBarClusterEnergy[i] = clusterEnergy[i][12] + clusterEnergy[i][13] + clusterEnergy[i][14];
-          totalTileGapClusterEnergy[i] = clusterEnergy[i][15] + clusterEnergy[i][16] + clusterEnergy[i][17];
-          totalTileExtClusterEnergy[i] = clusterEnergy[i][18] + clusterEnergy[i][19] + clusterEnergy[i][20];
-          totalHADClusterEnergy[i] = totalHECClusterEnergy[i] + totalTileBarClusterEnergy[i] + totalTileGapClusterEnergy[i] + totalTileExtClusterEnergy[i];
-
-          totalClusterEnergy[i] = totalEnergy;
-
+        for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
+            caloSamplingNumberToEnergySum_EMScale[caloSamplingNumber] = 0.0;
+            caloSamplingNumberToEnergySum_LCWScale[caloSamplingNumber] = 0.0;
         }
 
-        if(j==0) {
-          /*Cluster decorations at EM scale*/
-          decorator_ClusterEnergy_PreSamplerB_200(*track) = clusterEnergy[0][0];
-          decorator_ClusterEnergy_PreSamplerB_100(*track) = clusterEnergy[1][0];
-          decorator_ClusterEnergy_PreSamplerE_200(*track) = clusterEnergy[0][4];
-          decorator_ClusterEnergy_PreSamplerE_100(*track) = clusterEnergy[1][4];
+        ConstDataVector<xAOD::CaloClusterContainer>::iterator firstMatchedClus = matchedClusterMap.at(cutName).begin();
+        ConstDataVector<xAOD::CaloClusterContainer>::iterator lastMatchedClus = matchedClusterMap.at(cutName).end();
 
-          decorator_ClusterEnergy_EMB1_200(*track) = clusterEnergy[0][1];
-          decorator_ClusterEnergy_EMB1_100(*track) = clusterEnergy[1][1];
-          decorator_ClusterEnergy_EMB2_200(*track) = clusterEnergy[0][2];
-          decorator_ClusterEnergy_EMB2_100(*track) = clusterEnergy[1][2];
-          decorator_ClusterEnergy_EMB3_200(*track) = clusterEnergy[0][3];
-          decorator_ClusterEnergy_EMB3_100(*track) = clusterEnergy[1][3];
+        /*Loop over matched clusters for a given cone dimension*/
+        for (; firstMatchedClus != lastMatchedClus; ++firstMatchedClus) {
 
-          decorator_ClusterEnergy_EME1_200(*track) = clusterEnergy[0][5];
-          decorator_ClusterEnergy_EME1_100(*track) = clusterEnergy[1][5];
-          decorator_ClusterEnergy_EME2_200(*track) = clusterEnergy[0][6];
-          decorator_ClusterEnergy_EME2_100(*track) = clusterEnergy[1][6];
-          decorator_ClusterEnergy_EME3_200(*track) = clusterEnergy[0][7];
-          decorator_ClusterEnergy_EME3_100(*track) = clusterEnergy[1][7];
+          const xAOD::CaloCluster* cl = *firstMatchedClus;
+          float energy_EM = -999999999;
+          float energy_LCW = -999999999;
 
-          decorator_ClusterEnergy_HEC0_200(*track) = clusterEnergy[0][8];
-          decorator_ClusterEnergy_HEC0_100(*track) = clusterEnergy[1][8];
-          decorator_ClusterEnergy_HEC1_200(*track) = clusterEnergy[0][9];
-          decorator_ClusterEnergy_HEC1_100(*track) = clusterEnergy[1][9];
-          decorator_ClusterEnergy_HEC2_200(*track) = clusterEnergy[0][10];
-          decorator_ClusterEnergy_HEC2_100(*track) = clusterEnergy[1][10];
-          decorator_ClusterEnergy_HEC3_200(*track) = clusterEnergy[0][11];
-          decorator_ClusterEnergy_HEC3_100(*track) = clusterEnergy[1][11];
+          energy_EM = cl->rawE();
+          energy_LCW = cl->calE();
 
-          decorator_ClusterEnergy_TileBar0_200(*track) = clusterEnergy[0][12];
-          decorator_ClusterEnergy_TileBar0_100(*track) = clusterEnergy[1][12];
-          decorator_ClusterEnergy_TileBar1_200(*track) = clusterEnergy[0][13];
-          decorator_ClusterEnergy_TileBar1_100(*track) = clusterEnergy[1][13];
-          decorator_ClusterEnergy_TileBar2_200(*track) = clusterEnergy[0][14];
-          decorator_ClusterEnergy_TileBar2_100(*track) = clusterEnergy[1][14];
+          if(energy_EM == -999999999 || energy_LCW == -999999999) continue;
 
-          decorator_ClusterEnergy_TileGap1_200(*track) = clusterEnergy[0][15];
-          decorator_ClusterEnergy_TileGap1_100(*track) = clusterEnergy[1][15];
-          decorator_ClusterEnergy_TileGap2_200(*track) = clusterEnergy[0][16];
-          decorator_ClusterEnergy_TileGap2_100(*track) = clusterEnergy[1][16];
-          decorator_ClusterEnergy_TileGap3_200(*track) = clusterEnergy[0][17];
-          decorator_ClusterEnergy_TileGap3_100(*track) = clusterEnergy[1][17];
+          double cluster_weight = energy_LCW/energy_EM;
 
-          decorator_ClusterEnergy_TileExt0_200(*track) = clusterEnergy[0][18];
-          decorator_ClusterEnergy_TileExt0_100(*track) = clusterEnergy[1][18];
-          decorator_ClusterEnergy_TileExt1_200(*track) = clusterEnergy[0][19];
-          decorator_ClusterEnergy_TileExt1_100(*track) = clusterEnergy[1][19];
-          decorator_ClusterEnergy_TileExt2_200(*track) = clusterEnergy[0][20];
-          decorator_ClusterEnergy_TileExt2_100(*track) = clusterEnergy[1][20];
+          for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
+            caloSamplingNumberToEnergySum_EMScale[caloSamplingNumber] += cl->eSample(caloSamplingNumber);
+            caloSamplingNumberToEnergySum_LCWScale[caloSamplingNumber] += cluster_weight*(cl->eSample(caloSamplingNumber));
+          }
 
-          decorator_EM_ClusterEnergy_0_200(*track) = totalEMClusterEnergy[0];
-          decorator_EM_ClusterEnergy_0_100(*track) = totalEMClusterEnergy[1];
-          decorator_HAD_ClusterEnergy_0_200(*track) = totalHADClusterEnergy[0];
-          decorator_HAD_ClusterEnergy_0_100(*track) = totalHADClusterEnergy[1];
-          decorator_Total_ClusterEnergy_0_200(*track) = totalClusterEnergy[0];
-          decorator_Total_ClusterEnergy_0_100(*track) = totalClusterEnergy[1];	
+          //The map is hit type -> energy type (EM,nonEM,Invisible,Escaped) -> unsigned int CalorimeterLayer -> energy sum
+          std::map<std::string, std::map< std::string, std::map<CaloSampling::CaloSample, float> > > hitsMap;
+          std::map<std::string, std::map< std::string, std::map<int, std::map<CaloSampling::CaloSample, float> > > > bkgHitsMap;
+          hitsMap["LarAct"] = getHitsSum(lar_actHitCnt, cl, particle_barcode);
+          hitsMap["LarInact"] = getHitsSum(lar_inactHitCnt, cl, particle_barcode);
+          hitsMap["TileAct"] = getHitsSum(tile_actHitCnt, cl, particle_barcode);
+          hitsMap["TileInact"]= getHitsSum(tile_inactHitCnt, cl, particle_barcode);
 
-        } else if (j==1) {
-          /*Cluster decorations at LCW scale*/
-          decorator_ClusterEnergyLCW_PreSamplerB_200(*track) = clusterEnergy[0][0];
-          decorator_ClusterEnergyLCW_PreSamplerB_100(*track) = clusterEnergy[1][0];
-          decorator_ClusterEnergyLCW_PreSamplerE_200(*track) = clusterEnergy[0][4];
-          decorator_ClusterEnergyLCW_PreSamplerE_100(*track) = clusterEnergy[1][4];
-
-          decorator_ClusterEnergyLCW_EMB1_200(*track) = clusterEnergy[0][1];
-          decorator_ClusterEnergyLCW_EMB1_100(*track) = clusterEnergy[1][1];
-          decorator_ClusterEnergyLCW_EMB2_200(*track) = clusterEnergy[0][2];
-          decorator_ClusterEnergyLCW_EMB2_100(*track) = clusterEnergy[1][2];
-          decorator_ClusterEnergyLCW_EMB3_200(*track) = clusterEnergy[0][3];
-          decorator_ClusterEnergyLCW_EMB3_100(*track) = clusterEnergy[1][3];
-
-          decorator_ClusterEnergyLCW_EME1_200(*track) = clusterEnergy[0][5];
-          decorator_ClusterEnergyLCW_EME1_100(*track) = clusterEnergy[1][5];
-          decorator_ClusterEnergyLCW_EME2_200(*track) = clusterEnergy[0][6];
-          decorator_ClusterEnergyLCW_EME2_100(*track) = clusterEnergy[1][6];
-          decorator_ClusterEnergyLCW_EME3_200(*track) = clusterEnergy[0][7];
-          decorator_ClusterEnergyLCW_EME3_100(*track) = clusterEnergy[1][7];
-
-          decorator_ClusterEnergyLCW_HEC0_200(*track) = clusterEnergy[0][8];
-          decorator_ClusterEnergyLCW_HEC0_100(*track) = clusterEnergy[1][8];
-          decorator_ClusterEnergyLCW_HEC1_200(*track) = clusterEnergy[0][9];
-          decorator_ClusterEnergyLCW_HEC1_100(*track) = clusterEnergy[1][9];
-          decorator_ClusterEnergyLCW_HEC2_200(*track) = clusterEnergy[0][10];
-          decorator_ClusterEnergyLCW_HEC2_100(*track) = clusterEnergy[1][10];
-          decorator_ClusterEnergyLCW_HEC3_200(*track) = clusterEnergy[0][11];
-          decorator_ClusterEnergyLCW_HEC3_100(*track) = clusterEnergy[1][11];
-
-          decorator_ClusterEnergyLCW_TileBar0_200(*track) = clusterEnergy[0][12];
-          decorator_ClusterEnergyLCW_TileBar0_100(*track) = clusterEnergy[1][12];
-          decorator_ClusterEnergyLCW_TileBar1_200(*track) = clusterEnergy[0][13];
-          decorator_ClusterEnergyLCW_TileBar1_100(*track) = clusterEnergy[1][13];
-          decorator_ClusterEnergyLCW_TileBar2_200(*track) = clusterEnergy[0][14];
-          decorator_ClusterEnergyLCW_TileBar2_100(*track) = clusterEnergy[1][14];
-
-          decorator_ClusterEnergyLCW_TileGap1_200(*track) = clusterEnergy[0][15];
-          decorator_ClusterEnergyLCW_TileGap1_100(*track) = clusterEnergy[1][15];
-          decorator_ClusterEnergyLCW_TileGap2_200(*track) = clusterEnergy[0][16];
-          decorator_ClusterEnergyLCW_TileGap2_100(*track) = clusterEnergy[1][16];
-          decorator_ClusterEnergyLCW_TileGap3_200(*track) = clusterEnergy[0][17];
-          decorator_ClusterEnergyLCW_TileGap3_100(*track) = clusterEnergy[1][17];
-
-          decorator_ClusterEnergyLCW_TileExt0_200(*track) = clusterEnergy[0][18];
-          decorator_ClusterEnergyLCW_TileExt0_100(*track) = clusterEnergy[1][18];
-          decorator_ClusterEnergyLCW_TileExt1_200(*track) = clusterEnergy[0][19];
-          decorator_ClusterEnergyLCW_TileExt1_100(*track) = clusterEnergy[1][19];
-          decorator_ClusterEnergyLCW_TileExt2_200(*track) = clusterEnergy[0][20];
-          decorator_ClusterEnergyLCW_TileExt2_100(*track) = clusterEnergy[1][20];
-
-          decorator_EM_ClusterEnergyLCW_0_200(*track) = totalEMClusterEnergy[0];
-          decorator_EM_ClusterEnergyLCW_0_100(*track) = totalEMClusterEnergy[1];
-          decorator_HAD_ClusterEnergyLCW_0_200(*track) = totalHADClusterEnergy[0];
-          decorator_HAD_ClusterEnergyLCW_0_100(*track) = totalHADClusterEnergy[1];
-          decorator_Total_ClusterEnergyLCW_0_200(*track) = totalClusterEnergy[0];
-          decorator_Total_ClusterEnergyLCW_0_100(*track) = totalClusterEnergy[1];
-
+          bkgHitsMap["LarAct"] = getHitsSumAllBackground(lar_actHitCnt ,cl, particle_barcode, truthParticles);
+          bkgHitsMap["LarInact"] = getHitsSumAllBackground(lar_inactHitCnt ,cl, particle_barcode, truthParticles);
+          bkgHitsMap["TileAct"] = getHitsSumAllBackground(tile_actHitCnt ,cl, particle_barcode, truthParticles);
+          bkgHitsMap["TileInact"] = getHitsSumAllBackground(tile_inactHitCnt ,cl, particle_barcode, truthParticles);
+        }
+        //Loop over all of the calorimeter regions and decorate the tracks
+        for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
+            (m_cutToCaloSamplingNumberToDecorator_ClusterEnergy.at(cutName).at(caloSamplingNumber))(*track) = caloSamplingNumberToEnergySum_EMScale.at(caloSamplingNumber);
+            (m_cutToCaloSamplingNumberToDecorator_LCWClusterEnergy.at(cutName).at(caloSamplingNumber))(*track) = caloSamplingNumberToEnergySum_LCWScale.at(caloSamplingNumber);
         }
       }
 
       if (m_doCutflow) m_cutflow_trk -> Fill(m_cutflow_trk_pass_loop_matched_clusters, 1);
 
-      /*Populate cell decorations*/
-      std::vector<ConstDataVector<CaloCellContainer> > matchedCells;
-      matchedCells.push_back(matchedCells_200);
-      matchedCells.push_back(matchedCells_100);
+      for (std::string cutName : m_cutNames){
+        ConstDataVector<CaloCellContainer>::iterator firstMatchedCell = matchedCellMap.at(cutName).begin();
+        ConstDataVector<CaloCellContainer>::iterator lastMatchedCell = matchedCellMap.at(cutName).end();
 
-      double matchedCellEnergy[2][21] = {{0}};
-
-      double totalEMBCellEnergy[2] = {};
-      double totalEMECellEnergy[2] = {};
-      double totalEMCellEnergy[2] = {};
-
-      double totalHECCellEnergy[2] = {};
-      double totalTileBarCellEnergy[2] = {};
-      double totalTileGapCellEnergy[2] = {};
-      double totalTileExtCellEnergy[2] = {};
-      double totalHADCellEnergy[2] = {};
-
-      double totalCellEnergy[2] = {};
-
-      for (unsigned int i=0; i < matchedCells.size(); i++) {
-
-        double summedCellEnergy = 0;
-
-        ConstDataVector<CaloCellContainer>::iterator firstMatchedCell = matchedCells[i].begin();
-        ConstDataVector<CaloCellContainer>::iterator lastMatchedCell = matchedCells[i].end();
-
-        for (; firstMatchedCell != lastMatchedCell; ++firstMatchedCell) {
-
-          if (!(*firstMatchedCell)->caloDDE()) continue;
-
-          summedCellEnergy += (*firstMatchedCell)->energy();
-
-          CaloCell_ID::CaloSample cellLayer = (*firstMatchedCell)->caloDDE()->getSampling();
-
-          if(cellLayer<=CaloCell_ID::CaloSample::TileExt2) matchedCellEnergy[i][cellLayer] += (*firstMatchedCell)->energy();
+        std::map<CaloSampling::CaloSample, float> caloSamplingNumberToEnergySum_CellEnergy;
+        for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
+            caloSamplingNumberToEnergySum_CellEnergy[caloSamplingNumber] = 0.0;
         }
-
-        totalEMBCellEnergy[i] = matchedCellEnergy[i][1] + matchedCellEnergy[i][2] + matchedCellEnergy[i][3];
-        totalEMECellEnergy[i] = matchedCellEnergy[i][5] + matchedCellEnergy[i][6] + matchedCellEnergy[i][7];
-        totalEMCellEnergy[i] = totalEMBCellEnergy[i] + totalEMECellEnergy[i];
-
-        totalHECCellEnergy[i] = matchedCellEnergy[i][8] + matchedCellEnergy[i][9] + matchedCellEnergy[i][10] + matchedCellEnergy[i][11];
-        totalTileBarCellEnergy[i] = matchedCellEnergy[i][12] + matchedCellEnergy[i][13] + matchedCellEnergy[i][14];
-        totalTileGapCellEnergy[i] = matchedCellEnergy[i][15] + matchedCellEnergy[i][16] + matchedCellEnergy[i][17];
-        totalTileExtCellEnergy[i] = matchedCellEnergy[i][18] + matchedCellEnergy[i][19] + matchedCellEnergy[i][20];
-        totalHADCellEnergy[i] = totalHECCellEnergy[i] + totalTileBarCellEnergy[i] + totalTileGapCellEnergy[i] + totalTileExtCellEnergy[i];
-
-        totalCellEnergy[i] = summedCellEnergy;
+        for (; firstMatchedCell != lastMatchedCell; ++firstMatchedCell) {
+          if (!(*firstMatchedCell)->caloDDE()) continue;
+          CaloCell_ID::CaloSample cellLayer = (*firstMatchedCell)->caloDDE()->getSampling();
+          caloSamplingNumberToEnergySum_CellEnergy.at((CaloSampling::CaloSample)(cellLayer)) += (*firstMatchedCell)->energy();
+        }
+        //Decorate the tracks with the energy deposits in the correct layers
+        for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
+            (m_cutToCaloSamplingNumberToDecorator_CellEnergy.at(cutName).at(caloSamplingNumber))(*track) = caloSamplingNumberToEnergySum_CellEnergy.at(caloSamplingNumber);
+        }
       }
 
       if (m_doCutflow) m_cutflow_trk -> Fill(m_cutflow_trk_pass_loop_matched_cells, 1);
 
-      /*Cell decorations*/
-      decorator_CellEnergy_PreSamplerB_200(*track) = matchedCellEnergy[0][0];
-      decorator_CellEnergy_PreSamplerB_100(*track) = matchedCellEnergy[1][0];
-      decorator_CellEnergy_PreSamplerE_200(*track) = matchedCellEnergy[0][4];
-      decorator_CellEnergy_PreSamplerE_100(*track) = matchedCellEnergy[1][4];
 
-      decorator_CellEnergy_EMB1_200(*track) = matchedCellEnergy[0][1];
-      decorator_CellEnergy_EMB1_100(*track) = matchedCellEnergy[1][1];
-      decorator_CellEnergy_EMB2_200(*track) = matchedCellEnergy[0][2];
-      decorator_CellEnergy_EMB2_100(*track) = matchedCellEnergy[1][2];
-      decorator_CellEnergy_EMB3_200(*track) = matchedCellEnergy[0][3];
-      decorator_CellEnergy_EMB3_100(*track) = matchedCellEnergy[1][3];
-
-      decorator_CellEnergy_EME1_200(*track) = matchedCellEnergy[0][5];
-      decorator_CellEnergy_EME1_100(*track) = matchedCellEnergy[1][5];
-      decorator_CellEnergy_EME2_200(*track) = matchedCellEnergy[0][6];
-      decorator_CellEnergy_EME2_100(*track) = matchedCellEnergy[1][6];
-      decorator_CellEnergy_EME3_200(*track) = matchedCellEnergy[0][7];
-      decorator_CellEnergy_EME3_100(*track) = matchedCellEnergy[1][7];
-
-      decorator_CellEnergy_HEC0_200(*track) = matchedCellEnergy[0][8];
-      decorator_CellEnergy_HEC0_100(*track) = matchedCellEnergy[1][8];
-      decorator_CellEnergy_HEC1_200(*track) = matchedCellEnergy[0][9];
-      decorator_CellEnergy_HEC1_100(*track) = matchedCellEnergy[1][9];
-      decorator_CellEnergy_HEC2_200(*track) = matchedCellEnergy[0][10];
-      decorator_CellEnergy_HEC2_100(*track) = matchedCellEnergy[1][10];
-      decorator_CellEnergy_HEC3_200(*track) = matchedCellEnergy[0][11];
-      decorator_CellEnergy_HEC3_100(*track) = matchedCellEnergy[1][11];
-
-      decorator_CellEnergy_TileBar0_200(*track) = matchedCellEnergy[0][12];
-      decorator_CellEnergy_TileBar0_100(*track) = matchedCellEnergy[1][12];
-      decorator_CellEnergy_TileBar1_200(*track) = matchedCellEnergy[0][13];
-      decorator_CellEnergy_TileBar1_100(*track) = matchedCellEnergy[1][13];
-      decorator_CellEnergy_TileBar2_200(*track) = matchedCellEnergy[0][14];
-      decorator_CellEnergy_TileBar2_100(*track) = matchedCellEnergy[1][14];
-
-      decorator_CellEnergy_TileGap1_200(*track) = matchedCellEnergy[0][15];
-      decorator_CellEnergy_TileGap1_100(*track) = matchedCellEnergy[1][15];
-      decorator_CellEnergy_TileGap2_200(*track) = matchedCellEnergy[0][16];
-      decorator_CellEnergy_TileGap2_100(*track) = matchedCellEnergy[1][16];
-      decorator_CellEnergy_TileGap3_200(*track) = matchedCellEnergy[0][17];
-      decorator_CellEnergy_TileGap3_100(*track) = matchedCellEnergy[1][17];
-
-      decorator_CellEnergy_TileExt0_200(*track) = matchedCellEnergy[0][18];
-      decorator_CellEnergy_TileExt0_100(*track) = matchedCellEnergy[1][18];
-      decorator_CellEnergy_TileExt1_200(*track) = matchedCellEnergy[0][19];
-      decorator_CellEnergy_TileExt1_100(*track) = matchedCellEnergy[1][19];
-      decorator_CellEnergy_TileExt2_200(*track) = matchedCellEnergy[0][20];
-      decorator_CellEnergy_TileExt2_100(*track) = matchedCellEnergy[1][20];
-
-      decorator_EM_CellEnergy_0_200(*track) = totalEMCellEnergy[0];
-      decorator_EM_CellEnergy_0_100(*track) = totalEMCellEnergy[1];
-      decorator_HAD_CellEnergy_0_200(*track) = totalHADCellEnergy[0];
-      decorator_HAD_CellEnergy_0_100(*track) = totalHADCellEnergy[1];
-      decorator_Total_CellEnergy_0_200(*track) = totalCellEnergy[0];
-      decorator_Total_CellEnergy_0_100(*track) = totalCellEnergy[1];
-
+      //Decorate the tracks with the vector-like quantities
       decorator_ClusterEnergy_Energy (*track) = ClusterEnergy_Energy;
       decorator_ClusterEnergy_Eta (*track) = ClusterEnergy_Eta;
       decorator_ClusterEnergy_Phi (*track) = ClusterEnergy_Phi;
@@ -1325,15 +625,6 @@ namespace DerivationFramework {
       decorator_ClusterEnergy_firstEnergyDensity (*track) = ClusterEnergy_firstEnergyDensity;
       decorator_ClusterEnergy_lambdaCenter (*track) = ClusterEnergy_lambdaCenter;
       decorator_ClusterEnergy_maxEnergyLayer (*track) = ClusterEnergy_maxEnergyLayer;
-
-      decorator_CellEnergy_Energy (*track) = CellEnergy_Energy;
-      decorator_CellEnergy_Eta (*track) = CellEnergy_Eta;
-      decorator_CellEnergy_Phi (*track) = CellEnergy_Phi;
-      decorator_CellEnergy_dRToTrack (*track) = CellEnergy_dRToTrack;
-      decorator_CellEnergy_firstEnergyDensity (*track) = CellEnergy_firstEnergyDensity;
-      decorator_CellEnergy_emProbability (*track) = CellEnergy_emProbability;
-      decorator_CellEnergy_lambdaCenter (*track) = CellEnergy_lambdaCenter;
-      decorator_CellEnergy_maxEnergyLayer (*track) = CellEnergy_maxEnergyLayer;
 
       decorator_ClusterEnergyLCW_Energy (*track) = ClusterEnergyLCW_Energy;
       decorator_ClusterEnergyLCW_Eta (*track) = ClusterEnergyLCW_Eta;
@@ -1372,28 +663,28 @@ namespace DerivationFramework {
     return StatusCode::SUCCESS;
   }
 
-   std::map< std::string, std::map<int, std::map<unsigned int, float> > > TrackCaloDecorator::getHitsSumAllBackground(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode, const xAOD::TruthParticleContainer* truthParticles) const
+   std::map< std::string, std::map<int, std::map<CaloSampling::CaloSample, float> > > TrackCaloDecorator::getHitsSumAllBackground(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode, const xAOD::TruthParticleContainer* truthParticles) const
   {
     //Sum all of the calibration hits in all of the layers, and return a map of calo layer to energy sum
     //Gather all of the information pertaining to the total energy deposited in the cells of this cluster
     
     //a std::map of energy type -> pdgID -> calocelllayer -> total energy deposited
-    std::map<std::string, std::map<int, std::map<unsigned int, float> > >hitsSum;
+    std::map<std::string, std::map<int, std::map<CaloSampling::CaloSample, float> > >hitsSum;
 
-    hitsSum["EM"] = std::map<int, std::map<unsigned int, float> >();
-    hitsSum["NonEM"] = std::map<int, std::map<unsigned int, float> >();
-    hitsSum["Escaped"] = std::map<int, std::map<unsigned int, float> >();
-    hitsSum["Invisible"]= std::map< int, std::map<unsigned int, float> >();
+    hitsSum["EM"] = std::map<int, std::map<CaloSampling::CaloSample, float> >();
+    hitsSum["NonEM"] = std::map<int, std::map<CaloSampling::CaloSample, float> >();
+    hitsSum["Escaped"] = std::map<int, std::map<CaloSampling::CaloSample, float> >();
+    hitsSum["Invisible"]= std::map< int, std::map<CaloSampling::CaloSample, float> >();
 
     //Loop though all of the truth particles in the event, and make sure that the std::map has an entry for it
     for(const auto& truthPart: *truthParticles){
         int pdgID = truthPart->pdgId();
         if (hitsSum["EM"].find( pdgID) == hitsSum["EM"].end()){
-            hitsSum["EM"][pdgID] = std::map<unsigned int, float>();
-            hitsSum["NonEM"][pdgID] = std::map<unsigned int, float>();
-            hitsSum["Escaped"][pdgID] = std::map<unsigned int, float>();
-            hitsSum["Invisible"][pdgID] = std::map<unsigned int, float>();
-            for(unsigned int m=0; m<CaloCell_ID::CaloSample::TileExt2+1; m++) {
+            hitsSum["EM"][pdgID] = std::map<CaloSampling::CaloSample, float>();
+            hitsSum["NonEM"][pdgID] = std::map<CaloSampling::CaloSample, float>();
+            hitsSum["Escaped"][pdgID] = std::map<CaloSampling::CaloSample, float>();
+            hitsSum["Invisible"][pdgID] = std::map<CaloSampling::CaloSample, float>();
+            for(CaloSampling::CaloSample m : m_caloSamplingNumbers) {
                 hitsSum["EM"][pdgID][m] = 0.0;
                 hitsSum["NonEM"][pdgID][m] = 0.0;
                 hitsSum["Escaped"][pdgID][m] = 0.0;
@@ -1402,7 +693,7 @@ namespace DerivationFramework {
         }
     }
 
-    for(unsigned int m=0; m<CaloCell_ID::CaloSample::TileExt2+1; m++) {
+    for(CaloSampling::CaloSample m : m_caloSamplingNumbers) {
         //Sum the energy from all particles 
         hitsSum["EM"][0][m] = 0.0;
         hitsSum["NonEM"][0][m] = 0.0;
@@ -1415,8 +706,10 @@ namespace DerivationFramework {
         std::cout<<"hits container was null"<<std::endl;
         return hitsSum;
     }
+    if (particle_barcode == 0){
+        return hitsSum;
+    }
 
-    std::cout<<"Getting background hits in cells of this cluster"<<std::endl;
     const CaloClusterCellLink* cellLinks=cl->getCellLinks();
     if ((cellLinks != NULL)){
        CaloCalibrationHitContainer::const_iterator it;
@@ -1441,10 +734,6 @@ namespace DerivationFramework {
            //continue because the hit isn't background
            if (hitIsForTrackParticle) continue;
 
-           //All hits are associated with a truth particle.
-           //if (pdgIDHit == 0){std::cout<<"Found a hit without a truth particle"<<std::endl;}
-           //std::cout<<"The particle barcode"<<particle_barcode<<std::endl;
-           //std::cout<<"The hit barcode"<<hitID<<std::endl;
 
            CaloClusterCellLink::const_iterator lnk_it=cellLinks->begin();
            CaloClusterCellLink::const_iterator lnk_it_e=cellLinks->end();
@@ -1464,29 +753,33 @@ namespace DerivationFramework {
     return hitsSum;
   }
 
-  std::map< std::string, std::map<unsigned int, float> > TrackCaloDecorator::getHitsSum(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode) const
-  {
+  std::map<std::string, std::map<CaloSampling::CaloSample, float> > TrackCaloDecorator::getHitsSum(const CaloCalibrationHitContainer* hits,const  xAOD::CaloCluster* cl,  unsigned int particle_barcode) const{
     //Sum all of the calibration hits in all of the layers, and return a map of calo layer to energy sum
     //Gather all of the information pertaining to the total energy deposited in the cells of this cluster
-    std::map<std::string, std::map<unsigned int, float> > hitsSum;
+    std::map<std::string, std::map<CaloSampling::CaloSample, float> > hitsSum;
 
-    hitsSum["EM"] = std::map<unsigned int, float>();
-    hitsSum["NonEM"] = std::map<unsigned int, float>();
-    hitsSum["Escaped"] = std::map<unsigned int, float>();
-    hitsSum["Invisible"]= std::map<unsigned int, float>();
+    hitsSum["EM"] = std::map<CaloSampling::CaloSample, float>();
+    hitsSum["NonEM"] = std::map<CaloSampling::CaloSample, float>();
+    hitsSum["Escaped"] = std::map<CaloSampling::CaloSample, float>();
+    hitsSum["Invisible"]= std::map<CaloSampling::CaloSample, float>();
 
-    for(unsigned int m=0; m<CaloCell_ID::CaloSample::TileExt2+1; m++) {
+    for(CaloSampling::CaloSample m : m_caloSamplingNumbers) {
         hitsSum["EM"][m] = 0.0;
         hitsSum["NonEM"][m] = 0.0;
         hitsSum["Escaped"][m] = 0.0;
         hitsSum["Invisible"][m] = 0.0;
     }
+
     if (hits == NULL)
     {
         std::cout<<"hits container was null"<<std::endl;
         return hitsSum;
     }
-    std::cout<<"Getting cells inside this cluster"<<std::endl;
+
+    if (particle_barcode == 0){
+        return hitsSum;
+    }
+
     const CaloClusterCellLink* cellLinks=cl->getCellLinks();
     if ((cellLinks != NULL)){
       CaloClusterCellLink::const_iterator lnk_it=cellLinks->begin();
