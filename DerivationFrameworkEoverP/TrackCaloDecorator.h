@@ -42,8 +42,8 @@ namespace DerivationFramework {
   class TrackCaloDecorator : public AthAlgTool, public IAugmentationTool {
     public: 
       TrackCaloDecorator(const std::string& t, const std::string& n, const IInterface* p);
-      std::map<std::string, std::map<CaloSampling::CaloSample, float> > getHitsSum(const CaloCalibrationHitContainer* hits,const  xAOD::CaloCluster* cl,  unsigned int particle_barcode) const;
-      std::map< std::string, std::map<int, std::map<CaloSampling::CaloSample, float> > > getHitsSumAllBackground(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode, const xAOD::TruthParticleContainer* truthParticles) const;
+      void getHitsSum(const CaloCalibrationHitContainer* hits,const  xAOD::CaloCluster* cl,  unsigned int particle_barcode, std::map<std::string, std::map<CaloSampling::CaloSample, float> >& hitsMap) const;
+      void getHitsSumAllBackground(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode, const xAOD::TruthParticleContainer* truthParticles, std::map< std::string, std::map<CaloSampling::CaloSample, std::map<int ,float> > >& hitsMap) const;
 
      std::vector<std::string> m_cutNames;
      std::map<std::string, float> m_stringToCut;
@@ -52,6 +52,26 @@ namespace DerivationFramework {
       std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_CellEnergy;
       std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterEnergy;
       std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_LCWClusterEnergy;
+
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterEMActiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterNonEMActiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterInvisibleActiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterEscapedActiveCalibHitEnergy;
+
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterEMInactiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterNonEMInactiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterInvisibleInactiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterEscapedInactiveCalibHitEnergy;
+
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< std::map<int, float> > > > m_cutToCaloSamplingNumberToDecorator_ClusterBackgroundEMActiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< std::map<int, float> > > > m_cutToCaloSamplingNumberToDecorator_ClusterBackgroundNonEMActiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< std::map<int, float> > > > m_cutToCaloSamplingNumberToDecorator_ClusterBackgroundInvisibleActiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< std::map<int, float> > > > m_cutToCaloSamplingNumberToDecorator_ClusterBackgroundEscapedActiveCalibHitEnergy;
+
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< std::map<int, float> > > > m_cutToCaloSamplingNumberToDecorator_ClusterBackgroundEMInactiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< std::map<int, float> > > > m_cutToCaloSamplingNumberToDecorator_ClusterBackgroundNonEMInactiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< std::map<int, float> > > > m_cutToCaloSamplingNumberToDecorator_ClusterBackgroundInvisibleInactiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< std::map<int, float> > > > m_cutToCaloSamplingNumberToDecorator_ClusterBackgroundEscapedInactiveCalibHitEnergy;
 
       std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > >  m_caloSamplingNumberToDecorator_extrapolTrackEta;
       std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > >  m_caloSamplingNumberToDecorator_extrapolTrackPhi;
