@@ -60,6 +60,15 @@ EOPTrackToCaloExtensionTool = Trk__ParticleCaloExtensionTool(name="EOPParticleEx
 ToolSvc += EOPTrackToCaloExtensionTool
 
 #====================================================================
+# THE MC TRUTH CLASSIFICATION TOOL
+#====================================================================
+from MCTruthClassifier.MCTruthClassifierConf import MCTruthClassifier
+CommonTruthClassifier = MCTruthClassifier(name = "CommonTruthClassifier",
+                                            ParticleCaloExtensionTool=EOPTrackToCaloExtensionTool) 
+ToolSvc += CommonTruthClassifier
+
+
+#====================================================================
 # AUGMENTATION TOOL
 #====================================================================
 from DerivationFrameworkEoverP.DerivationFrameworkEoverPConf import DerivationFramework__TrackCaloDecorator
@@ -69,6 +78,7 @@ CaloDeco = DerivationFramework__TrackCaloDecorator(name = "TrackCaloDecorator",
                                                    DecorationPrefix = "CALO",
                                                    TheTrackExtrapolatorTool = EOPTrackToCaloExtensionTool,
                                                    Extrapolator = EOPAtlasExtrapolator,
+                                                   MCTruthClassifier = CommonTruthClassifier,
                                                    DoCutflow = doCutflow)
 ToolSvc += CaloDeco
 

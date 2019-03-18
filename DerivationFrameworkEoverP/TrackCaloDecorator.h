@@ -2,6 +2,7 @@
  * @file     TrackCaloDecorator.h
  * @author   Millie McDonald <emcdonal@cern.ch> // Main author
  * @author   Joakim Olsson <joakim.olsson@cern.ch> // Modifications and cross-checks
+ * @author   Lukas Adamek <Lukas.Adamek@cern.ch> //Modifications to include calibration hit information
  * @brief    A derivation for ATLAS Run II E/p analyses. Extrapolates all tracks to calorimeter and decorates them with cluster and cell energies.
  * Updated: 2 December 2015, Millie McDonald
  * Updated: 12 December 2016, Joakim Olsson
@@ -16,6 +17,7 @@
 #include "TTree.h"
 
 #include "AthenaBaseComps/AthAlgTool.h"
+#include "MCTruthClassifier/IMCTruthClassifier.h"
 #include "DerivationFrameworkInterfaces/IAugmentationTool.h"
 #include "GaudiKernel/ToolHandle.h"
 #include "GaudiKernel/ServiceHandle.h"
@@ -24,6 +26,8 @@
 #include "RecoToolInterfaces/IParticleCaloExtensionTool.h"
 #include "xAODCaloEvent/CaloClusterContainer.h"
 #include "xAODCaloEvent/CaloClusterChangeSignalState.h"
+#include "xAODTruth/TruthParticleContainer.h"
+#include "CaloSimEvent/CaloCalibrationHitContainer.h"  
 
 class TileTBID;
 class ICaloSurfaceHelper;
@@ -38,6 +42,49 @@ namespace DerivationFramework {
   class TrackCaloDecorator : public AthAlgTool, public IAugmentationTool {
     public: 
       TrackCaloDecorator(const std::string& t, const std::string& n, const IInterface* p);
+      void getHitsSum(const CaloCalibrationHitContainer* hits,const  xAOD::CaloCluster* cl,  unsigned int particle_barcode, std::map<std::string, std::map<CaloSampling::CaloSample, float> >& hitsMap) const;
+      void getHitsSumAllBackground(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode, const xAOD::TruthParticleContainer* truthParticles, std::vector<int> sumForThesePDGIDs, std::vector<int> skipThesePDGIDs,  std::map< std::string, std::map<CaloSampling::CaloSample, float>  >& hitsMap) const;
+
+     std::vector<std::string> m_cutNames;
+     std::map<std::string, float> m_stringToCut;
+     std::vector<CaloSampling::CaloSample> m_caloSamplingNumbers;
+
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_CellEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_LCWClusterEnergy;
+
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterEMActiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterNonEMActiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterInvisibleActiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterEscapedActiveCalibHitEnergy;
+
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterEMInactiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterNonEMInactiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterInvisibleInactiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterEscapedInactiveCalibHitEnergy;
+
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundEMActiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundNonEMActiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundInvisibleActiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundEscapedActiveCalibHitEnergy;
+
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundEMInactiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundNonEMInactiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundInvisibleInactiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundEscapedInactiveCalibHitEnergy;
+
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundEMActiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundNonEMActiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundInvisibleActiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundEscapedActiveCalibHitEnergy;
+
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundEMInactiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundNonEMInactiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundInvisibleInactiveCalibHitEnergy;
+      std::map<std::string, std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundEscapedInactiveCalibHitEnergy;
+
+      std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > >  m_caloSamplingNumberToDecorator_extrapolTrackEta;
+      std::map<CaloSampling::CaloSample, SG::AuxElement::Decorator< float > >  m_caloSamplingNumberToDecorator_extrapolTrackPhi;
 
       StatusCode initialize();
       StatusCode finalize();
@@ -61,6 +108,7 @@ namespace DerivationFramework {
 
       ToolHandle<Trk::IExtrapolator> m_extrapolator;
       ToolHandle<Trk::IParticleCaloExtensionTool> m_theTrackExtrapolatorTool;
+      ToolHandle<IMCTruthClassifier> m_truthClassifier;
       Trk::TrackParametersIdHelper* m_trackParametersIdHelper;
       ToolHandle<ICaloSurfaceHelper> m_surfaceHelper;
 

@@ -7,6 +7,8 @@ atlas_subdir( DerivationFrameworkEoverP )
 
 # Declare the package's dependencies:
 atlas_depends_on_subdirs( PUBLIC
+              Calorimeter/CaloUtils
+              Control/AthContainers
 			  GaudiKernel
 			  Event/xAOD/xAODMuon
 			  Control/DataModel
@@ -19,15 +21,16 @@ atlas_depends_on_subdirs( PUBLIC
 			  Reconstruction/RecoTools/RecoToolInterfaces
 			  Event/EventPrimitives
 			  PhysicsAnalysis/BPhys/BPhysTools
-                          External/GaudiInterfaces
-                          External/AtlasROOT
-                          PhysicsAnalysis/DerivationFramework/DerivationFrameworkInterfaces
-                          Trigger/TrigEvent/TrigCaloEvent
-                          Calorimeter/CaloIdentifier
-                          Reconstruction/RecoTools/RecoToolInterfaces
-                          Event/xAOD/xAODCaloEvent
-                          Event/xAOD/xAODMuon
+              External/GaudiInterfaces
+              External/AtlasROOT
+              PhysicsAnalysis/DerivationFramework/DerivationFrameworkInterfaces
+              Trigger/TrigEvent/TrigCaloEvent
+              Calorimeter/CaloIdentifier
+              Reconstruction/RecoTools/RecoToolInterfaces
+              Event/xAOD/xAODMuon
+              Event/xAOD/xAODTruth
 			  PRIVATE
+              Event/xAOD/xAODCaloEvent
 			  Event/xAOD/xAODBase
 			  Event/xAOD/xAODMetaData
 			  Tracking/TrkVertexFitter/TrkVertexAnalysisUtils
@@ -39,28 +42,27 @@ atlas_depends_on_subdirs( PUBLIC
 			  Tracking/TrkEvent/TrkCaloExtension
 			  InnerDetector/InDetConditions/InDetBeamSpotService
 			  InnerDetector/InDetRecTools/InDetTrackSelectionTool
-                          Event/xAOD/xAODEventInfo
-                          Calorimeter/CaloEvent
-                          Calorimeter/CaloSimEvent
-                          Calorimeter/CaloUtils
+              Event/xAOD/xAODEventInfo
+              Calorimeter/CaloSimEvent
 			  PhysicsAnalysis/JpsiUpsilonTools
 			  TrkVKalVrtFitter/TrkVKalVrtFitter
 			  TileCalorimeter/TileEvent
-                          Tracking/TrkExtrapolation/TrkExInterfaces
-                          Tracking/TrkEvent/TrkParamters
+              Tracking/TrkExtrapolation/TrkExInterfaces
+              Tracking/TrkEvent/TrkParamters
 			  Tracking/TrkEvent/TrkTrack
-                 	  Event/xAOD/xAODTracking 
-                          Calorimeter/CaloTrackingGeometry
-                          Tracking/TrkDetDescr/TrkSurfaces
-                          DetectorDescription/GeoPrimitives
-                          Tracking/TrkEvent/TrkCaloExtension
-                          Tracking/TrkEvent/TrkParamtersIdentificationHelpers
+       	      Event/xAOD/xAODTracking 
+              Calorimeter/CaloTrackingGeometry
+              Tracking/TrkDetDescr/TrkSurfaces
+              DetectorDescription/GeoPrimitives
+              Tracking/TrkEvent/TrkCaloExtension
+              Tracking/TrkEvent/TrkParamtersIdentificationHelpers
 			  Tracking/TrkVertexFitter/TrkVertexAnalysisUtils
 			  InnerDetector/InDetConditions/InDetBeamSpotService
 			  PhysicsAnalysis/BPhys/BPhysTools
 			  Trigger/TrigAnalysis/TrigDecisionTool
-                          Calorimeter/CaloDetDescr
+              Calorimeter/CaloDetDescr
 			  InnerDetector/InDetRecAlgs/InDetV0Finder
+              PhysicsAnalysis/MCTruthClassifier
 )
 
 # Find the needed external(s):
@@ -72,9 +74,9 @@ atlas_install_joboptions( share/*.py )
 
 atlas_add_component(DerivationFrameworkEoverP DerivationFrameworkEoverP/*.h src/*.cxx src/components/*.cxx
                    INCLUDE_DIRS ${ROOT_INCLUDE_DIRS} ${HEPPDT_INCLUDE_DIRS}
-      		   LINK_LIBRARIES  ${ROOT_LIBRARIES}  ${HEPPDT_LIBRARIES}
-                   ${release_libs} GaudiKernel xAODEventInfo TrkExInterfaces
+      		       LINK_LIBRARIES  ${ROOT_LIBRARIES}  ${HEPPDT_LIBRARIES}
+                   ${release_libs} GaudiKernel xAODEventInfo TrkExInterfaces CaloUtilsLib
                    RecoToolInterfaces xAODMuon JpsiUpsilonTools DataModel EventPrimitives xAODBPhys
                    PRIVATE_LINK_LIBRARIES TrkVertexAnalysisUtils TrackToVertex InDetV0FinderLib InDetBeamSpotServiceLib 
-                   TrkVertexAnalysisUtilsLib TrkVKalVrtFitterLib CaloSimEvent
+                   TrkVertexAnalysisUtilsLib TrkVKalVrtFitterLib CaloSimEvent MCTruthClassifierLib xAODTruth 
 )
