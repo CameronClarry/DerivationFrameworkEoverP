@@ -762,18 +762,19 @@ namespace DerivationFramework {
        for(it = hits->begin(); it!=hits->end(); it++) {
            hit = *it;
 
-           //check if the hit is for the track particle. then it isn't a background. Don't sum for it.
-           //check that we can find a truth particle for the hit. If we can, then sum the background for this pdgID. Else sum the energy into the background hits
-           int pdgIDHit = 0;
+           //check if the hit is for the track particle. If it is from the track particle, it isn't background. Don't sum the energy deposits for it.
            unsigned int hitID = hit->particleID();
+           if (hitID == particle_barcode){continue;}
            
-           bool hitIsForTrackParticle = false;
+           //loop through the truth particle container, and find the pdg of the truth particle that caused the hit
+           int pdgIDHit = 0;
            for(const auto& truthPart: *truthParticles){
                unsigned int truthPartBarcode = truthPart->barcode();
-               if (hitID == truthPartBarcode){pdgIDHit = truthPart->pdgId(); break;}
-               if (hitID == particle_barcode){hitIsForTrackParticle = true; break;}
+               if (hitID == truthPartBarcode){pdgIDHit = truthPart->pdgId(); break;} 
            }
-           if (hitIsForTrackParticle) continue;
+           if (pdgIDHit == 0){ATH_MSG_WARNING("Warning, couldn't find a truth particle for this hit");}
+
+           //Check if this is a PDG ID that should be summed
            //bool shouldSum = true;
            if (sumForThesePDGIDs.size() != 0){
                if (std::find(sumForThesePDGIDs.begin(), sumForThesePDGIDs.end(), pdgIDHit) == sumForThesePDGIDs.end()){
@@ -781,6 +782,7 @@ namespace DerivationFramework {
                    continue;
                }
            }
+           //Check if this is a PDG ID that should be skipped
            else if (skipThesePDGIDs.size() != 0){
                if (std::find(skipThesePDGIDs.begin(), skipThesePDGIDs.end(), pdgIDHit) != skipThesePDGIDs.end()){
                    //shouldSum = false;
@@ -788,7 +790,6 @@ namespace DerivationFramework {
                }
            }
 
-           //continue because the hit isn't background
            CaloClusterCellLink::const_iterator lnk_it=cellLinks->begin();
            CaloClusterCellLink::const_iterator lnk_it_e=cellLinks->end();
            for (;lnk_it!=lnk_it_e;++lnk_it) {
