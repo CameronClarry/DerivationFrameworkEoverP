@@ -4,12 +4,11 @@ import subprocess as sp
 
 # Joakim Olsson <joakim.olsson@cern.ch>
 
-tag = '20180724_test2'
+tag = '20190321_test3'
 user = 'luadamek'
 
-nFiles = 2
-nFilesPerJob = 2
-nEventsPerFile = 100
+nFiles = 1
+nFilesPerJob = 1
 
 # If sub-jobs exceed the walltime limit, they will get killed. When you want to submit long running jobs (e.g., customized G4 simulation), submit them to sites where longer walltime limit is available by specifying the expected execution time (in second) to the --maxCpuCount option.
 maxCpuCount = 252000 # 70 hrs ##172800 # 48 hrs
@@ -33,15 +32,15 @@ doBuildAll = True
            # 'data15_13TeV.00267360.physics_MinBias.DAOD_EOP.r7922']
 # outDSs  = ['mc15_13TeV.428001.single_piplus_logE0p2to2000.DAOD_EOP.e3501_s2832_r8014']
 
-inDSs = ["mc16_13TeV.361020.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ0W.recon.ESD.e3569_s3170_r10572",\
-         "mc16_13TeV.361021.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ1W.recon.ESD.e3569_s3170_r10572",\
-         "mc16_13TeV.361022.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ2W.recon.ESD.e3668_s3170_r10572"]
+inDSs = [\
+"data17_13TeV.00341294.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
+"mc16_13TeV.361020.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ0W.recon.ESD.e3569_s3170_r10572"]
 
-outDSs = ["mc16_13TeV.361020.jetjet.DAOD_EOP.e3569_s3170_r10572",\
-         "mc16_13TeV.361021.jetjet.DAOD_EOP.e3569_s3170_r10572",\
-         "mc16_13TeV.361022.jetjet.DAOD_EOP.e3668_s3170_r10572"]
+outDSs = [\
+"data17_13TeV.00341294.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
+"mc16_13TeV.361020.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ0W.deriv.DAOD_EOP.e3569_s3170_r10572"]
 
-setup = '--nFiles '+str(nFiles)+' --nFilesPerJob '+str(nFilesPerJob)+' --nEventsPerFile '+str(nEventsPerFile)+' --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputDAOD_EOPFile=%OUT.pool.root --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything --maxEvents='+str(nEventsPerFile)+'" --extOutFile cutflow.root --individualOutDS'
+setup = '--nFiles '+str(nFiles)+' --nFilesPerJob '+str(nFilesPerJob)+ ' --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputDAOD_EOPFile=%OUT.pool.root --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything" --individualOutDS'
 print 'setup: '+setup
 
 config = ''

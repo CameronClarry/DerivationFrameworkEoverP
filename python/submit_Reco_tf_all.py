@@ -5,7 +5,7 @@ import subprocess as sp
 # Joakim Olsson <joakim.olsson@cern.ch>
 # Lukas Adamek <Lukas.adamek@cern.ch>
 
-tag = '070119_secondaries1'
+tag = '290319_calibhitinfo'
 user = 'luadamek'
 
 nFilesPerJob = 1
@@ -41,28 +41,30 @@ doBuildAll = True
          #"mc15_13TeV.361021.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ1W.recon.ESD.e3569_s2832_r7968"
 
 inDSs = [\
-"data17_13TeV.00341294.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
-"data17_13TeV.00341312.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
-"data17_13TeV.00341419.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
-"data17_13TeV.00341534.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
-"data17_13TeV.00341615.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
-"data17_13TeV.00341649.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
-"mc16_13TeV.361020.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ0W.recon.ESD.e3569_s3170_r10572",\
+#"data17_13TeV.00341294.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
+#"data17_13TeV.00341312.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
+#"data17_13TeV.00341419.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
+#"data17_13TeV.00341534.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
+#"data17_13TeV.00341615.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
+#"data17_13TeV.00341649.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
+#"mc16_13TeV.361020.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ0W.recon.ESD.e3569_s3170_r10572",\
 "mc16_13TeV.361021.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ1W.recon.ESD.e3569_s3170_r10572",\
-"mc16_13TeV.361022.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ2W.recon.ESD.e3668_s3170_r10572"]
+"mc16_13TeV.361022.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ2W.recon.ESD.e3668_s3170_r10572"\
+]
 
 outDSs = [\
-"data17_13TeV.00341294.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
-"data17_13TeV.00341312.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
-"data17_13TeV.00341419.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
-"data17_13TeV.00341534.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
-"data17_13TeV.00341615.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
-"data17_13TeV.00341649.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
-"mc16_13TeV.361020.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ0W.deriv.DAOD_EOP.e3569_s3170_r10572",\
+#"data17_13TeV.00341294.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
+#"data17_13TeV.00341312.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
+#"data17_13TeV.00341419.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
+#"data17_13TeV.00341534.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
+#"data17_13TeV.00341615.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
+#"data17_13TeV.00341649.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
+#"mc16_13TeV.361020.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ0W.deriv.DAOD_EOP.e3569_s3170_r10572",\
 "mc16_13TeV.361021.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ1W.deriv.DAOD_EOP.e3569_s3170_r10572",\
-"mc16_13TeV.361022.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ2W.deriv.DAOD_EOP.e3668_s3170_r10572"]
+"mc16_13TeV.361022.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ2W.deriv.DAOD_EOP.e3668_s3170_r10572"\
+]
 
-setup = '--nFilesPerJob '+str(nFilesPerJob)+' --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputDAOD_EOPFile=%OUT.pool.root --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything" --extOutFile cutflow.root --individualOutDS'
+setup = '--nFilesPerJob '+str(nFilesPerJob)+' --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputDAOD_EOPFile=%OUT.pool.root --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything" --individualOutDS'
 print 'setup: '+setup
 
 config = ''
