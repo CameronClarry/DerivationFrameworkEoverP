@@ -761,7 +761,7 @@ namespace DerivationFramework {
   {
       //Sum all of the calibration hits in all of the layers, and return a map of calo layer to energy sum
       //Gather all of the information pertaining to the total energy deposited in the cells of this cluster
-      std::cout<<"Summing energy deposits for particle "<<particle_barcode<<std::endl;
+      if (particle_barcode == 0) return;
 
       if (hits == NULL)
       {
@@ -780,6 +780,20 @@ namespace DerivationFramework {
               //check if the hit is for the track particle. If it is from the track particle, it isn't background. Don't sum the energy deposits for it.
               unsigned int hitID = hit->particleID();
               if (hitID == particle_barcode){continue;}
+
+              //check that the hit was in the cluster
+              bool hitInCluster = false;
+              CaloClusterCellLink::const_iterator lnk_it=cellLinks->begin();
+              CaloClusterCellLink::const_iterator lnk_it_e=cellLinks->end();
+              for (;lnk_it!=lnk_it_e;++lnk_it) {
+                  const CaloCell* cell=*lnk_it;
+                  CaloCell_ID::CaloSample cellLayer = cell->caloDDE()->getSampling();
+                  if (cell->ID() == hit->cellID()){
+                      hitInCluster=true;
+                      break;
+                  }
+              }
+              if (not hitInCluster){continue;}
 
               //loop through the truth particle container, and find the pdg of the truth particle that caused the hit
               int pdgIDHit = 0;
@@ -805,8 +819,6 @@ namespace DerivationFramework {
                   }
               }
 
-              CaloClusterCellLink::const_iterator lnk_it=cellLinks->begin();
-              CaloClusterCellLink::const_iterator lnk_it_e=cellLinks->end();
               for (;lnk_it!=lnk_it_e;++lnk_it) {
                   const CaloCell* cell=*lnk_it;
                   CaloCell_ID::CaloSample cellLayer = cell->caloDDE()->getSampling();
