@@ -40,7 +40,7 @@ outDSs = [\
 "data17_13TeV.00341294.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
 "mc16_13TeV.361020.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ0W.deriv.DAOD_EOP.e3569_s3170_r10572"]
 
-setup = '--nFiles '+str(nFiles)+' --nFilesPerJob '+str(nFilesPerJob)+ ' --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputDAOD_EOPFile=%OUT.pool.root --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything" --individualOutDS'
+setup = '--nFiles '+str(nFiles)+' --nFilesPerJob '+str(nFilesPerJob)+ ' --excludedSite ANALY_BNL_SHORT --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputDAOD_EOPFile=%OUT.pool.root --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything" --individualOutDS'
 print 'setup: '+setup
 
 config = ''
