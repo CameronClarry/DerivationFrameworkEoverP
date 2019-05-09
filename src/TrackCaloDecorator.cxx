@@ -267,6 +267,11 @@ namespace DerivationFramework {
    SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_Phi (m_sgName + "_ClusterEnergy_Phi");
    SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_dRToTrack (m_sgName + "_ClusterEnergy_dRToTrack");
    SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_lambdaCenter (m_sgName + "_ClusterEnergy_lambdaCenter");
+
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_deltaAlpha (m_sgName + "_ClusterEnergy_deltaAlpha");
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_secondR (m_sgName + "_ClusterEnergy_secondR");
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_secondLambda (m_sgName + "_ClusterEnergy_secondLambda");
+
    SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergy_emProbability (m_sgName + "_ClusterEnergy_emProbability");
    SG::AuxElement::Decorator< std::vector<int> > decorator_ClusterEnergy_maxEnergyLayer (m_sgName + "_ClusterEnergy_maxEnergyLayer");
    SG::AuxElement::Decorator< std::vector<int> > decorator_ClusterEnergy_IDNumber (m_sgName + "_ClusterEnergy_IDNumber");
@@ -277,6 +282,11 @@ namespace DerivationFramework {
    SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_Phi (m_sgName + "_ClusterEnergyLCW_Phi");
    SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_dRToTrack (m_sgName + "_ClusterEnergyLCW_dRToTrack");
    SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_lambdaCenter (m_sgName + "_ClusterEnergyLCW_lambdaCenter");
+
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_deltaAlpha (m_sgName + "_ClusterEnergyLCW_deltaAlpha");
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_secondR (m_sgName + "_ClusterEnergyLCW_secondR");
+   SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_secondLambda (m_sgName + "_ClusterEnergyLCW_secondLambda");
+
    SG::AuxElement::Decorator< std::vector<float> > decorator_ClusterEnergyLCW_emProbability (m_sgName + "_ClusterEnergyLCW_emProbability");
    SG::AuxElement::Decorator< std::vector<int> > decorator_ClusterEnergyLCW_maxEnergyLayer (m_sgName + "_ClusterEnergyLCW_maxEnergyLayer");
    SG::AuxElement::Decorator< std::vector<int> > decorator_ClusterEnergyLCW_IDNumber (m_sgName + "_ClusterEnergyLCW_IDNumber");
@@ -352,6 +362,9 @@ namespace DerivationFramework {
       decorator_ClusterEnergy_emProbability (*track) = std::vector<float>();
       decorator_ClusterEnergy_firstEnergyDensity (*track) = std::vector<float>();
       decorator_ClusterEnergy_lambdaCenter (*track) = std::vector<float>();
+      decorator_ClusterEnergy_deltaAlpha (*track) = std::vector<float>();
+      decorator_ClusterEnergy_secondLambda (*track) = std::vector<float>();
+      decorator_ClusterEnergy_secondR (*track) = std::vector<float>();
       decorator_ClusterEnergy_maxEnergyLayer (*track) = std::vector<int>();
       decorator_ClusterEnergy_IDNumber (*track) = std::vector<int>();
 
@@ -362,6 +375,9 @@ namespace DerivationFramework {
       decorator_ClusterEnergyLCW_firstEnergyDensity (*track) = std::vector<float>();
       decorator_ClusterEnergyLCW_dRToTrack (*track) = std::vector<float>();
       decorator_ClusterEnergyLCW_lambdaCenter (*track) = std::vector<float>();
+      decorator_ClusterEnergyLCW_deltaAlpha (*track) = std::vector<float>();
+      decorator_ClusterEnergyLCW_secondLambda (*track) = std::vector<float>();
+      decorator_ClusterEnergyLCW_secondR (*track) = std::vector<float>();
       decorator_ClusterEnergyLCW_maxEnergyLayer (*track) = std::vector<int>();
       decorator_ClusterEnergyLCW_IDNumber (*track) = std::vector<int>();
 
@@ -443,6 +459,9 @@ namespace DerivationFramework {
       std::vector<float> ClusterEnergy_Phi;
       std::vector<float> ClusterEnergy_dRToTrack;
       std::vector<float> ClusterEnergy_lambdaCenter;
+      std::vector<float> ClusterEnergy_secondLambda;
+      std::vector<float> ClusterEnergy_secondR;
+      std::vector<float> ClusterEnergy_deltaAlpha;
       std::vector<float> ClusterEnergy_firstEnergyDensity;
       std::vector<float> ClusterEnergy_emProbability;
       std::vector<int> ClusterEnergy_IDNumber;
@@ -453,6 +472,9 @@ namespace DerivationFramework {
       std::vector<float> ClusterEnergyLCW_Phi;
       std::vector<float> ClusterEnergyLCW_dRToTrack;
       std::vector<float> ClusterEnergyLCW_lambdaCenter;
+      std::vector<float> ClusterEnergyLCW_secondLambda;
+      std::vector<float> ClusterEnergyLCW_secondR;
+      std::vector<float> ClusterEnergyLCW_deltaAlpha;
       std::vector<float> ClusterEnergyLCW_firstEnergyDensity;
       std::vector<float> ClusterEnergyLCW_emProbability;
       std::vector<int> ClusterEnergyLCW_IDNumber;
@@ -502,16 +524,29 @@ namespace DerivationFramework {
           double lambda_center;
           double em_probability;
           double first_energy_density;
+          double second_lambda;
+          double delta_alpha;
+          double second_r;
+
+
           if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 501, lambda_center)) {ATH_MSG_WARNING("Couldn't retrieve the cluster lambda center");}
           if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 900, em_probability)) {ATH_MSG_WARNING("Couldn't rertieve the EM Probability");}
           if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 804, first_energy_density)) {ATH_MSG_WARNING("Couldn't rertieve the first energy density moment");}
+          if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 303, delta_alpha)) {ATH_MSG_WARNING("Couldn't rertieve the delta alpha moment");}
+          if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 202, second_lambda)) {ATH_MSG_WARNING("Couldn't rertieve the second lambda moment");}
+          if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 202, second_r)) {ATH_MSG_WARNING("Couldn't rertieve the second radial");}
 
           //we want to include the information about these clusters in the derivation output
           ClusterEnergy_Energy.push_back(cluster->rawE()); //Raw Energy
           ClusterEnergy_Eta.push_back(cluster->rawEta()); //Eta and phi based on EM Scale
           ClusterEnergy_Phi.push_back(cluster->rawPhi()); //Eta and phi based on EM Scale
           ClusterEnergy_dRToTrack.push_back(deltaR);
+
           ClusterEnergy_lambdaCenter.push_back(lambda_center);
+          ClusterEnergy_secondLambda.push_back(second_lambda);
+          ClusterEnergy_deltaAlpha.push_back(delta_alpha);
+          ClusterEnergy_secondR.push_back(second_r);
+
           ClusterEnergy_maxEnergyLayer.push_back(mostEnergeticLayer);
           ClusterEnergy_emProbability.push_back(em_probability);
           ClusterEnergy_IDNumber.push_back(clusterID);
@@ -520,11 +555,17 @@ namespace DerivationFramework {
           if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 501, lambda_center)) {ATH_MSG_WARNING("Couldn't retrieve the cluster lambda center");}
           if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 900, em_probability)) {ATH_MSG_WARNING("Couldn't rertieve the EM Probability");}
           if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 804, first_energy_density)) {ATH_MSG_WARNING("Couldn't rertieve the first energy density moment");}
+          if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 303, delta_alpha)) {ATH_MSG_WARNING("Couldn't rertieve the delta alpha moment");}
+          if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 202, second_lambda)) {ATH_MSG_WARNING("Couldn't rertieve the second lambda moment");}
+          if (!cluster->retrieveMoment((xAOD::CaloCluster_v1::MomentType) 202, second_r)) {ATH_MSG_WARNING("Couldn't rertieve the second radial");}
           ClusterEnergyLCW_Energy.push_back(cluster->e());   //LCW Energy
           ClusterEnergyLCW_Eta.push_back(cluster->calEta()); // Eta and phi at LCW Scale
           ClusterEnergyLCW_Phi.push_back(cluster->calPhi()); // Eta and phi at LCW Scale
           ClusterEnergyLCW_dRToTrack.push_back(deltaR);
           ClusterEnergyLCW_lambdaCenter.push_back(lambda_center);
+          ClusterEnergyLCW_secondLambda.push_back(second_lambda);
+          ClusterEnergyLCW_deltaAlpha.push_back(delta_alpha);
+          ClusterEnergyLCW_secondR.push_back(second_r);
           ClusterEnergyLCW_maxEnergyLayer.push_back(mostEnergeticLayer);
           ClusterEnergyLCW_emProbability.push_back(em_probability);
           ClusterEnergyLCW_IDNumber.push_back(clusterID);
@@ -548,6 +589,9 @@ namespace DerivationFramework {
       decorator_ClusterEnergy_emProbability (*track) = ClusterEnergy_emProbability;
       decorator_ClusterEnergy_firstEnergyDensity (*track) = ClusterEnergy_firstEnergyDensity;
       decorator_ClusterEnergy_lambdaCenter (*track) = ClusterEnergy_lambdaCenter;
+      decorator_ClusterEnergy_deltaAlpha (*track) = ClusterEnergy_deltaAlpha;
+      decorator_ClusterEnergy_secondLambda (*track) = ClusterEnergy_secondLambda;
+      decorator_ClusterEnergy_secondR (*track) = ClusterEnergy_secondR;
       decorator_ClusterEnergy_maxEnergyLayer (*track) = ClusterEnergy_maxEnergyLayer;
 
       decorator_ClusterEnergyLCW_Energy (*track) = ClusterEnergyLCW_Energy;
@@ -555,6 +599,9 @@ namespace DerivationFramework {
       decorator_ClusterEnergyLCW_Phi (*track) = ClusterEnergyLCW_Phi;
       decorator_ClusterEnergyLCW_dRToTrack (*track) = ClusterEnergyLCW_dRToTrack;
       decorator_ClusterEnergyLCW_lambdaCenter (*track) = ClusterEnergyLCW_lambdaCenter;
+      decorator_ClusterEnergyLCW_deltaAlpha (*track) = ClusterEnergyLCW_deltaAlpha;
+      decorator_ClusterEnergyLCW_secondLambda (*track) = ClusterEnergyLCW_secondLambda;
+      decorator_ClusterEnergyLCW_secondR (*track) = ClusterEnergyLCW_secondR;
       decorator_ClusterEnergyLCW_emProbability (*track) = ClusterEnergyLCW_emProbability;
       decorator_ClusterEnergyLCW_firstEnergyDensity (*track) = ClusterEnergyLCW_firstEnergyDensity;
       decorator_ClusterEnergyLCW_maxEnergyLayer (*track) = ClusterEnergyLCW_maxEnergyLayer;
