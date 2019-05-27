@@ -5,7 +5,7 @@ import subprocess as sp
 # Joakim Olsson <joakim.olsson@cern.ch>
 # Lukas Adamek <Lukas.adamek@cern.ch>
 
-tag = '310319_calibhitinfo'
+tag = '030419_calibhitinfo'
 user = 'luadamek'
 
 nFilesPerJob = 1
@@ -49,7 +49,9 @@ inDSs = [\
 #"data17_13TeV.00341649.physics_MinBias.merge.DESDM_EOVERP.r11054_p3694",\
 #"mc16_13TeV.361020.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ0W.recon.ESD.e3569_s3170_r10572",\
 #"mc16_13TeV.361021.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ1W.recon.ESD.e3569_s3170_r10572",\
-"mc16_13TeV.361022.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ2W.recon.ESD.e3668_s3170_r10572"\
+#"mc16_13TeV.361022.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ2W.recon.ESD.e3668_s3170_r10572",\
+"mc16_13TeV.428001.ParticleGun_single_piplus_logE0p2to2000.recon.ESD.e3501_s3007_r8917",\
+"mc16_13TeV.428002.ParticleGun_single_piminus_logE0p2to2000.recon.ESD.e3501_s3007_r8917",\
 ]
 
 outDSs = [\
@@ -61,10 +63,12 @@ outDSs = [\
 #"data17_13TeV.00341649.physics_MinBias.deriv.DAOD_EOP.r11054_p3694",\
 #"mc16_13TeV.361020.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ0W.deriv.DAOD_EOP.e3569_s3170_r10572",\
 #"mc16_13TeV.361021.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ1W.deriv.DAOD_EOP.e3569_s3170_r10572",\
-"mc16_13TeV.361022.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ2W.deriv.DAOD_EOP.e3668_s3170_r10572"\
+#"mc16_13TeV.361022.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ2W.deriv.DAOD_EOP.e3668_s3170_r10572",\
+"mc16_13TeV.428001.ParticleGun_single_piplus_logE0p2to2000.deriv.DAOD_EOP.e3501_s3007_r8917",\
+"mc16_13TeV.428002.ParticleGun_single_piminus_logE0p2to2000.deriv.DAOD_EOP.e3501_s3007_r8917",\
 ]
 
-setup = '--nFilesPerJob '+str(nFilesPerJob)+' --excludedSite ANALY_BNL_SHORT --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputDAOD_EOPFile=%OUT.pool.root --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything" --individualOutDS'
+setup = '--nFilesPerJob '+str(nFilesPerJob)+' --excludedSite ANALY_BNL_SHORT,ANALY_SiGNET,ANALY_SiGNET_DIRECT,ANALY_ARNES,ANALY_ARNES_DIRECT,ANALY_RAL_ECHO --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputDAOD_EOPFile=%OUT.pool.root --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything" --individualOutDS'
 print 'setup: '+setup
 
 config = ''
