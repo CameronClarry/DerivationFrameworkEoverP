@@ -871,10 +871,11 @@ namespace DerivationFramework {
                for(it = hits->begin(); it!=hits->end(); it++) {
                    const CaloCalibrationHit* hit = *it;
                    if ((cell->ID() == hit->cellID()) and (particle_barcode == hit->particleID())){
-                       hitsMap[0][cellLayer] += hit->energyEM();
-                       hitsMap[1][cellLayer] += hit->energyNonEM();
-                       hitsMap[2][cellLayer] += hit->energyInvisible();
-                       hitsMap[3][cellLayer] += hit->energyEscaped();
+                       unsigned int cell_layer_index = m_mapCaloSamplingToIndex.at(((CaloSampling::CaloSample)(cellLayer)));
+                       hitsMap[0][cell_layer_index] += hit->energyEM();
+                       hitsMap[1][cell_layer_index] += hit->energyNonEM();
+                       hitsMap[2][cell_layer_index] += hit->energyInvisible();
+                       hitsMap[3][cell_layer_index] += hit->energyEscaped();
                    }
                }
            }
@@ -942,12 +943,13 @@ namespace DerivationFramework {
                       continue;
                   }
               }
+              unsigned int cell_layer_index = m_mapCaloSamplingToIndex.at(((CaloSampling::CaloSample)(cellLayer)));
 
               //std::cout<<"PDG ID = "<<pdgIDHit<< "   ID=" << std::hex << cell->ID() << std::dec << ", E=" << cell->e() << ", weight=" << lnk_it.weight() << std::endl;
-              hitsMap[0][cellLayer]+=hit->energyEM();
-              hitsMap[1][cellLayer]+=hit->energyNonEM();
-              hitsMap[2][cellLayer]+=hit->energyInvisible();
-              hitsMap[3][cellLayer]+=hit->energyEscaped();
+              hitsMap[0][cell_layer_index]+=hit->energyEM();
+              hitsMap[1][cell_layer_index]+=hit->energyNonEM();
+              hitsMap[2][cell_layer_index]+=hit->energyInvisible();
+              hitsMap[3][cell_layer_index]+=hit->energyEscaped();
           }
      }
   }
