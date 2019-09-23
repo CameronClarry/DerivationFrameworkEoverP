@@ -77,28 +77,18 @@ namespace DerivationFramework {
       ATH_MSG_WARNING("No decoration prefix name provided for the output of TrackCaloDecorator!");
     }
 
-    //OK initialize all of the radii that we want to use for track-to-cluster matching
-    m_stringToCut["025"] = 0.025;
-    m_stringToCut["050"] = 0.050;
-    m_stringToCut["075"] = 0.075;
-    m_stringToCut["100"] = 0.100;
-    m_stringToCut["125"] = 0.125;
-    m_stringToCut["150"] = 0.150;
-    m_stringToCut["175"] = 0.175;
-    m_stringToCut["125"] = 0.125;
-    m_stringToCut["150"] = 0.150;
-    m_stringToCut["175"] = 0.175;
-    m_stringToCut["200"] = 0.200;
-    m_stringToCut["225"] = 0.225;
-    m_stringToCut["250"] = 0.250;
-    m_stringToCut["275"] = 0.275;
-    m_stringToCut["300"] = 0.300;
-
     //Get a list of all of the sampling numbers for the calorimeter
     ATH_MSG_INFO("Summing energy deposit info for layers: ");
-    for (unsigned int i =0; i < CaloSampling::getNumberOfSamplings(); i++){
+    m_caloSamplingIndices = std::vector<unsigned int>();
+    m_caloSamplingNumbers = std::vector<CaloSampling::CaloSample>();
+    m_mapCaloSamplingToIndex = std::map<CaloSampling::CaloSample, unsigned int>();
+    unsigned int count = 0;
+    for (unsigned int i =0; i < m_nsamplings; i++){
         m_caloSamplingNumbers.push_back((CaloSampling::CaloSample)(i));
+        m_caloSamplingIndices.push_back(count);
+        m_mapCaloSamplingToIndex[(CaloSampling::CaloSample)(i)] = i;
         ATH_MSG_INFO(CaloSampling::getSamplingName(i));
+        count += 1;
     }
 
     //Get a list of strings for each of the cuts:
@@ -106,7 +96,7 @@ namespace DerivationFramework {
 
     //Assign a number to each of the cuts
     unsigned int cutNumber = 0;
-    for(std::map<std::string,float>::iterator it = m_stringToCut.begin(); it != m_stringToCut.end(); ++it) {
+    for(std::map<std::string,float>::const_iterator it = m_stringToCut.begin(); it != m_stringToCut.end(); ++it) {
           m_cutNumbers.push_back(cutNumber);
           m_cutNumberToCut[cutNumber] = it->second;
           m_cutNumberToCutName[cutNumber] = it->first;
@@ -115,6 +105,50 @@ namespace DerivationFramework {
           cutNumber += 1;
     }
 
+    ////////////insert the decorators into the std maps
+    m_cutToCaloSamplingIndexToDecorator_ClusterEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_LCWClusterEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_CellEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+
+    //////////calib hits from truth matched particle/////////////
+    //Active calibration hit energy
+    m_cutToCaloSamplingIndexToDecorator_ClusterEMActiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterNonEMActiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterInvisibleActiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterEscapedActiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+
+    //Inactive calibration hit energy
+    m_cutToCaloSamplingIndexToDecorator_ClusterEMInactiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterNonEMInactiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterInvisibleInactiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterEscapedInactiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    
+    //////////calib hits from background particles/////////////
+    //Active calibration hit energy
+    m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundEMActiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundNonEMActiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundInvisibleActiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundEscapedActiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+
+    //Inactive calibration hit energy
+    m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundEMInactiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundNonEMInactiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundInvisibleInactiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundEscapedInactiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+
+    //////////calib hits from background particles/////////////
+    //Active calibration hit energy
+    m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundEMActiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundNonEMActiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundInvisibleActiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundEscapedActiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+
+    //Inactive calibration hit energy
+    m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundEMInactiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundNonEMInactiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundInvisibleInactiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundEscapedInactiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+
 
     //For each of the dR cuts and m_caloSamplingNumbers, create a decoration for the tracks
     ATH_MSG_INFO("Preparing Energy Deposit Decorators");
@@ -122,7 +156,8 @@ namespace DerivationFramework {
         std::string cutName = m_cutNumberToCutName.at(cutNumber);
         ATH_MSG_INFO(cutName);
         //Create decorators for the total energy summed at different scales
-        for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
+        for (unsigned int sampling_index : m_caloSamplingIndices){
+            CaloSampling::CaloSample caloSamplingNumber = m_caloSamplingNumbers[sampling_index];
             const std::string caloSamplingName = CaloSampling::getSamplingName(caloSamplingNumber);
             SG::AuxElement::Decorator< float > cellDecorator(m_sgName + "_CellEnergy_" + caloSamplingName + "_" + cutName);
             SG::AuxElement::Decorator< float > clusterDecorator(m_sgName + "_ClusterEnergy_" + caloSamplingName + "_" + cutName);
@@ -165,61 +200,62 @@ namespace DerivationFramework {
             SG::AuxElement::Decorator< float > clusterHadronicBackgroundInvisibleInactiveCalibHitDecorator(m_sgName + "_ClusterHadronicBackgroundInvisibleInactiveCalibHitEnergy_" + caloSamplingName + "_" + cutName);
 
             ////////////insert the decorators into the std maps
-            //Need to use insted(std::make_pair()) because the decorators do not have a default constructor with not arguments
-            m_cutToCaloSamplingNumberToDecorator_ClusterEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterDecorator));
-            m_cutToCaloSamplingNumberToDecorator_LCWClusterEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,lcwClusterDecorator));
-            m_cutToCaloSamplingNumberToDecorator_CellEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,cellDecorator));
+            m_cutToCaloSamplingIndexToDecorator_ClusterEnergy[cutNumber].push_back(clusterDecorator);
+            m_cutToCaloSamplingIndexToDecorator_LCWClusterEnergy[cutNumber].push_back(lcwClusterDecorator);
+            m_cutToCaloSamplingIndexToDecorator_CellEnergy[cutNumber].push_back(cellDecorator);
 
             //////////calib hits from truth matched particle/////////////
             //Active calibration hit energy
-            m_cutToCaloSamplingNumberToDecorator_ClusterEMActiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterEMActiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterNonEMActiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterNonEMActiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterInvisibleActiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterInvisibleActiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterEscapedActiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterEscapedActiveCalibHitDecorator));
+            m_cutToCaloSamplingIndexToDecorator_ClusterEMActiveCalibHitEnergy[cutNumber].push_back(clusterEMActiveCalibHitDecorator);
+            m_cutToCaloSamplingIndexToDecorator_ClusterNonEMActiveCalibHitEnergy[cutNumber].push_back(clusterNonEMActiveCalibHitDecorator);
+            m_cutToCaloSamplingIndexToDecorator_ClusterInvisibleActiveCalibHitEnergy[cutNumber].push_back(clusterInvisibleActiveCalibHitDecorator);
+            m_cutToCaloSamplingIndexToDecorator_ClusterEscapedActiveCalibHitEnergy[cutNumber].push_back(clusterEscapedActiveCalibHitDecorator);
 
             //Inactive calibration hit energy
-            m_cutToCaloSamplingNumberToDecorator_ClusterEMInactiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterEMInactiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterNonEMInactiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterNonEMInactiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterInvisibleInactiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterInvisibleInactiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterEscapedInactiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterEscapedInactiveCalibHitDecorator));
+            m_cutToCaloSamplingIndexToDecorator_ClusterEMInactiveCalibHitEnergy[cutNumber].push_back(clusterEMInactiveCalibHitDecorator);
+            m_cutToCaloSamplingIndexToDecorator_ClusterNonEMInactiveCalibHitEnergy[cutNumber].push_back(clusterNonEMInactiveCalibHitDecorator);
+            m_cutToCaloSamplingIndexToDecorator_ClusterInvisibleInactiveCalibHitEnergy[cutNumber].push_back(clusterInvisibleInactiveCalibHitDecorator);
+            m_cutToCaloSamplingIndexToDecorator_ClusterEscapedInactiveCalibHitEnergy[cutNumber].push_back(clusterEscapedInactiveCalibHitDecorator);
             
             //////////calib hits from background particles/////////////
             //Active calibration hit energy
-            m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundEMActiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterPhotonBackgroundEMActiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundNonEMActiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterPhotonBackgroundNonEMActiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundInvisibleActiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterPhotonBackgroundInvisibleActiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundEscapedActiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterPhotonBackgroundEscapedActiveCalibHitDecorator));
+            m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundEMActiveCalibHitEnergy[cutNumber].push_back(clusterPhotonBackgroundEMActiveCalibHitDecorator);
+            m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundNonEMActiveCalibHitEnergy[cutNumber].push_back(clusterPhotonBackgroundNonEMActiveCalibHitDecorator);
+            m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundInvisibleActiveCalibHitEnergy[cutNumber].push_back(clusterPhotonBackgroundInvisibleActiveCalibHitDecorator);
+            m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundEscapedActiveCalibHitEnergy[cutNumber].push_back(clusterPhotonBackgroundEscapedActiveCalibHitDecorator);
 
             //Inactive calibration hit energy
-            m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundEMInactiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterPhotonBackgroundEMInactiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundNonEMInactiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterPhotonBackgroundNonEMInactiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundInvisibleInactiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterPhotonBackgroundInvisibleInactiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundEscapedInactiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterPhotonBackgroundEscapedInactiveCalibHitDecorator));
+            m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundEMInactiveCalibHitEnergy[cutNumber].push_back(clusterPhotonBackgroundEMInactiveCalibHitDecorator);
+            m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundNonEMInactiveCalibHitEnergy[cutNumber].push_back(clusterPhotonBackgroundNonEMInactiveCalibHitDecorator);
+            m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundInvisibleInactiveCalibHitEnergy[cutNumber].push_back(clusterPhotonBackgroundInvisibleInactiveCalibHitDecorator);
+            m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundEscapedInactiveCalibHitEnergy[cutNumber].push_back(clusterPhotonBackgroundEscapedInactiveCalibHitDecorator);
 
             //////////calib hits from background particles/////////////
             //Active calibration hit energy
-            m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundEMActiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterHadronicBackgroundEMActiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundNonEMActiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterHadronicBackgroundNonEMActiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundInvisibleActiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterHadronicBackgroundInvisibleActiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundEscapedActiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterHadronicBackgroundEscapedActiveCalibHitDecorator));
+            m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundEMActiveCalibHitEnergy[cutNumber].push_back(clusterHadronicBackgroundEMActiveCalibHitDecorator);
+            m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundNonEMActiveCalibHitEnergy[cutNumber].push_back(clusterHadronicBackgroundNonEMActiveCalibHitDecorator);
+        m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundInvisibleActiveCalibHitEnergy[cutNumber].push_back(clusterHadronicBackgroundInvisibleActiveCalibHitDecorator);
+        m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundEscapedActiveCalibHitEnergy[cutNumber].push_back(clusterHadronicBackgroundEscapedActiveCalibHitDecorator);
 
-            //Inactive calibration hit energy
-            m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundEMInactiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterHadronicBackgroundEMInactiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundNonEMInactiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterHadronicBackgroundNonEMInactiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundInvisibleInactiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterHadronicBackgroundInvisibleInactiveCalibHitDecorator));
-            m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundEscapedInactiveCalibHitEnergy[cutNumber].insert(std::make_pair(caloSamplingNumber,clusterHadronicBackgroundEscapedInactiveCalibHitDecorator));
+        //Inactive calibration hit energy
+        m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundEMInactiveCalibHitEnergy[cutNumber].push_back(clusterHadronicBackgroundEMInactiveCalibHitDecorator);
+        m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundNonEMInactiveCalibHitEnergy[cutNumber].push_back(clusterHadronicBackgroundNonEMInactiveCalibHitDecorator);
+        m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundInvisibleInactiveCalibHitEnergy[cutNumber].push_back(clusterHadronicBackgroundInvisibleInactiveCalibHitDecorator);
+        m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundEscapedInactiveCalibHitEnergy[cutNumber].push_back(clusterHadronicBackgroundEscapedInactiveCalibHitDecorator);
         }
     }
 
+    m_caloSamplingIndexToDecorator_extrapolTrackEta.reserve(m_nsamplings);
+    m_caloSamplingIndexToDecorator_extrapolTrackPhi.reserve(m_nsamplings);
     //Create the decorators for the extrapolated track coordinates
     ATH_MSG_INFO("Perparing Decorators for the extrapolated track coordinates");
-    for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
+    for (unsigned int sampling_index : m_caloSamplingIndices){
+        CaloSampling::CaloSample caloSamplingNumber = m_caloSamplingNumbers[sampling_index];
         const std::string caloSamplingName = CaloSampling::getSamplingName(caloSamplingNumber);
         ATH_MSG_INFO(caloSamplingName);
-        m_caloSamplingNumberToDecorator_extrapolTrackEta.insert(std::make_pair(caloSamplingNumber, SG::AuxElement::Decorator< float >(m_sgName + "_trkEta_" + caloSamplingName)));
-        m_caloSamplingNumberToDecorator_extrapolTrackPhi.insert(std::make_pair(caloSamplingNumber, SG::AuxElement::Decorator< float >(m_sgName + "_trkPhi_" + caloSamplingName)));
+        m_caloSamplingIndexToDecorator_extrapolTrackEta.push_back(SG::AuxElement::Decorator< float >(m_sgName + "_trkEta_" + caloSamplingName));
+        m_caloSamplingIndexToDecorator_extrapolTrackPhi.push_back(SG::AuxElement::Decorator< float >(m_sgName + "_trkPhi_" + caloSamplingName));
     }
-
 
     ATH_CHECK(m_extrapolator.retrieve());
     ATH_CHECK(m_theTrackExtrapolatorTool.retrieve());
@@ -381,16 +417,17 @@ namespace DerivationFramework {
       decorator_ClusterEnergyLCW_maxEnergyLayer (*track) = std::vector<int>();
       decorator_ClusterEnergyLCW_IDNumber (*track) = std::vector<int>();
 
-      for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
-          m_caloSamplingNumberToDecorator_extrapolTrackEta.at(caloSamplingNumber)(*track) = -999999999;
-          m_caloSamplingNumberToDecorator_extrapolTrackPhi.at(caloSamplingNumber)(*track) = -999999999;
+      for (unsigned int sampling_index : m_caloSamplingIndices){
+          CaloSampling::CaloSample caloSamplingNumber = m_caloSamplingNumbers[sampling_index];
+          m_caloSamplingIndexToDecorator_extrapolTrackEta.at(sampling_index)(*track) = -999999999;
+          m_caloSamplingIndexToDecorator_extrapolTrackPhi.at(sampling_index)(*track) = -999999999;
       }
 
       //for (unsigned int cutNumber : m_cutNumbers){
       ///    for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
-      //        (m_cutToCaloSamplingNumberToDecorator_ClusterEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = -999999999;
-      //        (m_cutToCaloSamplingNumberToDecorator_LCWClusterEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = -999999999;
-      //        (m_cutToCaloSamplingNumberToDecorator_CellEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = -999999999;
+      //        (m_cutToCaloSamplingIndexToDecorator_ClusterEnergy.at(cutNumber).at(sampling_index))(*track) = -999999999;
+      //        (m_cutToCaloSamplingIndexToDecorator_LCWClusterEnergy.at(cutNumber).at(sampling_index))(*track) = -999999999;
+      //        (m_cutToCaloSamplingIndexToDecorator_CellEnergy.at(cutNumber).at(sampling_index))(*track) = -999999999;
       //    }
       //}
 
@@ -433,10 +470,11 @@ namespace DerivationFramework {
       decorator_extrapolation(*track) = 1;
 
       //Decorate the tracks with their extrapolated coordinates
-      for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
+      for (unsigned int sampling_index : m_caloSamplingIndices){
+          CaloSampling::CaloSample caloSamplingNumber = m_caloSamplingNumbers[sampling_index];
           if (parametersMap[caloSamplingNumber]){
-              (m_caloSamplingNumberToDecorator_extrapolTrackPhi.at(caloSamplingNumber))(*track) = parametersMap[caloSamplingNumber]->position().phi();
-              (m_caloSamplingNumberToDecorator_extrapolTrackEta.at(caloSamplingNumber))(*track) = parametersMap[caloSamplingNumber]->position().eta();
+              (m_caloSamplingIndexToDecorator_extrapolTrackPhi.at(sampling_index))(*track) = parametersMap[caloSamplingNumber]->position().phi();
+              (m_caloSamplingIndexToDecorator_extrapolTrackEta.at(sampling_index))(*track) = parametersMap[caloSamplingNumber]->position().eta();
           }
       }
 
@@ -448,9 +486,10 @@ namespace DerivationFramework {
       //Perform the matching between these track eta and phi coordinates and the energy-weighted (bary)centre eta and phi of the cluster//
 
       //create a const data vector for each dR cut
-      std::map<unsigned int, ConstDataVector<xAOD::CaloClusterContainer> > matchedClusterMap;
-      for (unsigned int cutNumber: m_cutNumbers){
-          matchedClusterMap[cutNumber] = ConstDataVector<xAOD::CaloClusterContainer>(SG::VIEW_ELEMENTS);
+      std::vector<ConstDataVector<xAOD::CaloClusterContainer> > matchedClusterVector;
+      matchedClusterVector.reserve(m_ncuts);
+      for (unsigned int i = 0; i < m_ncuts; i++){
+          matchedClusterVector.push_back(ConstDataVector<xAOD::CaloClusterContainer>(SG::VIEW_ELEMENTS));
       }
 
 
@@ -575,7 +614,7 @@ namespace DerivationFramework {
         for (unsigned int cutNumber: m_cutNumbers){
             float cut = m_cutNumberToCut.at(cutNumber);
             if (deltaR < cut) {
-                matchedClusterMap.at(cutNumber).push_back(cluster);
+                matchedClusterVector.at(cutNumber).push_back(cluster);
                 break;
             }
         }
@@ -611,9 +650,10 @@ namespace DerivationFramework {
       //Approach: loop over cell container, getting the eta and phi coordinates of each cell for each layer.//
       //Perform a match between the cell and the track eta and phi coordinates in the cell's sampling layer.//
       //
-      std::map<unsigned int, ConstDataVector<CaloCellContainer> > matchedCellMap;
-      for (unsigned int cutNumber :  m_cutNumbers){
-          matchedCellMap[cutNumber] = ConstDataVector<CaloCellContainer>(SG::VIEW_ELEMENTS);
+      std::vector<ConstDataVector<CaloCellContainer> > matchedCellVector;
+      matchedCellVector.reserve(m_ncuts);
+      for (unsigned int i = 0; i < m_ncuts; i++){
+          matchedCellVector.push_back(ConstDataVector<CaloCellContainer>(SG::VIEW_ELEMENTS));
       }
 
       for (const auto& cell : *caloCellContainer) {
@@ -644,59 +684,64 @@ namespace DerivationFramework {
           for (unsigned int cutNumber: m_cutNumbers){
               float cut = m_cutNumberToCut.at(cutNumber);
               if (deltaR < cut) {
-                  matchedCellMap.at(cutNumber).push_back(cell);
+                  matchedCellVector.at(cutNumber).push_back(cell);
                   break;
               }
           }
       }
 
-      std::map<CaloSampling::CaloSample, float> caloSamplingNumberToEnergySum_EMScale;
-      std::map<CaloSampling::CaloSample, float> caloSamplingNumberToEnergySum_LCWScale;
+      std::vector<float> caloSamplingIndexToEnergySum_EMScale(m_nsamplings);
+      std::vector<float> caloSamplingIndexToEnergySum_LCWScale(m_nsamplings);
 
       //EM == 0
       //NonEM == 1
       //Invisible == 2
       //Escaped == 3
-      std::map<unsigned int, std::map<CaloSampling::CaloSample, float> > energyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit;
-      std::map<unsigned int, std::map<CaloSampling::CaloSample, float> > energyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit;
+      std::vector< std::vector<float> > energyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit(4, std::vector<float>(m_nsamplings));
+      std::vector< std::vector<float> > energyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit(4, std::vector<float>(m_nsamplings));
 
-      std::map<unsigned int, std::map<CaloSampling::CaloSample, float > > photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit;
-      std::map<unsigned int, std::map<CaloSampling::CaloSample, float > > photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit;
+      std::vector< std::vector<float> > photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit(4, std::vector<float>(m_nsamplings));
+      std::vector< std::vector<float> > photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit(4, std::vector<float>(m_nsamplings));
 
-      std::map<unsigned int, std::map<CaloSampling::CaloSample, float > > hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit;
-      std::map<unsigned int, std::map<CaloSampling::CaloSample, float > > hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit;
+      std::vector< std::vector<float> > hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit(4, std::vector<float>(m_nsamplings));
+      std::vector< std::vector<float> > hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit(4, std::vector<float>(m_nsamplings));
 
-      for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
-          caloSamplingNumberToEnergySum_EMScale[caloSamplingNumber] = 0.0;
-          caloSamplingNumberToEnergySum_LCWScale[caloSamplingNumber] = 0.0;
+      for (unsigned int sampling_index : m_caloSamplingIndices){
+          CaloSampling::CaloSample caloSamplingNumber = m_caloSamplingNumbers[sampling_index];
+          caloSamplingIndexToEnergySum_EMScale[sampling_index] = 0.0;
+          caloSamplingIndexToEnergySum_LCWScale[sampling_index] = 0.0;
 
-          energyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[0][caloSamplingNumber] = 0.0;
-          energyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[1][caloSamplingNumber] = 0.0;
-          energyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[2][caloSamplingNumber] = 0.0;
-          energyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[3][caloSamplingNumber] = 0.0;
+          energyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[0][sampling_index] = 0.0;
+          energyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[1][sampling_index] = 0.0;
+          energyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[2][sampling_index] = 0.0;
+          energyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[3][sampling_index] = 0.0;
 
-          energyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit[0][caloSamplingNumber] = 0.0;
-          energyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit[1][caloSamplingNumber] = 0.0;
-          energyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit[2][caloSamplingNumber] = 0.0;
-          energyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit[3][caloSamplingNumber] = 0.0;
+          energyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit[0][sampling_index] = 0.0;
+          energyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit[1][sampling_index] = 0.0;
+          energyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit[2][sampling_index] = 0.0;
+          energyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit[3][sampling_index] = 0.0;
 
-          photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[0][caloSamplingNumber] = 0.0;
-          photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[1][caloSamplingNumber] = 0.0;
-          photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[2][caloSamplingNumber] = 0.0;
-          photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[3][caloSamplingNumber] = 0.0;
+          photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[0][sampling_index] = 0.0;
+          photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[1][sampling_index] = 0.0;
+          photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[2][sampling_index] = 0.0;
+          photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[3][sampling_index] = 0.0;
 
-          hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[0][caloSamplingNumber] = 0.0;
-          hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[1][caloSamplingNumber] = 0.0;
-          hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[2][caloSamplingNumber] = 0.0;
-          hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[3][caloSamplingNumber] = 0.0;
+          hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[0][sampling_index] = 0.0;
+          hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[1][sampling_index] = 0.0;
+          hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[2][sampling_index] = 0.0;
+          hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[3][sampling_index] = 0.0;
 
       }
+
+      std::vector<int> PhotonPDGID;
+      PhotonPDGID.push_back(22);
+      std::vector<int> EmptyVectorPDGID;
 
       for (unsigned int cutNumber: m_cutNumbers){
           std::string cutName = m_cutNumberToCutName.at(cutNumber);
           //create std::maps of std::string CaloRegion -> float Energy Sum
-          ConstDataVector<xAOD::CaloClusterContainer>::iterator firstMatchedClus = matchedClusterMap.at(cutNumber).begin();
-          ConstDataVector<xAOD::CaloClusterContainer>::iterator lastMatchedClus = matchedClusterMap.at(cutNumber).end();
+          ConstDataVector<xAOD::CaloClusterContainer>::iterator firstMatchedClus = matchedClusterVector.at(cutNumber).begin();
+          ConstDataVector<xAOD::CaloClusterContainer>::iterator lastMatchedClus = matchedClusterVector.at(cutNumber).end();
 
           /*Loop over matched clusters for a given cone dimension*/
           for (; firstMatchedClus != lastMatchedClus; ++firstMatchedClus) {
@@ -711,70 +756,69 @@ namespace DerivationFramework {
 
               if(energy_EM == -999999999 || energy_LCW == -999999999) continue;
 
-              for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
-                  caloSamplingNumberToEnergySum_EMScale[caloSamplingNumber] += cl->eSample(caloSamplingNumber);
-                  caloSamplingNumberToEnergySum_LCWScale[caloSamplingNumber] += cluster_weight*(cl->eSample(caloSamplingNumber));
+              for (unsigned int sampling_index : m_caloSamplingIndices){
+                  CaloSampling::CaloSample caloSamplingNumber = m_caloSamplingNumbers[sampling_index];
+                  caloSamplingIndexToEnergySum_EMScale[sampling_index] += cl->eSample(caloSamplingNumber);
+                  caloSamplingIndexToEnergySum_LCWScale[sampling_index] += cluster_weight*(cl->eSample(caloSamplingNumber));
               }
 
-              getHitsSum(lar_actHitCnt, cl, particle_barcode, energyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit);
-              getHitsSum(lar_inactHitCnt, cl, particle_barcode, energyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit);
-              getHitsSum(tile_actHitCnt, cl, particle_barcode, energyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit);
-              getHitsSum(tile_inactHitCnt, cl, particle_barcode, energyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit);
+              getHitsSum(lar_actHitCnt, cl, particle_barcode, energyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit);
+              getHitsSum(lar_inactHitCnt, cl, particle_barcode, energyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit);
+              getHitsSum(tile_actHitCnt, cl, particle_barcode, energyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit);
+              getHitsSum(tile_inactHitCnt, cl, particle_barcode, energyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit);
 
-              std::vector<int> PhotonPDGID;
-              PhotonPDGID.push_back(22);
-              std::vector<int> EmptyVectorPDGID;
 
               if (hasCalibrationHits and hasTruthParticles){
-                  getHitsSumAllBackground(lar_actHitCnt ,cl, particle_barcode, truthParticles, PhotonPDGID, EmptyVectorPDGID, photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit);
-                  getHitsSumAllBackground(lar_inactHitCnt ,cl, particle_barcode, truthParticles, PhotonPDGID, EmptyVectorPDGID, photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit);
-                  getHitsSumAllBackground(tile_actHitCnt ,cl, particle_barcode, truthParticles, PhotonPDGID, EmptyVectorPDGID, photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit);
-                  getHitsSumAllBackground(tile_inactHitCnt ,cl, particle_barcode, truthParticles, PhotonPDGID, EmptyVectorPDGID, photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit);
+                  getHitsSumAllBackground(lar_actHitCnt ,cl, particle_barcode, truthParticles, PhotonPDGID, EmptyVectorPDGID, photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit);
+                  getHitsSumAllBackground(lar_inactHitCnt ,cl, particle_barcode, truthParticles, PhotonPDGID, EmptyVectorPDGID, photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit);
+                  getHitsSumAllBackground(tile_actHitCnt ,cl, particle_barcode, truthParticles, PhotonPDGID, EmptyVectorPDGID, photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit);
+                  getHitsSumAllBackground(tile_inactHitCnt ,cl, particle_barcode, truthParticles, PhotonPDGID, EmptyVectorPDGID, photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit);
 
-                  getHitsSumAllBackground(lar_actHitCnt ,cl, particle_barcode, truthParticles, EmptyVectorPDGID, PhotonPDGID, hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit);
-                  getHitsSumAllBackground(lar_inactHitCnt ,cl, particle_barcode, truthParticles, EmptyVectorPDGID, PhotonPDGID, hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit);
-                  getHitsSumAllBackground(tile_actHitCnt ,cl, particle_barcode, truthParticles, EmptyVectorPDGID, PhotonPDGID, hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit);
-                  getHitsSumAllBackground(tile_inactHitCnt ,cl, particle_barcode, truthParticles, EmptyVectorPDGID, PhotonPDGID, hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit);
+                  getHitsSumAllBackground(lar_actHitCnt ,cl, particle_barcode, truthParticles, EmptyVectorPDGID, PhotonPDGID, hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit);
+                  getHitsSumAllBackground(lar_inactHitCnt ,cl, particle_barcode, truthParticles, EmptyVectorPDGID, PhotonPDGID, hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit);
+                  getHitsSumAllBackground(tile_actHitCnt ,cl, particle_barcode, truthParticles, EmptyVectorPDGID, PhotonPDGID, hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit);
+                  getHitsSumAllBackground(tile_inactHitCnt ,cl, particle_barcode, truthParticles, EmptyVectorPDGID, PhotonPDGID, hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit);
               }
 
 
           }
-          for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
+          for (unsigned int sampling_index : m_caloSamplingIndices){
+              CaloSampling::CaloSample caloSamplingNumber = m_caloSamplingNumbers[sampling_index];
 
               //Decorate the tracks with the sum of the hits
-              (m_cutToCaloSamplingNumberToDecorator_ClusterEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = caloSamplingNumberToEnergySum_EMScale.at(caloSamplingNumber);
-              (m_cutToCaloSamplingNumberToDecorator_LCWClusterEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = caloSamplingNumberToEnergySum_LCWScale.at(caloSamplingNumber);
+              (m_cutToCaloSamplingIndexToDecorator_ClusterEnergy.at(cutNumber).at(sampling_index))(*track) = caloSamplingIndexToEnergySum_EMScale.at(sampling_index);
+              (m_cutToCaloSamplingIndexToDecorator_LCWClusterEnergy.at(cutNumber).at(sampling_index))(*track) = caloSamplingIndexToEnergySum_LCWScale.at(sampling_index);
 
               if (hasCalibrationHits and hasTruthParticles){
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterEMActiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = energyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[0][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterNonEMActiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = energyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[1][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterInvisibleActiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = energyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[2][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterEscapedActiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = energyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[3][caloSamplingNumber];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterEMActiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = energyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[0][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterNonEMActiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = energyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[1][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterInvisibleActiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = energyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[2][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterEscapedActiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = energyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[3][sampling_index];
 
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterEMInactiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = energyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit[0][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterNonEMInactiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = energyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit[1][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterInvisibleInactiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = energyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit[2][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterEscapedInactiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = energyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit[3][caloSamplingNumber];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterEMInactiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = energyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit[0][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterNonEMInactiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = energyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit[1][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterInvisibleInactiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = energyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit[2][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterEscapedInactiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = energyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit[3][sampling_index];
 
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundEMActiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[0][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundNonEMActiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[1][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundInvisibleActiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[2][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundEscapedActiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[3][caloSamplingNumber];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundEMActiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[0][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundNonEMActiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[1][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundInvisibleActiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[2][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundEscapedActiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[3][sampling_index];
 
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundEMInactiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit[0][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundNonEMInactiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit[1][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundInvisibleInactiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit[2][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterPhotonBackgroundEscapedInactiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = photonBkgEnergyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit[3][caloSamplingNumber];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundEMInactiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit[0][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundNonEMInactiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit[1][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundInvisibleInactiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit[2][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterPhotonBackgroundEscapedInactiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = photonBkgEnergyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit[3][sampling_index];
 
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundEMActiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[0][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundNonEMActiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[1][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundInvisibleActiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[2][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundEscapedActiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_ActiveCalibHit[3][caloSamplingNumber];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundEMActiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[0][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundNonEMActiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[1][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundInvisibleActiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[2][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundEscapedActiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_ActiveCalibHit[3][sampling_index];
 
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundEMInactiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit[0][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundNonEMInactiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit[1][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundInvisibleInactiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit[2][caloSamplingNumber];
-                  (m_cutToCaloSamplingNumberToDecorator_ClusterHadronicBackgroundEscapedInactiveCalibHitEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = hadronicBkgEnergyTypeToCaloSamplingNumberToEnergySum_InactiveCalibHit[3][caloSamplingNumber];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundEMInactiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit[0][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundNonEMInactiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit[1][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundInvisibleInactiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit[2][sampling_index];
+                  (m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundEscapedInactiveCalibHitEnergy.at(cutNumber).at(sampling_index))(*track) = hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit[3][sampling_index];
               }
 
           }//close loop over calo sampling numbers
@@ -782,30 +826,62 @@ namespace DerivationFramework {
       }//close loop over cut names
 
       //sum energy deposits from cells
-      std::map<CaloSampling::CaloSample, float> caloSamplingNumberToEnergySum_CellEnergy;
-      for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
-          caloSamplingNumberToEnergySum_CellEnergy[caloSamplingNumber] = 0.0;
+      std::vector<float> caloSamplingIndexToEnergySum_CellEnergy(m_nsamplings);
+      for (unsigned int sampling_index : m_caloSamplingIndices){
+          CaloSampling::CaloSample caloSamplingNumber = m_caloSamplingNumbers[sampling_index];
+          caloSamplingIndexToEnergySum_CellEnergy[sampling_index] = 0.0;
       }
       for (unsigned int cutNumber : m_cutNumbers){
-          ConstDataVector<CaloCellContainer>::iterator firstMatchedCell = matchedCellMap.at(cutNumber).begin();
-          ConstDataVector<CaloCellContainer>::iterator lastMatchedCell = matchedCellMap.at(cutNumber).end();
-
+          ConstDataVector<CaloCellContainer>::iterator firstMatchedCell = matchedCellVector.at(cutNumber).begin();
+          ConstDataVector<CaloCellContainer>::iterator lastMatchedCell = matchedCellVector.at(cutNumber).end();
           for (; firstMatchedCell != lastMatchedCell; ++firstMatchedCell) {
               if (!(*firstMatchedCell)->caloDDE()) continue;
               CaloCell_ID::CaloSample cellLayer = (*firstMatchedCell)->caloDDE()->getSampling();
-              caloSamplingNumberToEnergySum_CellEnergy.at((CaloSampling::CaloSample)(cellLayer)) += (*firstMatchedCell)->energy();
+              caloSamplingIndexToEnergySum_CellEnergy.at(m_mapCaloSamplingToIndex.at(((CaloSampling::CaloSample)(cellLayer)))) += (*firstMatchedCell)->energy();
           }
           //Decorate the tracks with the energy deposits in the correct layers
-          for(CaloSampling::CaloSample caloSamplingNumber : m_caloSamplingNumbers){
-              (m_cutToCaloSamplingNumberToDecorator_CellEnergy.at(cutNumber).at(caloSamplingNumber))(*track) = caloSamplingNumberToEnergySum_CellEnergy.at(caloSamplingNumber);
+          for (unsigned int sampling_index : m_caloSamplingIndices){
+              (m_cutToCaloSamplingIndexToDecorator_CellEnergy.at(cutNumber).at(sampling_index))(*track) = caloSamplingIndexToEnergySum_CellEnergy.at(sampling_index);
           }
       }//close loop over cut names
     } // loop trackContainer
     return StatusCode::SUCCESS;
   }
+  void TrackCaloDecorator::getHitsSum(const CaloCalibrationHitContainer* hits,const  xAOD::CaloCluster* cl,  unsigned int particle_barcode, std::vector< std::vector<float> >& hitsMap) const {
+       //Sum all of the calibration hits in all of the layers, and return a map of calo layer to energy sum
+       if (hits == NULL)
+       {
+           return;
+       }
 
-  void TrackCaloDecorator::getHitsSumAllBackground(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode, const xAOD::TruthParticleContainer* truthParticles, std::vector<int> sumForThesePDGIDs, std::vector<int> skipThesePDGIDs, std::map< unsigned int, std::map<CaloSampling::CaloSample, float > >& hitsSum) const
-  {
+       if (particle_barcode == 0){
+           return;
+       }
+
+       const CaloClusterCellLink* cellLinks=cl->getCellLinks();
+       if ((cellLinks != NULL)){
+           CaloClusterCellLink::const_iterator lnk_it=cellLinks->begin();
+           CaloClusterCellLink::const_iterator lnk_it_e=cellLinks->end();
+           for (;lnk_it!=lnk_it_e;++lnk_it) {
+               const CaloCell* cell=*lnk_it;
+               CaloCell_ID::CaloSample cellLayer = cell->caloDDE()->getSampling();
+               //std::cout<< "   ID=" << std::hex << cell->ID() << std::dec << ", E=" << cell->e() << ", weight=" << lnk_it.weight() << std::endl;
+               CaloCalibrationHitContainer::const_iterator it;
+               //Can we find a corresponding calibration hit for this cell?
+               for(it = hits->begin(); it!=hits->end(); it++) {
+                   const CaloCalibrationHit* hit = *it;
+                   if ((cell->ID() == hit->cellID()) and (particle_barcode == hit->particleID())){
+                       hitsMap[0][cellLayer] += hit->energyEM();
+                       hitsMap[1][cellLayer] += hit->energyNonEM();
+                       hitsMap[2][cellLayer] += hit->energyInvisible();
+                       hitsMap[3][cellLayer] += hit->energyEscaped();
+                   }
+               }
+           }
+       }
+    }
+
+      void TrackCaloDecorator::getHitsSumAllBackground(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode, const xAOD::TruthParticleContainer* truthParticles, std::vector<int> sumForThesePDGIDs, std::vector<int> skipThesePDGIDs,  std::vector< std::vector<float> >& hitsMap) const {
       //Sum all of the calibration hits in all of the layers, and return a map of calo layer to energy sum
       //Gather all of the information pertaining to the total energy deposited in the cells of this cluster
       if (particle_barcode == 0) return;
@@ -832,11 +908,12 @@ namespace DerivationFramework {
               bool hitInCluster = false;
               CaloClusterCellLink::const_iterator lnk_it=cellLinks->begin();
               CaloClusterCellLink::const_iterator lnk_it_e=cellLinks->end();
+              CaloCell_ID::CaloSample cellLayer;
               for (;lnk_it!=lnk_it_e;++lnk_it) {
                   const CaloCell* cell=*lnk_it;
-                  CaloCell_ID::CaloSample cellLayer = cell->caloDDE()->getSampling();
                   if (cell->ID() == hit->cellID()){
                       hitInCluster=true;
+                      cellLayer = cell->caloDDE()->getSampling();
                       break;
                   }
               }
@@ -866,55 +943,12 @@ namespace DerivationFramework {
                   }
               }
 
-              for (;lnk_it!=lnk_it_e;++lnk_it) {
-                  const CaloCell* cell=*lnk_it;
-                  CaloCell_ID::CaloSample cellLayer = cell->caloDDE()->getSampling();
-                  if (cell->ID() == hit->cellID()){
-                      //std::cout<<"PDG ID = "<<pdgIDHit<< "   ID=" << std::hex << cell->ID() << std::dec << ", E=" << cell->e() << ", weight=" << lnk_it.weight() << std::endl;
-                      hitsSum[0][cellLayer]+=hit->energyEM();
-                      hitsSum[1][cellLayer]+=hit->energyNonEM();
-                      hitsSum[2][cellLayer]+=hit->energyInvisible();
-                      hitsSum[3][cellLayer]+=hit->energyEscaped();
-
-                  }
-              }
+              //std::cout<<"PDG ID = "<<pdgIDHit<< "   ID=" << std::hex << cell->ID() << std::dec << ", E=" << cell->e() << ", weight=" << lnk_it.weight() << std::endl;
+              hitsMap[0][cellLayer]+=hit->energyEM();
+              hitsMap[1][cellLayer]+=hit->energyNonEM();
+              hitsMap[2][cellLayer]+=hit->energyInvisible();
+              hitsMap[3][cellLayer]+=hit->energyEscaped();
           }
-      }
-  }
-
-  void TrackCaloDecorator::getHitsSum(const CaloCalibrationHitContainer* hits,const  xAOD::CaloCluster* cl,  unsigned int particle_barcode, std::map<unsigned int, std::map<CaloSampling::CaloSample, float> >& hitsSum) const
-  {
-      //Sum all of the calibration hits in all of the layers, and return a map of calo layer to energy sum
-      if (hits == NULL)
-      {
-          return;
-      }
-
-      if (particle_barcode == 0){
-          return;
-      }
-
-      const CaloClusterCellLink* cellLinks=cl->getCellLinks();
-      if ((cellLinks != NULL)){
-          CaloClusterCellLink::const_iterator lnk_it=cellLinks->begin();
-          CaloClusterCellLink::const_iterator lnk_it_e=cellLinks->end();
-          for (;lnk_it!=lnk_it_e;++lnk_it) {
-              const CaloCell* cell=*lnk_it;
-              CaloCell_ID::CaloSample cellLayer = cell->caloDDE()->getSampling();
-              //std::cout<< "   ID=" << std::hex << cell->ID() << std::dec << ", E=" << cell->e() << ", weight=" << lnk_it.weight() << std::endl;
-              CaloCalibrationHitContainer::const_iterator it;
-              const CaloCalibrationHit* hit = nullptr;
-              //Can we find a corresponding calibration hit for this cell?
-              for(it = hits->begin(); it!=hits->end(); it++) {
-                  hit = *it;
-                  if ((cell->ID() == hit->cellID()) and (particle_barcode == hit->particleID())){
-                      hitsSum[0][cellLayer] += hit->energyEM();
-                      hitsSum[1][cellLayer] += hit->energyNonEM();
-                      hitsSum[2][cellLayer] += hit->energyInvisible();
-                      hitsSum[3][cellLayer] += hit->energyEscaped();
-                  }
-              }
-          }
-      }
+     }
   }
 } // Derivation Framework
