@@ -177,6 +177,8 @@ namespace DerivationFramework {
 
       std::pair<xAOD::CaloCluster::CaloSample, double> get_most_energetic_layer(const xAOD::CaloCluster* cl) const;
       float calc_LHED(ConstDataVector<xAOD::CaloClusterContainer>* clusters, const xAOD::TrackParticle* trk) const;
+
+      float calc_angular_distance(float eta_obj1, float phi_obj1, float eta_obj2, float phi_obj2) const;
   }; 
 } // Derivation Framework
 #endif 

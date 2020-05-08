@@ -3,6 +3,7 @@
 #include "MCTruthClassifier/IMCTruthClassifier.h"
 #include "MCTruthClassifier/MCTruthClassifierDefs.h"
 #include "CaloUtils/CaloClusterSignalState.h"
+#include "Math/ProbFunc.h"
 
 // tracks
 #include "TrkTrack/Track.h"
@@ -549,13 +550,7 @@ namespace DerivationFramework {
 
         double trackEta = parametersMap[mostEnergeticLayer]->position().eta();
         double trackPhi = parametersMap[mostEnergeticLayer]->position().phi();
-
-        double etaDiff = clEta - trackEta;
-        double phiDiff = clPhi - trackPhi;
-
-        if (phiDiff > TMath::Pi()) phiDiff = 2 * TMath::Pi() - phiDiff;
-
-        double deltaR = std::sqrt((etaDiff*etaDiff) + (phiDiff*phiDiff));
+        double deltaR = TrackCaloDecorator::calc_angular_distance(trackEta, trackPhi, clEta, clPhi);
 
         if(deltaR < 0.3){
           //push back the vector-like quantities that we want
@@ -953,20 +948,62 @@ namespace DerivationFramework {
      }
   }
 
+  float TrackCaloDecorator::calc_angular_distance(float eta_obj1, float phi_obj1, float eta_obj2, float phi_obj2) const {
+          float etaDiff = eta_obj1 - eta_obj2;
+          float phiDiff = phi_obj1 - phi_obj2;
+          if (phiDiff > TMath::Pi()) phiDiff = 2*TMath::Pi() - phiDiff;
+          return std::sqrt((etaDiff*etaDiff) + (phiDiff*phiDiff));
+  }
+
   float TrackCaloDecorator::calc_LHED(ConstDataVector<xAOD::CaloClusterContainer>* clusters, const xAOD::TrackParticle* trk) const {
     //Go through the various extrapolated coordinates of the tracks
-    for (unsigned int sampling_index : m_caloSamplingIndices){
-        CaloSampling::CaloSample caloSamplingNumber = m_caloSamplingNumbers[sampling_index];
-        const std::string caloSamplingName = CaloSampling::getSamplingName(caloSamplingNumber);
-        float extrapolEta = m_caloSamplingIndexToAccessor_extrapolTrackEta.at(sampling_index)(*trk);
-        float extrapolPhi = m_caloSamplingIndexToAccessor_extrapolTrackEta.at(sampling_index)(*trk);
+    //Lets loop through the clusters:
+    for (const auto& cl : *clusters) {
+        std::pair<xAOD::CaloCluster::CaloSample, double> sampling_energy_pair = get_most_energetic_layer(cl);
+        xAOD::CaloCluster::CaloSample most_energetic_layer = sampling_energy_pair.first;
+        if (most_energetic_layer = xAOD::CaloCluster::CaloSample::Unknown) continue;
+        if (not m_caloSamplingIndexToAccessor_extrapolTrackEta.at(most_energetic_layer).isAvailable(*trk) or 
+            not m_caloSamplingIndexToAccessor_extrapolTrackPhi.at(most_energetic_layer).isAvailable(*trk)) continue;
+        float extrapolEta = m_caloSamplingIndexToAccessor_extrapolTrackEta.at(most_energetic_layer)(*trk);
+        float extrapolPhi = m_caloSamplingIndexToAccessor_extrapolTrackPhi.at(most_energetic_layer)(*trk);
+
+        double clEta = cl->rawEta();
+        double clPhi = cl->rawPhi();
+        if(clEta == -999 || clPhi == -999) continue;
+
+        double dR = TrackCaloDecorator::calc_angular_distance(clEta, clPhi, extrapolEta, extrapolPhi);
+        //Lets calculate the LHED
+        float LHED_scale = 0.035;// taken from https://arxiv.org/pdf/1703.10485.pdf
+        //loop over the cells
+        const CaloClusterCellLink* cellLinks=cl->getCellLinks();
+        if ((cellLinks == NULL)){ continue;}
+
+        CaloClusterCellLink::const_iterator lnk_it=cellLinks->begin();
+        CaloClusterCellLink::const_iterator lnk_it_e=cellLinks->end();
+        CaloCell_ID::CaloSample cellLayer;
+        for (;lnk_it!=lnk_it_e;++lnk_it) {
+             const CaloCell* cell=*lnk_it;
+             const CaloDetDescrElement* dde = cell->caloDDE();
+             float volume = dde->volume();
+             float cell_dr = dde->dr();
+             float cell_dphi = dde->dphi();
+             float cell_eta = dde->eta_raw();
+             float cell_phi = dde->phi_raw();
+             float cell_track_dr = TrackCaloDecorator::calc_angular_distance(cell_eta, cell_phi, extrapolEta, extrapolPhi);
+             float cluster_dr_up = cell_track_dr + (cell_dr / 2.0);
+             float cluster_dr_down = cell_track_dr - (cell_dr / 2.0);
+             double cdf_low = ROOT::Math::normal_cdf ( cluster_dr_down, LHED_scale,  0.0 );
+             double cdf_high = ROOT::Math::normal_cdf ( cluster_dr_up , LHED_scale, 0.0 );
+             double weight = (cdf_high - cdf_low) * cell_dphi;
+             //OK Now lets calculate the cell ENERGY at LC and EM scales:
+        }
     }
     return 0.0; //TODO: Implement calculation
   }
 
   std::pair<xAOD::CaloCluster::CaloSample, double> TrackCaloDecorator::get_most_energetic_layer(const xAOD::CaloCluster* cl) const {
-    double maxLayerClusterEnergy = cl->eSample(xAOD::CaloCluster::CaloSample::TileExt2);
-    xAOD::CaloCluster::CaloSample mostEnergeticLayer = xAOD::CaloCluster::CaloSample::TileExt2;
+    double maxLayerClusterEnergy = -999999999.0;
+    xAOD::CaloCluster::CaloSample mostEnergeticLayer = xAOD::CaloCluster::CaloSample::Unknown;
     for (int i=0; i<xAOD::CaloCluster::CaloSample::TileExt2+1; i++) {
       xAOD::CaloCluster::CaloSample sampleLayer = (xAOD::CaloCluster::CaloSample)(i);
       double clusterLayerEnergy = cl->eSample(sampleLayer);
