@@ -106,6 +106,7 @@ namespace DerivationFramework {
       std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundNonEMInactiveCalibHitEnergy;
       std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundInvisibleInactiveCalibHitEnergy;
       std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundEscapedInactiveCalibHitEnergy;
+      std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_WeigtedEnergyDensity;
 
       std::vector<SG::AuxElement::Decorator< float > >  m_caloSamplingIndexToDecorator_extrapolTrackEta;
       std::vector<SG::AuxElement::Decorator< float > >  m_caloSamplingIndexToDecorator_extrapolTrackPhi;
@@ -174,9 +175,10 @@ namespace DerivationFramework {
 
       void getHitsSumAllBackground(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode, const xAOD::TruthParticleContainer* truthParticles, std::vector<int> sumForThesePDGIDs, std::vector<int> skipThesePDGIDs,  std::vector< std::vector<float> >& hitsMap) const;
 
-
       std::pair<xAOD::CaloCluster::CaloSample, double> get_most_energetic_layer(const xAOD::CaloCluster* cl) const;
-      float calc_LHED(ConstDataVector<xAOD::CaloClusterContainer>* clusters, const xAOD::TrackParticle* trk) const;
+      std::map<xAOD::CaloCluster::CaloSample, float> calc_LHED(ConstDataVector<xAOD::CaloClusterContainer> &clusters, const xAOD::TrackParticle* trk) const;
+
+       std::map<xAOD::CaloCluster::CaloSample, float> initialize_Empty_Sum_Map() const;
 
       float calc_angular_distance(float eta_obj1, float phi_obj1, float eta_obj2, float phi_obj2) const;
   }; 

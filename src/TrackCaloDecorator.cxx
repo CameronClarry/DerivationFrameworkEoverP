@@ -151,6 +151,8 @@ namespace DerivationFramework {
     m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundInvisibleInactiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
     m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundEscapedInactiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
 
+    m_cutToCaloSamplingIndexToDecorator_WeigtedEnergyDensity = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts);
+
 
     //For each of the dR cuts and m_caloSamplingNumbers, create a decoration for the tracks
     ATH_MSG_INFO("Preparing Energy Deposit Decorators");
@@ -201,7 +203,12 @@ namespace DerivationFramework {
             SG::AuxElement::Decorator< float > clusterHadronicBackgroundEscapedInactiveCalibHitDecorator(m_sgName + "_ClusterHadronicBackgroundEscapedInactiveCalibHitEnergy_" + caloSamplingName + "_" + cutName);
             SG::AuxElement::Decorator< float > clusterHadronicBackgroundInvisibleInactiveCalibHitDecorator(m_sgName + "_ClusterHadronicBackgroundInvisibleInactiveCalibHitEnergy_" + caloSamplingName + "_" + cutName);
 
+            //Energy Density Decorators
+            SG::AuxElement::Decorator< float > weigtedEnergyDensityDecorator(m_sgName + "_WeightedEnergyDensity_" + caloSamplingName + "_" + cutName);
+
             ////////////insert the decorators into the std maps
+            m_cutToCaloSamplingIndexToDecorator_WeigtedEnergyDensity[cutNumber].push_back(weigtedEnergyDensityDecorator);
+
             m_cutToCaloSamplingIndexToDecorator_ClusterEnergy[cutNumber].push_back(clusterDecorator);
             m_cutToCaloSamplingIndexToDecorator_LCWClusterEnergy[cutNumber].push_back(lcwClusterDecorator);
             m_cutToCaloSamplingIndexToDecorator_CellEnergy[cutNumber].push_back(cellDecorator);
@@ -531,10 +538,9 @@ namespace DerivationFramework {
 
         /*Finding the most energetic layer of the cluster*/
         xAOD::CaloCluster::CaloSample mostEnergeticLayer = xAOD::CaloCluster::CaloSample::Unknown;
-        double maxLayerClusterEnergy = -999999999; //Some extremely low value
         std::pair<xAOD::CaloCluster::CaloSample, double> layer_energy = get_most_energetic_layer(cluster);
         mostEnergeticLayer = layer_energy.first;
-        maxLayerClusterEnergy = layer_energy.second;
+        double maxLayerClusterEnergy = layer_energy.second;
 
         if(mostEnergeticLayer==xAOD::CaloCluster::CaloSample::Unknown) continue;
 
@@ -701,7 +707,6 @@ namespace DerivationFramework {
       std::vector< std::vector<float> > hadronicBkgEnergyTypeToCaloSamplingIndexToEnergySum_InactiveCalibHit(4, std::vector<float>(m_nsamplings));
 
       for (unsigned int sampling_index : m_caloSamplingIndices){
-          CaloSampling::CaloSample caloSamplingNumber = m_caloSamplingNumbers[sampling_index];
           caloSamplingIndexToEnergySum_EMScale[sampling_index] = 0.0;
           caloSamplingIndexToEnergySum_LCWScale[sampling_index] = 0.0;
 
@@ -731,11 +736,24 @@ namespace DerivationFramework {
       PhotonPDGID.push_back(22);
       std::vector<int> EmptyVectorPDGID;
 
+      std::map<xAOD::CaloCluster::CaloSample, float> density_sum_map;
+      density_sum_map = TrackCaloDecorator::initialize_Empty_Sum_Map();
+
       for (unsigned int cutNumber: m_cutNumbers){
           std::string cutName = m_cutNumberToCutName.at(cutNumber);
           //create std::maps of std::string CaloRegion -> float Energy Sum
           ConstDataVector<xAOD::CaloClusterContainer>::iterator firstMatchedClus = matchedClusterVector.at(cutNumber).begin();
           ConstDataVector<xAOD::CaloClusterContainer>::iterator lastMatchedClus = matchedClusterVector.at(cutNumber).end();
+
+          ConstDataVector<xAOD::CaloClusterContainer> matchedClusters = matchedClusterVector.at(cutNumber);
+          std::map<xAOD::CaloCluster::CaloSample, float> this_density_map = TrackCaloDecorator::calc_LHED(matchedClusters, track);
+          
+          //add the maps together, and decorate the track for this sampling
+          for (unsigned int sampling_index : m_caloSamplingIndices){
+              CaloSampling::CaloSample sampling = m_caloSamplingNumbers.at(sampling_index);
+              density_sum_map[sampling] += this_density_map[sampling];
+              m_cutToCaloSamplingIndexToDecorator_LHED.at(cutNumber).at(sampling_index)(*track) = density_sum_map[sampling];
+          }
 
           /*Loop over matched clusters for a given cone dimension*/
           for (; firstMatchedClus != lastMatchedClus; ++firstMatchedClus) {
@@ -955,13 +973,24 @@ namespace DerivationFramework {
           return std::sqrt((etaDiff*etaDiff) + (phiDiff*phiDiff));
   }
 
-  float TrackCaloDecorator::calc_LHED(ConstDataVector<xAOD::CaloClusterContainer>* clusters, const xAOD::TrackParticle* trk) const {
+  std::map<xAOD::CaloCluster::CaloSample, float> TrackCaloDecorator::initialize_Empty_Sum_Map() const {
+    std::map<CaloSampling::CaloSample, float> to_return;
+        for (unsigned int sampling_index : m_caloSamplingIndices){
+        CaloSampling::CaloSample caloSamplingNumber = m_caloSamplingNumbers[sampling_index];
+        to_return[caloSamplingNumber] = 0.0;
+     }
+    return to_return;
+  }
+
+  std::map<xAOD::CaloCluster::CaloSample, float> TrackCaloDecorator::calc_LHED(ConstDataVector<xAOD::CaloClusterContainer> &clusters, const xAOD::TrackParticle* trk) const {
+
+    std::map<CaloSampling::CaloSample, float> densities = TrackCaloDecorator::initialize_Empty_Sum_Map();
     //Go through the various extrapolated coordinates of the tracks
     //Lets loop through the clusters:
-    for (const auto& cl : *clusters) {
+    for (const auto& cl : clusters) {
         std::pair<xAOD::CaloCluster::CaloSample, double> sampling_energy_pair = get_most_energetic_layer(cl);
         xAOD::CaloCluster::CaloSample most_energetic_layer = sampling_energy_pair.first;
-        if (most_energetic_layer = xAOD::CaloCluster::CaloSample::Unknown) continue;
+        if (most_energetic_layer == xAOD::CaloCluster::CaloSample::Unknown) continue;
         if (not m_caloSamplingIndexToAccessor_extrapolTrackEta.at(most_energetic_layer).isAvailable(*trk) or 
             not m_caloSamplingIndexToAccessor_extrapolTrackPhi.at(most_energetic_layer).isAvailable(*trk)) continue;
         float extrapolEta = m_caloSamplingIndexToAccessor_extrapolTrackEta.at(most_energetic_layer)(*trk);
@@ -971,7 +1000,6 @@ namespace DerivationFramework {
         double clPhi = cl->rawPhi();
         if(clEta == -999 || clPhi == -999) continue;
 
-        double dR = TrackCaloDecorator::calc_angular_distance(clEta, clPhi, extrapolEta, extrapolPhi);
         //Lets calculate the LHED
         float LHED_scale = 0.035;// taken from https://arxiv.org/pdf/1703.10485.pdf
         //loop over the cells
@@ -984,6 +1012,7 @@ namespace DerivationFramework {
         for (;lnk_it!=lnk_it_e;++lnk_it) {
              const CaloCell* cell=*lnk_it;
              const CaloDetDescrElement* dde = cell->caloDDE();
+             cellLayer = dde->getSampling();
              float volume = dde->volume();
              float cell_dr = dde->dr();
              float cell_dphi = dde->dphi();
@@ -995,10 +1024,13 @@ namespace DerivationFramework {
              double cdf_low = ROOT::Math::normal_cdf ( cluster_dr_down, LHED_scale,  0.0 );
              double cdf_high = ROOT::Math::normal_cdf ( cluster_dr_up , LHED_scale, 0.0 );
              double weight = (cdf_high - cdf_low) * cell_dphi;
-             //OK Now lets calculate the cell ENERGY at LC and EM scales:
+             //OK Now lets calculate the cell energy density
+             double density = cell->energy() * weight / volume; //density with weight applied
+             std::cout<<"The density was "<<density<<std::endl;
+             densities[CaloSampling::CaloSample(cellLayer)] += density;
         }
     }
-    return 0.0; //TODO: Implement calculation
+    return densities;
   }
 
   std::pair<xAOD::CaloCluster::CaloSample, double> TrackCaloDecorator::get_most_energetic_layer(const xAOD::CaloCluster* cl) const {
