@@ -75,6 +75,7 @@ namespace DerivationFramework {
       std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_CellEnergy;
       std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_ClusterEnergy;
       std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_LCWClusterEnergy;
+      std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_LHED;
 
       std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_ClusterEMActiveCalibHitEnergy;
       std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_ClusterNonEMActiveCalibHitEnergy;
@@ -108,6 +109,9 @@ namespace DerivationFramework {
 
       std::vector<SG::AuxElement::Decorator< float > >  m_caloSamplingIndexToDecorator_extrapolTrackEta;
       std::vector<SG::AuxElement::Decorator< float > >  m_caloSamplingIndexToDecorator_extrapolTrackPhi;
+
+      std::vector<SG::AuxElement::Accessor< float > >  m_caloSamplingIndexToAccessor_extrapolTrackEta;
+      std::vector<SG::AuxElement::Accessor< float > >  m_caloSamplingIndexToAccessor_extrapolTrackPhi;
 
       StatusCode initialize();
       StatusCode finalize();
@@ -169,6 +173,10 @@ namespace DerivationFramework {
       void getHitsSum(const CaloCalibrationHitContainer* hits,const  xAOD::CaloCluster* cl,  unsigned int particle_barcode, std::vector< std::vector<float> >& hitsMap) const;
 
       void getHitsSumAllBackground(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode, const xAOD::TruthParticleContainer* truthParticles, std::vector<int> sumForThesePDGIDs, std::vector<int> skipThesePDGIDs,  std::vector< std::vector<float> >& hitsMap) const;
+
+
+      std::pair<xAOD::CaloCluster::CaloSample, double> get_most_energetic_layer(const xAOD::CaloCluster* cl) const;
+      float calc_LHED(ConstDataVector<xAOD::CaloClusterContainer>* clusters, const xAOD::TrackParticle* trk) const;
   }; 
 } // Derivation Framework
 #endif 

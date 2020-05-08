@@ -109,6 +109,7 @@ namespace DerivationFramework {
     m_cutToCaloSamplingIndexToDecorator_ClusterEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
     m_cutToCaloSamplingIndexToDecorator_LCWClusterEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
     m_cutToCaloSamplingIndexToDecorator_CellEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
+    m_cutToCaloSamplingIndexToDecorator_LHED = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
 
     //////////calib hits from truth matched particle/////////////
     //Active calibration hit energy
@@ -247,6 +248,8 @@ namespace DerivationFramework {
 
     m_caloSamplingIndexToDecorator_extrapolTrackEta.reserve(m_nsamplings);
     m_caloSamplingIndexToDecorator_extrapolTrackPhi.reserve(m_nsamplings);
+    m_caloSamplingIndexToAccessor_extrapolTrackEta.reserve(m_nsamplings);
+    m_caloSamplingIndexToAccessor_extrapolTrackPhi.reserve(m_nsamplings);
     //Create the decorators for the extrapolated track coordinates
     ATH_MSG_INFO("Perparing Decorators for the extrapolated track coordinates");
     for (unsigned int sampling_index : m_caloSamplingIndices){
@@ -255,6 +258,8 @@ namespace DerivationFramework {
         ATH_MSG_INFO(caloSamplingName);
         m_caloSamplingIndexToDecorator_extrapolTrackEta.push_back(SG::AuxElement::Decorator< float >(m_sgName + "_trkEta_" + caloSamplingName));
         m_caloSamplingIndexToDecorator_extrapolTrackPhi.push_back(SG::AuxElement::Decorator< float >(m_sgName + "_trkPhi_" + caloSamplingName));
+        m_caloSamplingIndexToAccessor_extrapolTrackEta.push_back(SG::AuxElement::Accessor< float >(m_sgName + "_trkEta_" + caloSamplingName));
+        m_caloSamplingIndexToAccessor_extrapolTrackPhi.push_back(SG::AuxElement::Accessor< float >(m_sgName + "_trkEta_" + caloSamplingName));
     }
 
     ATH_CHECK(m_extrapolator.retrieve());
@@ -526,15 +531,9 @@ namespace DerivationFramework {
         /*Finding the most energetic layer of the cluster*/
         xAOD::CaloCluster::CaloSample mostEnergeticLayer = xAOD::CaloCluster::CaloSample::Unknown;
         double maxLayerClusterEnergy = -999999999; //Some extremely low value
-
-        for (int i=0; i<xAOD::CaloCluster::CaloSample::TileExt2+1; i++) {
-          xAOD::CaloCluster::CaloSample sampleLayer = (xAOD::CaloCluster::CaloSample)(i);
-          double clusterLayerEnergy = cluster->eSample(sampleLayer);
-          if(clusterLayerEnergy > maxLayerClusterEnergy) {
-            maxLayerClusterEnergy = clusterLayerEnergy;
-            mostEnergeticLayer = sampleLayer;
-          }
-        }
+        std::pair<xAOD::CaloCluster::CaloSample, double> layer_energy = get_most_energetic_layer(cluster);
+        mostEnergeticLayer = layer_energy.first;
+        maxLayerClusterEnergy = layer_energy.second;
 
         if(mostEnergeticLayer==xAOD::CaloCluster::CaloSample::Unknown) continue;
 
@@ -882,7 +881,7 @@ namespace DerivationFramework {
        }
     }
 
-      void TrackCaloDecorator::getHitsSumAllBackground(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode, const xAOD::TruthParticleContainer* truthParticles, std::vector<int> sumForThesePDGIDs, std::vector<int> skipThesePDGIDs,  std::vector< std::vector<float> >& hitsMap) const {
+    void TrackCaloDecorator::getHitsSumAllBackground(const CaloCalibrationHitContainer* hits, const xAOD::CaloCluster* cl,  unsigned int particle_barcode, const xAOD::TruthParticleContainer* truthParticles, std::vector<int> sumForThesePDGIDs, std::vector<int> skipThesePDGIDs,  std::vector< std::vector<float> >& hitsMap) const {
       //Sum all of the calibration hits in all of the layers, and return a map of calo layer to energy sum
       //Gather all of the information pertaining to the total energy deposited in the cells of this cluster
       if (particle_barcode == 0) return;
@@ -952,5 +951,30 @@ namespace DerivationFramework {
               hitsMap[3][cell_layer_index]+=hit->energyEscaped();
           }
      }
+  }
+
+  float TrackCaloDecorator::calc_LHED(ConstDataVector<xAOD::CaloClusterContainer>* clusters, const xAOD::TrackParticle* trk) const {
+    //Go through the various extrapolated coordinates of the tracks
+    for (unsigned int sampling_index : m_caloSamplingIndices){
+        CaloSampling::CaloSample caloSamplingNumber = m_caloSamplingNumbers[sampling_index];
+        const std::string caloSamplingName = CaloSampling::getSamplingName(caloSamplingNumber);
+        float extrapolEta = m_caloSamplingIndexToAccessor_extrapolTrackEta.at(sampling_index)(*trk);
+        float extrapolPhi = m_caloSamplingIndexToAccessor_extrapolTrackEta.at(sampling_index)(*trk);
+    }
+    return 0.0; //TODO: Implement calculation
+  }
+
+  std::pair<xAOD::CaloCluster::CaloSample, double> TrackCaloDecorator::get_most_energetic_layer(const xAOD::CaloCluster* cl) const {
+    double maxLayerClusterEnergy = cl->eSample(xAOD::CaloCluster::CaloSample::TileExt2);
+    xAOD::CaloCluster::CaloSample mostEnergeticLayer = xAOD::CaloCluster::CaloSample::TileExt2;
+    for (int i=0; i<xAOD::CaloCluster::CaloSample::TileExt2+1; i++) {
+      xAOD::CaloCluster::CaloSample sampleLayer = (xAOD::CaloCluster::CaloSample)(i);
+      double clusterLayerEnergy = cl->eSample(sampleLayer);
+      if(clusterLayerEnergy > maxLayerClusterEnergy) {
+        maxLayerClusterEnergy = clusterLayerEnergy;
+        mostEnergeticLayer = sampleLayer;
+      }
+    }
+    return std::pair<xAOD::CaloCluster::CaloSample, double>(mostEnergeticLayer, maxLayerClusterEnergy);
   }
 } // Derivation Framework
