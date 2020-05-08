@@ -266,7 +266,7 @@ namespace DerivationFramework {
         m_caloSamplingIndexToDecorator_extrapolTrackEta.push_back(SG::AuxElement::Decorator< float >(m_sgName + "_trkEta_" + caloSamplingName));
         m_caloSamplingIndexToDecorator_extrapolTrackPhi.push_back(SG::AuxElement::Decorator< float >(m_sgName + "_trkPhi_" + caloSamplingName));
         m_caloSamplingIndexToAccessor_extrapolTrackEta.push_back(SG::AuxElement::Accessor< float >(m_sgName + "_trkEta_" + caloSamplingName));
-        m_caloSamplingIndexToAccessor_extrapolTrackPhi.push_back(SG::AuxElement::Accessor< float >(m_sgName + "_trkEta_" + caloSamplingName));
+        m_caloSamplingIndexToAccessor_extrapolTrackPhi.push_back(SG::AuxElement::Accessor< float >(m_sgName + "_trkPhi_" + caloSamplingName));
     }
 
     ATH_CHECK(m_extrapolator.retrieve());
@@ -609,6 +609,7 @@ namespace DerivationFramework {
           ClusterEnergyLCW_IDNumber.push_back(clusterID);
           ClusterEnergyLCW_firstEnergyDensity.push_back(first_energy_density);
         }
+
         //Loop through the different dR Cuts, and push to the matched cluster container
         for (unsigned int cutNumber: m_cutNumbers){
             float cut = m_cutNumberToCut.at(cutNumber);
@@ -673,12 +674,7 @@ namespace DerivationFramework {
           double trackEta = parametersMap[cellLayer]->position().eta();
           double trackPhi = parametersMap[cellLayer]->position().phi();
 
-          double etaDiff = cellEta - trackEta;
-          double phiDiff = cellPhi - trackPhi;
-
-          if (phiDiff > TMath::Pi()) phiDiff = 2*TMath::Pi() - phiDiff;
-
-          double deltaR = std::sqrt((etaDiff*etaDiff) + (phiDiff*phiDiff));
+          double deltaR = TrackCaloDecorator::calc_angular_distance(trackEta, trackPhi, cellEta, cellPhi);
 
           for (unsigned int cutNumber: m_cutNumbers){
               float cut = m_cutNumberToCut.at(cutNumber);
@@ -966,8 +962,8 @@ namespace DerivationFramework {
   }
 
   float TrackCaloDecorator::calc_angular_distance(float eta_obj1, float phi_obj1, float eta_obj2, float phi_obj2) const {
-          float etaDiff = eta_obj1 - eta_obj2;
-          float phiDiff = phi_obj1 - phi_obj2;
+          float etaDiff = std::abs(eta_obj1 - eta_obj2);
+          float phiDiff = std::abs(phi_obj1 - phi_obj2);
           if (phiDiff > TMath::Pi()) phiDiff = 2*TMath::Pi() - phiDiff;
           return std::sqrt((etaDiff*etaDiff) + (phiDiff*phiDiff));
   }
@@ -1013,16 +1009,23 @@ namespace DerivationFramework {
              const CaloDetDescrElement* dde = cell->caloDDE();
              cellLayer = dde->getSampling();
              float volume = dde->volume();
-             float cell_dr = dde->dr();
              float cell_dphi = dde->dphi();
+             std::cout<<"Cell dphi was "<<cell_dphi<<std::endl;
+             float cell_deta = dde->deta();
+             std::cout<<"Cell deta was "<<cell_deta<<std::endl;
              float cell_eta = dde->eta_raw();
              float cell_phi = dde->phi_raw();
+             float cell_dr = std::sqrt((cell_dphi * cell_dphi) + (cell_deta * cell_deta));
+             std::cout<<"Cell dr was "<<cell_dr<<std::endl;
              float cell_track_dr = TrackCaloDecorator::calc_angular_distance(cell_eta, cell_phi, extrapolEta, extrapolPhi);
+             std::cout<<"Cell track dr was "<<cell_track_dr<<std::endl;
+             std::cout<<"Cluster track dr was "<<TrackCaloDecorator::calc_angular_distance(clEta, clPhi, extrapolEta, extrapolPhi)<<std::endl;
              float cluster_dr_up = cell_track_dr + (cell_dr / 2.0);
              float cluster_dr_down = cell_track_dr - (cell_dr / 2.0);
              double cdf_low = ROOT::Math::normal_cdf ( cluster_dr_down, LHED_scale,  0.0 );
              double cdf_high = ROOT::Math::normal_cdf ( cluster_dr_up , LHED_scale, 0.0 );
              double weight = (cdf_high - cdf_low) * cell_dphi;
+             std::cout<<"Cell weight was "<<weight<<std::endl;
              //OK Now lets calculate the cell energy density
              double density = cell->energy() * weight / volume; //density with weight applied
              std::cout<<"The density was "<<density<<std::endl;
