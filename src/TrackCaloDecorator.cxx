@@ -110,7 +110,6 @@ namespace DerivationFramework {
     m_cutToCaloSamplingIndexToDecorator_ClusterEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
     m_cutToCaloSamplingIndexToDecorator_LCWClusterEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
     m_cutToCaloSamplingIndexToDecorator_CellEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
-    m_cutToCaloSamplingIndexToDecorator_LHED = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
 
     //////////calib hits from truth matched particle/////////////
     //Active calibration hit energy
@@ -151,7 +150,7 @@ namespace DerivationFramework {
     m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundInvisibleInactiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
     m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundEscapedInactiveCalibHitEnergy = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts );
 
-    m_cutToCaloSamplingIndexToDecorator_WeigtedEnergyDensity = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts);
+    m_cutToCaloSamplingIndexToDecorator_WeightedEnergyDensity = std::vector< std::vector<SG::AuxElement::Decorator< float > > >(m_ncuts);
 
 
     //For each of the dR cuts and m_caloSamplingNumbers, create a decoration for the tracks
@@ -204,10 +203,10 @@ namespace DerivationFramework {
             SG::AuxElement::Decorator< float > clusterHadronicBackgroundInvisibleInactiveCalibHitDecorator(m_sgName + "_ClusterHadronicBackgroundInvisibleInactiveCalibHitEnergy_" + caloSamplingName + "_" + cutName);
 
             //Energy Density Decorators
-            SG::AuxElement::Decorator< float > weigtedEnergyDensityDecorator(m_sgName + "_WeightedEnergyDensity_" + caloSamplingName + "_" + cutName);
+            SG::AuxElement::Decorator< float > weightedEnergyDensityDecorator(m_sgName + "_WeightedEnergyDensity_" + caloSamplingName + "_" + cutName);
 
             ////////////insert the decorators into the std maps
-            m_cutToCaloSamplingIndexToDecorator_WeigtedEnergyDensity[cutNumber].push_back(weigtedEnergyDensityDecorator);
+            m_cutToCaloSamplingIndexToDecorator_WeightedEnergyDensity[cutNumber].push_back(weightedEnergyDensityDecorator);
 
             m_cutToCaloSamplingIndexToDecorator_ClusterEnergy[cutNumber].push_back(clusterDecorator);
             m_cutToCaloSamplingIndexToDecorator_LCWClusterEnergy[cutNumber].push_back(lcwClusterDecorator);
@@ -752,7 +751,7 @@ namespace DerivationFramework {
           for (unsigned int sampling_index : m_caloSamplingIndices){
               CaloSampling::CaloSample sampling = m_caloSamplingNumbers.at(sampling_index);
               density_sum_map[sampling] += this_density_map[sampling];
-              m_cutToCaloSamplingIndexToDecorator_LHED.at(cutNumber).at(sampling_index)(*track) = density_sum_map[sampling];
+              m_cutToCaloSamplingIndexToDecorator_WeightedEnergyDensity.at(cutNumber).at(sampling_index)(*track) = density_sum_map[sampling];
           }
 
           /*Loop over matched clusters for a given cone dimension*/

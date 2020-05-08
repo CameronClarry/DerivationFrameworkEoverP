@@ -75,7 +75,6 @@ namespace DerivationFramework {
       std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_CellEnergy;
       std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_ClusterEnergy;
       std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_LCWClusterEnergy;
-      std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_LHED;
 
       std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_ClusterEMActiveCalibHitEnergy;
       std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_ClusterNonEMActiveCalibHitEnergy;
@@ -106,7 +105,7 @@ namespace DerivationFramework {
       std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundNonEMInactiveCalibHitEnergy;
       std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundInvisibleInactiveCalibHitEnergy;
       std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_ClusterHadronicBackgroundEscapedInactiveCalibHitEnergy;
-      std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_WeigtedEnergyDensity;
+      std::vector< std::vector<SG::AuxElement::Decorator< float > > > m_cutToCaloSamplingIndexToDecorator_WeightedEnergyDensity;
 
       std::vector<SG::AuxElement::Decorator< float > >  m_caloSamplingIndexToDecorator_extrapolTrackEta;
       std::vector<SG::AuxElement::Decorator< float > >  m_caloSamplingIndexToDecorator_extrapolTrackPhi;
