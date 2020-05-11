@@ -4,6 +4,8 @@
 #include "MCTruthClassifier/MCTruthClassifierDefs.h"
 #include "CaloUtils/CaloClusterSignalState.h"
 #include "Math/ProbFunc.h"
+#include "eflowRec/eflowDatabase.h"
+#include "CaloEvent/CaloSamplingHelper.h"
 
 // tracks
 #include "TrkTrack/Track.h"
@@ -51,6 +53,7 @@ namespace DerivationFramework {
     m_surfaceHelper("CaloSurfaceHelper/CaloSurfaceHelper"),
     m_truthClassifier("MCTruthClassifier/MCTruthClassifier"),
     m_tileTBID(0),
+    m_caloSamplingHelper(),
     m_doCutflow{false}{
       declareInterface<DerivationFramework::IAugmentationTool>(this);
       declareProperty("DecorationPrefix", m_sgName);
@@ -977,6 +980,22 @@ namespace DerivationFramework {
     return to_return;
   }
 
+  float TrackCaloDecorator::GetRadiationLengthConversion(CaloSampling::CaloSample& layer) const {
+    eflowDatabase database;
+    bool isHAD = m_caloSamplingHelper.isHADSampling(layer);
+    bool isEM = m_caloSamplingHelper.isEMSampling(layer);
+    //bool isFCAL0 = layer == CaloCluster::FCAL0;
+    //bool isFCAL1 = layer == CaloCluster::FCAL1;
+    //bool isFCAL2 = layer == CaloCluster::FCAL2;
+    //if (isFCAL0) {return database.getFCalX0PerUnitLength(0);}
+    //else if (isFCAL1) {return database.getFCalX0PerUnitLength(1);}
+    //else if (isFCAL2) {return database.getFCalX0PerUnitLength(2);}
+    if (isEM) {return database.getEmX0PerUnitLength();}
+    else if (isHAD) {return database.getEmX0PerUnitLength();}
+    else {return -1.0;}
+    return -1.0;
+  }
+
   std::map<xAOD::CaloCluster::CaloSample, float> TrackCaloDecorator::calc_LHED(ConstDataVector<xAOD::CaloClusterContainer> &clusters, const xAOD::TrackParticle* trk) const {
 
     std::map<CaloSampling::CaloSample, float> densities = TrackCaloDecorator::initialize_Empty_Sum_Map();
@@ -1008,7 +1027,9 @@ namespace DerivationFramework {
              const CaloCell* cell=*lnk_it;
              const CaloDetDescrElement* dde = cell->caloDDE();
              cellLayer = dde->getSampling();
-             float volume = dde->volume(); //TODO Figure out how to convert to units of radiation length
+             float volume_conversion = TrackCaloDecorator::GetRadiationLengthConversion(cellLayer);
+             if (volume_conversion < 0.0) {ATH_MSG_WARNING("Couldn't find a radiation length conversion for a cell");}
+             float volume = dde->volume() * (volume_conversion  * volume_conversion  * volume_conversion); 
              float cell_dphi = dde->dphi();
              float cell_deta = dde->deta();
              float cell_eta = dde->eta_raw();

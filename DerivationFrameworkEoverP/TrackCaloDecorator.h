@@ -31,6 +31,7 @@
 #include "CaloEvent/CaloCellContainer.h"
 #include "xAODTruth/TruthParticleContainer.h"
 #include "CaloSimEvent/CaloCalibrationHitContainer.h"  
+#include "CaloEvent/CaloSamplingHelper.h"
 
 class TileTBID;
 class ICaloSurfaceHelper;
@@ -45,6 +46,7 @@ namespace DerivationFramework {
   class TrackCaloDecorator : public AthAlgTool, public IAugmentationTool {
     public: 
       TrackCaloDecorator(const std::string& t, const std::string& n, const IInterface* p);
+
 
      std::vector<std::string> m_cutNames;
      const std::map<std::string, float> m_stringToCut = {
@@ -112,6 +114,7 @@ namespace DerivationFramework {
 
       std::vector<SG::AuxElement::Accessor< float > >  m_caloSamplingIndexToAccessor_extrapolTrackEta;
       std::vector<SG::AuxElement::Accessor< float > >  m_caloSamplingIndexToAccessor_extrapolTrackPhi;
+      CaloSamplingHelper m_caloSamplingHelper;
 
       StatusCode initialize();
       StatusCode finalize();
@@ -177,7 +180,9 @@ namespace DerivationFramework {
       std::pair<xAOD::CaloCluster::CaloSample, double> get_most_energetic_layer(const xAOD::CaloCluster* cl) const;
       std::map<xAOD::CaloCluster::CaloSample, float> calc_LHED(ConstDataVector<xAOD::CaloClusterContainer> &clusters, const xAOD::TrackParticle* trk) const;
 
-       std::map<xAOD::CaloCluster::CaloSample, float> initialize_Empty_Sum_Map() const;
+      std::map<xAOD::CaloCluster::CaloSample, float> initialize_Empty_Sum_Map() const;
+
+      float GetRadiationLengthConversion(CaloSampling::CaloSample& layer) const;
 
       float calc_angular_distance(float eta_obj1, float phi_obj1, float eta_obj2, float phi_obj2) const;
   }; 

@@ -29,6 +29,7 @@ atlas_depends_on_subdirs( PUBLIC
               Reconstruction/RecoTools/RecoToolInterfaces
               Event/xAOD/xAODMuon
               Event/xAOD/xAODTruth
+              Reconstruction/eflowRec
 			  PRIVATE
               Event/xAOD/xAODCaloEvent
 			  Event/xAOD/xAODBase
@@ -78,5 +79,5 @@ atlas_add_component(DerivationFrameworkEoverP DerivationFrameworkEoverP/*.h src/
                    ${release_libs} GaudiKernel xAODEventInfo TrkExInterfaces CaloUtilsLib
                    RecoToolInterfaces xAODMuon JpsiUpsilonTools DataModel EventPrimitives xAODBPhys
                    PRIVATE_LINK_LIBRARIES TrkVertexAnalysisUtils TrackToVertex InDetV0FinderLib InDetBeamSpotServiceLib 
-                   TrkVertexAnalysisUtilsLib TrkVKalVrtFitterLib CaloSimEvent MCTruthClassifierLib xAODTruth 
+                   TrkVertexAnalysisUtilsLib TrkVKalVrtFitterLib CaloSimEvent MCTruthClassifierLib xAODTruth eflowRec
 )
