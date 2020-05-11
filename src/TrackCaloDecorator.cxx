@@ -1008,27 +1008,21 @@ namespace DerivationFramework {
              const CaloCell* cell=*lnk_it;
              const CaloDetDescrElement* dde = cell->caloDDE();
              cellLayer = dde->getSampling();
-             float volume = dde->volume();
+             float volume = dde->volume(); //TODO Figure out how to convert to units of radiation length
              float cell_dphi = dde->dphi();
-             std::cout<<"Cell dphi was "<<cell_dphi<<std::endl;
              float cell_deta = dde->deta();
-             std::cout<<"Cell deta was "<<cell_deta<<std::endl;
              float cell_eta = dde->eta_raw();
              float cell_phi = dde->phi_raw();
              float cell_dr = std::sqrt((cell_dphi * cell_dphi) + (cell_deta * cell_deta));
-             std::cout<<"Cell dr was "<<cell_dr<<std::endl;
              float cell_track_dr = TrackCaloDecorator::calc_angular_distance(cell_eta, cell_phi, extrapolEta, extrapolPhi);
-             std::cout<<"Cell track dr was "<<cell_track_dr<<std::endl;
-             std::cout<<"Cluster track dr was "<<TrackCaloDecorator::calc_angular_distance(clEta, clPhi, extrapolEta, extrapolPhi)<<std::endl;
              float cluster_dr_up = cell_track_dr + (cell_dr / 2.0);
              float cluster_dr_down = cell_track_dr - (cell_dr / 2.0);
              double cdf_low = ROOT::Math::normal_cdf ( cluster_dr_down, LHED_scale,  0.0 );
              double cdf_high = ROOT::Math::normal_cdf ( cluster_dr_up , LHED_scale, 0.0 );
              double weight = (cdf_high - cdf_low) * cell_dphi;
-             std::cout<<"Cell weight was "<<weight<<std::endl;
-             //OK Now lets calculate the cell energy density
-             double density = cell->energy() * weight / volume; //density with weight applied
-             std::cout<<"The density was "<<density<<std::endl;
+             double density;
+             if (volume > 0.0) {density = cell->energy() * weight / volume;} //density with weight applied
+             else density = 0.0;
              densities[CaloSampling::CaloSample(cellLayer)] += density;
         }
     }
