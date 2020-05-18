@@ -1,4 +1,5 @@
 #include "DerivationFrameworkEoverP/TrackCaloDecorator.h"
+#include "gsl/gsl_integration.h"
 #include "CaloSimEvent/CaloCalibrationHitContainer.h"  
 #include "MCTruthClassifier/IMCTruthClassifier.h"
 #include "MCTruthClassifier/MCTruthClassifierDefs.h"
@@ -735,7 +736,7 @@ namespace DerivationFramework {
       std::vector<int> EmptyVectorPDGID;
 
       std::map<xAOD::CaloCluster::CaloSample, float> density_sum_map;
-      density_sum_map = TrackCaloDecorator::initialize_Empty_Sum_Map();
+      density_sum_map = TrackCaloDecorator::InitializeEmptySumMap();
 
       for (unsigned int cutNumber: m_cutNumbers){
           std::string cutName = m_cutNumberToCutName.at(cutNumber);
@@ -971,7 +972,7 @@ namespace DerivationFramework {
           return std::sqrt((etaDiff*etaDiff) + (phiDiff*phiDiff));
   }
 
-  std::map<xAOD::CaloCluster::CaloSample, float> TrackCaloDecorator::initialize_Empty_Sum_Map() const {
+  std::map<xAOD::CaloCluster::CaloSample, float> TrackCaloDecorator::InitializeEmptySumMap() const {
     std::map<CaloSampling::CaloSample, float> to_return;
         for (unsigned int sampling_index : m_caloSamplingIndices){
         CaloSampling::CaloSample caloSamplingNumber = m_caloSamplingNumbers[sampling_index];
@@ -996,9 +997,13 @@ namespace DerivationFramework {
     return -1.0;
   }
 
+  //double TrackCaloDecorator::GetGaussianFunction()
+
+  //float TrackCaloDecorator::DoTwoDimensionalGaussianIntegral
+
   std::map<xAOD::CaloCluster::CaloSample, float> TrackCaloDecorator::calc_LHED(ConstDataVector<xAOD::CaloClusterContainer> &clusters, const xAOD::TrackParticle* trk) const {
 
-    std::map<CaloSampling::CaloSample, float> densities = TrackCaloDecorator::initialize_Empty_Sum_Map();
+    std::map<CaloSampling::CaloSample, float> densities = TrackCaloDecorator::InitializeEmptySumMap();
     //Go through the various extrapolated coordinates of the tracks
     //Lets loop through the clusters:
     for (const auto& cl : clusters) {

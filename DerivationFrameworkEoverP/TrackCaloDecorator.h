@@ -180,7 +180,7 @@ namespace DerivationFramework {
       std::pair<xAOD::CaloCluster::CaloSample, double> get_most_energetic_layer(const xAOD::CaloCluster* cl) const;
       std::map<xAOD::CaloCluster::CaloSample, float> calc_LHED(ConstDataVector<xAOD::CaloClusterContainer> &clusters, const xAOD::TrackParticle* trk) const;
 
-      std::map<xAOD::CaloCluster::CaloSample, float> initialize_Empty_Sum_Map() const;
+      std::map<xAOD::CaloCluster::CaloSample, float> InitializeEmptySumMap() const;
 
       float GetRadiationLengthConversion(CaloSampling::CaloSample& layer) const;
 

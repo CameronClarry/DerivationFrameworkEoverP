@@ -69,13 +69,14 @@ atlas_depends_on_subdirs( PUBLIC
 # Find the needed external(s):
 find_package( ROOT COMPONENTS Core RIO Hist Tree )
 find_package(HepPDT REQUIRED)
+find_package( GSL )
 
 atlas_install_python_modules( python/*.py )
 atlas_install_joboptions( share/*.py )
 
 atlas_add_component(DerivationFrameworkEoverP DerivationFrameworkEoverP/*.h src/*.cxx src/components/*.cxx
-                   INCLUDE_DIRS ${ROOT_INCLUDE_DIRS} ${HEPPDT_INCLUDE_DIRS}
-      		       LINK_LIBRARIES  ${ROOT_LIBRARIES}  ${HEPPDT_LIBRARIES}
+                   INCLUDE_DIRS ${ROOT_INCLUDE_DIRS} ${HEPPDT_INCLUDE_DIRS} ${GSL_INCLUDE_DIRS}
+      		       LINK_LIBRARIES  ${ROOT_LIBRARIES}  ${HEPPDT_LIBRARIES} ${GSL_LIBRARIES}
                    ${release_libs} GaudiKernel xAODEventInfo TrkExInterfaces CaloUtilsLib
                    RecoToolInterfaces xAODMuon JpsiUpsilonTools DataModel EventPrimitives xAODBPhys
                    PRIVATE_LINK_LIBRARIES TrkVertexAnalysisUtils TrackToVertex InDetV0FinderLib InDetBeamSpotServiceLib 
