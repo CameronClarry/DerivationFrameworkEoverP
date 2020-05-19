@@ -46,7 +46,8 @@ gsl_integration_glfixed_table* INT_TABLE =  gsl_integration_glfixed_table_alloc(
 double GaussianFunction(double phi, void * params) {
     double *pVec = (double *) params;
     double eta = pVec[0];
-    return TMath::Gaus(std::sqrt( (eta * eta) + (phi * phi)), 0.0, LHED_SCALE);
+    double to_return = TMath::Gaus(std::sqrt( (eta * eta) + (phi * phi)), 0.0, LHED_SCALE);
+    return to_return;
 }
 
 double PhiIntegratedGaussianFunction(double eta, void * params) {
@@ -1055,15 +1056,16 @@ namespace DerivationFramework {
              float cell_deta = dde->deta();
              float cell_eta = dde->eta_raw();
              float cell_phi = dde->phi_raw();
-             float cell_dr = std::sqrt((cell_dphi * cell_dphi) + (cell_deta * cell_deta));
+             float cell_trk_dphi = std::abs(cell_phi - extrapolPhi);
+             float cell_trk_deta = std::abs(cell_eta - extrapolEta);
+             float philow = cell_trk_dphi - (cell_dphi/2.0);
+             float phihi = cell_trk_dphi + (cell_dphi/2.0);
+             float etalow = cell_trk_deta - (cell_deta/2.0);
+             float etahi = cell_trk_deta + (cell_deta/2.0);
              float cell_track_dr = TrackCaloDecorator::calc_angular_distance(cell_eta, cell_phi, extrapolEta, extrapolPhi);
-             float cluster_dr_up = cell_track_dr + (cell_dr / 2.0);
-             float cluster_dr_down = cell_track_dr - (cell_dr / 2.0);
-             double cdf_low = ROOT::Math::normal_cdf ( cluster_dr_down, LHED_SCALE,  0.0 );
-             double cdf_high = ROOT::Math::normal_cdf ( cluster_dr_up , LHED_SCALE, 0.0 );
-             double weight = (cdf_high - cdf_low) * cell_dphi;
+             double integral = this->DoTwoDimensionalGuasIntegral(philow, phihi, etalow, etahi);
              double density;
-             if (volume > 0.0) {density = cell->energy() * weight / volume;} //density with weight applied
+             if (volume > 0.0) {density = cell->energy() * integral/ volume;} //density with weight applied
              else density = 0.0;
              densities[CaloSampling::CaloSample(cellLayer)] += density;
         }
