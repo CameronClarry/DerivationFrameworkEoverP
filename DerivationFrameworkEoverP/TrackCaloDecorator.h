@@ -16,6 +16,7 @@
 #include "TH1F.h"
 #include "TTree.h"
 
+#include "gsl/gsl_integration.h"
 #include "AthenaBaseComps/AthAlgTool.h"
 #include "MCTruthClassifier/IMCTruthClassifier.h"
 #include "DerivationFrameworkInterfaces/IAugmentationTool.h"
@@ -157,6 +158,7 @@ namespace DerivationFramework {
       int m_nTrks;
       int m_nTrks_pass;
 
+
       // cutflows
       TH1F* m_cutflow_evt;
       TH1F* m_cutflow_trk;
@@ -185,6 +187,11 @@ namespace DerivationFramework {
       float GetRadiationLengthConversion(CaloSampling::CaloSample& layer) const;
 
       float calc_angular_distance(float eta_obj1, float phi_obj1, float eta_obj2, float phi_obj2) const;
+
+      double DoTwoDimensionalGuasIntegral(double philow, double phihi, double etalow, double etahi) const;
+
+     // double GaussianFunction(double phi, void * params) const;
+     // double PhiIntegratedGaussianFunction(double eta, void * params) const;
   }; 
 } // Derivation Framework
 #endif 

@@ -40,6 +40,27 @@
 
 #include <map>
 
+float LHED_SCALE = 0.035;// taken from https://arxiv.org/pdf/1703.10485.pdf
+gsl_integration_glfixed_table* INT_TABLE =  gsl_integration_glfixed_table_alloc(8);
+
+double GaussianFunction(double phi, void * params) {
+    double *pVec = (double *) params;
+    double eta = pVec[0];
+    return TMath::Gaus(std::sqrt( (eta * eta) + (phi * phi)), 0.0, LHED_SCALE);
+}
+
+double PhiIntegratedGaussianFunction(double eta, void * params) {
+     double *pVec = (double *) params;
+     double philow = pVec[0];
+     double phihi = pVec[1];
+     gsl_function F;
+     F.function = &GaussianFunction;
+     double pVec2[1];
+     pVec2[0] = eta;
+     F.params = pVec2;
+     return gsl_integration_glfixed(&F, philow, phihi, INT_TABLE);
+}
+
 namespace DerivationFramework {
 
   TrackCaloDecorator::TrackCaloDecorator(const std::string& t, const std::string& n, const IInterface* p) : 
@@ -997,10 +1018,6 @@ namespace DerivationFramework {
     return -1.0;
   }
 
-  //double TrackCaloDecorator::GetGaussianFunction()
-
-  //float TrackCaloDecorator::DoTwoDimensionalGaussianIntegral
-
   std::map<xAOD::CaloCluster::CaloSample, float> TrackCaloDecorator::calc_LHED(ConstDataVector<xAOD::CaloClusterContainer> &clusters, const xAOD::TrackParticle* trk) const {
 
     std::map<CaloSampling::CaloSample, float> densities = TrackCaloDecorator::InitializeEmptySumMap();
@@ -1020,7 +1037,6 @@ namespace DerivationFramework {
         if(clEta == -999 || clPhi == -999) continue;
 
         //Lets calculate the LHED
-        float LHED_scale = 0.035;// taken from https://arxiv.org/pdf/1703.10485.pdf
         //loop over the cells
         const CaloClusterCellLink* cellLinks=cl->getCellLinks();
         if ((cellLinks == NULL)){ continue;}
@@ -1043,8 +1059,8 @@ namespace DerivationFramework {
              float cell_track_dr = TrackCaloDecorator::calc_angular_distance(cell_eta, cell_phi, extrapolEta, extrapolPhi);
              float cluster_dr_up = cell_track_dr + (cell_dr / 2.0);
              float cluster_dr_down = cell_track_dr - (cell_dr / 2.0);
-             double cdf_low = ROOT::Math::normal_cdf ( cluster_dr_down, LHED_scale,  0.0 );
-             double cdf_high = ROOT::Math::normal_cdf ( cluster_dr_up , LHED_scale, 0.0 );
+             double cdf_low = ROOT::Math::normal_cdf ( cluster_dr_down, LHED_SCALE,  0.0 );
+             double cdf_high = ROOT::Math::normal_cdf ( cluster_dr_up , LHED_SCALE, 0.0 );
              double weight = (cdf_high - cdf_low) * cell_dphi;
              double density;
              if (volume > 0.0) {density = cell->energy() * weight / volume;} //density with weight applied
@@ -1053,6 +1069,17 @@ namespace DerivationFramework {
         }
     }
     return densities;
+  }
+ 
+
+  double TrackCaloDecorator::DoTwoDimensionalGuasIntegral(double philow, double phihi, double etalow, double etahi) const {
+    gsl_function F;
+    F.function = &PhiIntegratedGaussianFunction;
+    double pVec[2];
+    pVec[0] = philow;
+    pVec[1] = phihi;
+    F.params = pVec;
+    return gsl_integration_glfixed(&F, etalow, etahi, INT_TABLE);
   }
 
   std::pair<xAOD::CaloCluster::CaloSample, double> TrackCaloDecorator::get_most_energetic_layer(const xAOD::CaloCluster* cl) const {
