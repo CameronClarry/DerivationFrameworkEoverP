@@ -69,10 +69,10 @@ outDSs = [\
 ]
 
 setup = '--nFilesPerJob '+str(nFilesPerJob)+' --excludedSite ANALY_BNL_SHORT,ANALY_SiGNET,ANALY_SiGNET_DIRECT,ANALY_ARNES,ANALY_ARNES_DIRECT,ANALY_RAL_ECHO --maxCpuCount '+str(maxCpuCount)+' --useNewTRF --trf "Reco_tf.py --outputDAOD_EOPFile=%OUT.pool.root --inputESDFile=%IN --ignoreErrors=True --autoConfiguration=everything" --individualOutDS'
-print 'setup: '+setup
+print('setup: '+setup)
 
 config = ''
-print 'config: '+config
+print('config: '+config)
 
 comFirst = 'pathena {} --outDS {} --inDS {} {}'
 comLater = 'pathena {} --outDS {} --inDS {} --libDS LAST {}'
@@ -81,8 +81,8 @@ comLater = 'pathena {} --outDS {} --inDS {} --libDS LAST {}'
 # https://twiki.cern.ch/twiki/bin/view/PanDA/PandaAthena
 for i,inDS in enumerate(inDSs):
     outDS = 'user.'+user+'.'+outDSs[i]+'.'+tag
-    print 'Input dataset: '+inDS
-    print 'Output dataset: '+outDS
+    print('Input dataset: '+inDS)
+    print('Output dataset: '+outDS)
     if (i==0 and doBuild) or doBuildAll:
         command = comFirst.format(setup, outDS, inDS, config)
     else:
