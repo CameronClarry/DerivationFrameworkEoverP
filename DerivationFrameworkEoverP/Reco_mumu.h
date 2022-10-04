@@ -16,14 +16,14 @@
 #include "DerivationFrameworkInterfaces/IAugmentationTool.h"
 #include "JpsiUpsilonTools/JpsiFinder.h"
 #include "JpsiUpsilonTools/PrimaryVertexRefitter.h"
+#include "BeamSpotConditionsData/BeamSpotData.h"
+#include "TrkVertexAnalysisUtils/V0Tools.h"
 
 /** forward declarations
  */
-namespace Trk {
-  class V0Tools;
-}
-
-class IBeamCondSvc;
+//namespace Trk {
+  //class V0Tools;
+//}
 
 /** THE reconstruction tool
  */
@@ -43,8 +43,8 @@ namespace DerivationFramework {
      */
     ToolHandle<Trk::V0Tools>                    m_v0Tools;
     ToolHandle<Analysis::JpsiFinder>            m_jpsiFinder;
-    ToolHandle<Analysis::PrimaryVertexRefitter> m_pvRefitter;
-    ServiceHandle<IBeamCondSvc>                 m_beamSpotSvc;
+    ToolHandle<Analysis::PrimaryVertexRefitter> m_pvRefitter{this, "PVRefitter", "Analysis::PrimaryVertexRefitter"};
+    SG::ReadCondHandleKey<InDet::BeamSpotData> m_beamSpotKey { this, "BeamSpotKey", "BeamSpotData", "SG key for beam spot" };
       
     /** job options
      */
@@ -58,6 +58,9 @@ namespace DerivationFramework {
     bool        m_do3d;
     bool        m_checkCollections;
     std::vector<std::string> m_CollectionsToCheck;
+    SG::ReadHandleKey<xAOD::VertexContainer> m_pvContainerKey{this,"PVContainerName", "PrimaryVertices"};
+    SG::WriteHandleKey<xAOD::VertexContainer> m_refContainerKey{this, "RefPVContainerName","RefittedPrimaryVertices" };
+    SG::WriteHandleKey<xAOD::VertexContainer> m_outContainerKey{this, "OutputVtxContainerName", "OniaCandidates"};
   }; 
 }
 
