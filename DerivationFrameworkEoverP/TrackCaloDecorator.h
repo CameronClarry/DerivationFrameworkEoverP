@@ -33,7 +33,6 @@
 #include "CaloSimEvent/CaloCalibrationHitContainer.h"  
 
 class TileTBID;
-class ICaloSurfaceHelper;
 
 namespace Trk {
   class IExtrapolator;
@@ -136,7 +135,6 @@ namespace DerivationFramework {
       ToolHandle<Trk::IParticleCaloExtensionTool> m_theTrackExtrapolatorTool;
       ToolHandle<IMCTruthClassifier> m_truthClassifier;
       Trk::TrackParametersIdHelper* m_trackParametersIdHelper;
-      ToolHandle<ICaloSurfaceHelper> m_surfaceHelper;
 
       const TileTBID* m_tileTBID; 
 

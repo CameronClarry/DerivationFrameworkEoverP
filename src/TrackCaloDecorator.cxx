@@ -24,7 +24,6 @@
 #include "TileEvent/TileContainer.h"
 #include "TileIdentifier/TileTBID.h"
 #include "CaloEvent/CaloCellContainer.h"
-#include "CaloTrackingGeometry/ICaloSurfaceHelper.h"
 #include "TrkSurfaces/DiscSurface.h"
 #include "GeoPrimitives/GeoPrimitives.h"
 #include "CaloEvent/CaloClusterContainer.h"
@@ -47,7 +46,6 @@ namespace DerivationFramework {
     m_extrapolator("Trk::Extrapolator"),
     m_theTrackExtrapolatorTool("Trk::ParticleCaloExtensionTool"),
     m_trackParametersIdHelper(new Trk::TrackParametersIdHelper),
-    m_surfaceHelper("CaloSurfaceHelper/CaloSurfaceHelper"),
     m_truthClassifier("MCTruthClassifier/MCTruthClassifier"),
     m_tileTBID(0),
     m_doCutflow{false}{
@@ -259,7 +257,6 @@ namespace DerivationFramework {
 
     ATH_CHECK(m_extrapolator.retrieve());
     ATH_CHECK(m_theTrackExtrapolatorTool.retrieve());
-    ATH_CHECK(m_surfaceHelper.retrieve());
 
     // Get the test beam identifier for the MBTS
     ATH_CHECK(detStore()->retrieve(m_tileTBID));
@@ -278,6 +275,8 @@ namespace DerivationFramework {
     // Retrieve track container, Cluster container and Cell container
     const xAOD::TrackParticleContainer* trackContainer = 0;
     CHECK(evtStore()->retrieve(trackContainer, m_trackContainerName));
+
+    const EventContext& eventContext = Gaudi::Hive::currentContext();
 
     const xAOD::CaloClusterContainer* clusterContainer = 0; //xAOD object used to create decorations.
     CHECK(evtStore()->retrieve(clusterContainer, m_caloClusterContainerName));
@@ -382,7 +381,7 @@ namespace DerivationFramework {
       //Create empty calocalibration hits containers
 
       res = m_truthClassifier->particleTruthClassifier(track);
-      const xAOD::TruthParticle_v1* thePart = m_truthClassifier->getGenPart();
+      const xAOD::TruthParticle_v1* thePart = m_truthClassifier->getGenPart(track);
       bool hasTruthPart = (thePart != NULL);
       unsigned int particle_barcode = 0;
       if (hasTruthPart) {particle_barcode = thePart->barcode();}
@@ -435,16 +434,17 @@ namespace DerivationFramework {
       std::map<CaloSampling::CaloSample, const Trk::TrackParameters*> parametersMap;
 
       /*get the CaloExtension object*/
-      const Trk::CaloExtension* extension = 0;
+      std::unique_ptr<Trk::CaloExtension> extension = nullptr;
+      extension = m_theTrackExtrapolatorTool->caloExtension(eventContext, *track);
 
-      if (m_theTrackExtrapolatorTool->caloExtension(*track, extension, false)) {
+      if (extension) {
 
         /*extract the CurvilinearParameters per each layer-track intersection*/
-        const std::vector<const Trk::CurvilinearParameters*>& clParametersVector = extension->caloLayerIntersections();
+        const std::vector<Trk::CurvilinearParameters>& clParametersVector = extension->caloLayerIntersections();
 
         for (auto clParameter : clParametersVector) {
 
-          unsigned int parametersIdentifier = clParameter->cIdentifier();
+          unsigned int parametersIdentifier = clParameter.cIdentifier();
           CaloSampling::CaloSample intLayer;
 
           if (!m_trackParametersIdHelper->isValid(parametersIdentifier)) {
@@ -455,10 +455,10 @@ namespace DerivationFramework {
           }
 
           if (parametersMap[intLayer] == NULL) {
-            parametersMap[intLayer] = clParameter->clone();
-          } else if (m_trackParametersIdHelper->isEntryToVolume(clParameter->cIdentifier())) {
+            parametersMap[intLayer] = clParameter.clone();
+          } else if (m_trackParametersIdHelper->isEntryToVolume(clParameter.cIdentifier())) {
             delete parametersMap[intLayer];
-            parametersMap[intLayer] = clParameter->clone();
+            parametersMap[intLayer] = clParameter.clone();
           }
         }
 
@@ -466,7 +466,7 @@ namespace DerivationFramework {
         //msg(MSG::WARNING) << "TrackExtension failed for track with pt and eta " << track->pt() << " and " << track->eta() << endreq;
       }
 
-      if(!(m_theTrackExtrapolatorTool->caloExtension(*track, extension, false))) continue; //No valid parameters for any of the layers of interest
+      if(!(m_theTrackExtrapolatorTool->caloExtension(eventContext, *track))) continue; //No valid parameters for any of the layers of interest
       decorator_extrapolation(*track) = 1;
 
       //Decorate the tracks with their extrapolated coordinates
