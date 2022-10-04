@@ -8,6 +8,60 @@ Modifications by: Joakim Olsson, Lukas Adamek, Matt Leblanc
 
 Port to release 21: Lukas Adamek
 
+## Setup in Release 22
+
+First we need to setup up our working directory
+
+```
+mkdir workdir && cd workdir
+mkdir source build run
+cd source
+```
+
+Setup AtlasDerivation and do a sparce checkout of athena.
+```
+asetup Athena,22.0.70.2,here
+lsetup git
+git atlas init-workdir https://:@gitlab.cern.ch:8443/atlas/athena.git
+cd athena
+git atlas addpkg PrimaryDPDMaker
+git atlas addpkg TrkVertexAnalysisUtils
+git atlas addpkg xAODBPhys
+git fetch upstream
+git checkout -b 22.0.70-patches release/22.0.70.2
+cd ..
+echo "- athena/Projects/WorkDir" >> package_filters.txt
+```
+
+Clone the Derivation Framework, and modify the PrimaryDPDFlags.py file in the PrimaryDPDMaker
+
+```
+git clone https://github.com/luadamek/DerivationFrameworkEoverP.git
+cp DerivationFrameworkEoverP/ModifiedAthena/PrimaryDPDFlags_mod.py athena/PhysicsAnalysis/PrimaryDPDMaker/python/PrimaryDPDFlags.py
+cp DerivationFrameworkEoverP/UpperCMakeLists.txt CMakeLists.txt
+```
+
+And finally, compile the project.
+```
+cd ../build
+cmake ../source && make
+source x86_64-slc6-gcc62-opt/setup.sh
+```
+
+
+
+## Running in Release 22
+
+### Example: Running locally on lxplus
+Download an example esd, and run over it
+```
+cd ../run
+lsetup rucio
+voms-proxy-init -voms atlas
+rucio download ESD.29797580._000004.pool.root.1
+Reco_tf.py --autoConfiguration='everything' --maxEvents 100 --inputESDFile data18_13TeV/ESD.29797580._000004.pool.root.1 --outputDAOD_EOPFile output_DAOD_EOP.root
+```
+
 ## Setup in Release 21
 
 First we need to setup up our working directory
