@@ -6,19 +6,22 @@
 #define DERIVATIONFRAMEWORK_PVTOOLS_H
 
 #include "GaudiKernel/ToolHandle.h"
+//#include "xAODTracking/VertexContainer.h"
+//#include "TrkVertexAnalysisUtils/V0Tools.h"
 #include "xAODBPhys/BPhysHelper.h"
 #include <vector>
 
 // Author: Adam Barton <abarton@SPAMMENOTTtttcern.ch>
 
-
+namespace InDet{
+class BeamSpotData;
+}
 namespace Trk {
   class V0Tools;
 }
 namespace Analysis{
   class PrimaryVertexRefitter;
 }
-class IBeamCondSvc;
 
 namespace DerivationFramework {
   
@@ -26,7 +29,7 @@ namespace DerivationFramework {
 
   private:
     const Trk::V0Tools *m_v0Tools;
-    const ServiceHandle<IBeamCondSvc> *m_beamSpotSvc;
+    const InDet::BeamSpotData *m_beamSpotData;
 
     /// minimum number of tracks required in PVs considered
     size_t m_PV_minNTracks;
@@ -38,16 +41,15 @@ namespace DerivationFramework {
        
   public:
   
-    BPhysPVTools(Trk::V0Tools *v0Tools);
-    BPhysPVTools(Trk::V0Tools *v0Tools,
-		 const ServiceHandle<IBeamCondSvc> *beamSpotSvc);
+    BPhysPVTools(const Trk::V0Tools *v0Tools);
+    BPhysPVTools(const Trk::V0Tools *v0Tools, const InDet::BeamSpotData*);
     void SetSave3d(bool v) { m_3dCalc =v; }
     StatusCode FillCandExistingVertices(xAOD::VertexContainer* vtxContainer, const xAOD::VertexContainer* pvContainer, int DoVertexType);
        
     static void FillBPhysHelperNULL(xAOD::BPhysHelper &vtx, const xAOD::VertexContainer* PvContainer,
 				    xAOD::BPhysHelper::pv_type pvtype, bool do3d = false);
        
-    StatusCode FillCandwithRefittedVertices(xAOD::VertexContainer* vtxContainer, const xAOD::VertexContainer* pvContainer,xAOD::VertexContainer* refPvContainer, Analysis::PrimaryVertexRefitter* , size_t in_PV_max, int DoVertexType);
+    StatusCode FillCandwithRefittedVertices(xAOD::VertexContainer* vtxContainer, const xAOD::VertexContainer* pvContainer,xAOD::VertexContainer* refPvContainer, const Analysis::PrimaryVertexRefitter* , size_t in_PV_max, int DoVertexType);
        
     void DecorateWithNULL(xAOD::VertexContainer* vtxContainer,const xAOD::VertexContainer* pvContainer, int DoVertexType) const;
        

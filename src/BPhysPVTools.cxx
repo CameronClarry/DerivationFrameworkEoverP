@@ -10,20 +10,18 @@
 #include "xAODBPhys/BPhysHelper.h"
 #include "JpsiUpsilonTools/PrimaryVertexRefitter.h"
 #include <limits>
-#include "InDetBeamSpotService/IBeamCondSvc.h"
 #include "TVector3.h"
+#include "BeamSpotConditionsData/BeamSpotData.h"
 using namespace std;
 
-DerivationFramework::BPhysPVTools::BPhysPVTools(Trk::V0Tools *v0Tools) :
-  m_v0Tools(v0Tools), m_beamSpotSvc(NULL), m_PV_minNTracks(0),
+DerivationFramework::BPhysPVTools::BPhysPVTools(const Trk::V0Tools *v0Tools) :
+  m_v0Tools(v0Tools), m_beamSpotData(NULL), m_PV_minNTracks(0),
   m_BScached(false), m_3dCalc(false)
 {
 }
 
-DerivationFramework::BPhysPVTools::BPhysPVTools(Trk::V0Tools *v0Tools,
-                        const ServiceHandle<IBeamCondSvc>
-                        *beamSpotSvc) :
-  m_v0Tools(v0Tools), m_beamSpotSvc(beamSpotSvc), m_PV_minNTracks(0),
+DerivationFramework::BPhysPVTools::BPhysPVTools(const Trk::V0Tools *v0Tools, const InDet::BeamSpotData *beamSpotSvc) :
+  m_v0Tools(v0Tools), m_beamSpotData(beamSpotSvc), m_PV_minNTracks(0),
   m_BScached(false), m_3dCalc(false)
 {
 }
@@ -239,7 +237,7 @@ StatusCode DerivationFramework::BPhysPVTools::FillCandExistingVertices(xAOD::Ver
 
 StatusCode DerivationFramework::BPhysPVTools::FillCandwithRefittedVertices(xAOD::VertexContainer* vtxContainer,
                                        const xAOD::VertexContainer* pvContainer, xAOD::VertexContainer* refPvContainer,
-                                       Analysis::PrimaryVertexRefitter *pvRefitter, size_t in_PV_max, int DoVertexType) {
+                                       const Analysis::PrimaryVertexRefitter *pvRefitter, size_t in_PV_max, int DoVertexType) {
 
   // reset beamspot cache
   GetBeamSpot(true);
@@ -263,6 +261,7 @@ StatusCode DerivationFramework::BPhysPVTools::FillCandwithRefittedVertices(xAOD:
         std::vector<const xAOD::Vertex*> refPVvertexes;
         std::vector<const xAOD::Vertex*> refPVvertexes_toDelete;
         std::vector<int> exitCode;
+        int refitExitCode;
         refPVvertexes.reserve(pVmax);
         refPVvertexes_toDelete.reserve(pVmax);
         exitCode.reserve(pVmax);
@@ -283,8 +282,8 @@ StatusCode DerivationFramework::BPhysPVTools::FillCandwithRefittedVertices(xAOD:
             for(size_t i =0; i < pVmax ; i++) {
                 const xAOD::Vertex* oldPV = goodPrimaryVertices.at(i);
                 //when set to false this will return null when a new vertex is not required
-                const xAOD::Vertex* refPV = pvRefitter->refitVertex(oldPV, vtx.vtx(), false);
-                exitCode.push_back(pvRefitter->getLastExitCode());
+                const xAOD::Vertex* refPV = pvRefitter->refitVertex(oldPV, vtx.vtx(), false, &refitExitCode);
+                exitCode.push_back(refitExitCode);
                 //I want positioning to match the goodPrimaryVertices
                 if(refPV == nullptr){
                    refPVvertexes.push_back(oldPV);
@@ -479,9 +478,9 @@ Amg::Vector3D DerivationFramework::BPhysPVTools::GetBeamSpot(bool resetCache)
     m_BScached = false;
   } else {
     if ( !m_BScached ) {
-      if ( m_beamSpotSvc != NULL ) { 
+      if ( m_beamSpotData != NULL ) { 
     // obtain beamspot from BeamCondSvc
-    m_beamspot = (*m_beamSpotSvc)->beamPos();
+    m_beamspot = m_beamSpotData->beamPos();
       } else {
     m_beamspot = Amg::Vector3D(-10000.,-10000.,-10000.);
       }
