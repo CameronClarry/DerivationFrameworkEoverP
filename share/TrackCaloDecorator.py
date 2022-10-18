@@ -28,7 +28,7 @@ svcMgr.MessageSvc.defaultLimit = 9999999
 # SET UP STREAM
 #====================================================================
 from OutputStreamAthenaPool.MultipleStreamManager import MSMgr
-from D2PDMaker.D2PDHelpers import buildFileName
+from PrimaryDPDMaker.PrimaryDPDHelpers import buildFileName
 from PrimaryDPDMaker.PrimaryDPDFlags import primDPD
 streamName = primDPD.WriteDAOD_EOP.StreamName
 fileName = buildFileName( primDPD.WriteDAOD_EOP )
@@ -109,13 +109,12 @@ EOPLambdaFinder = Analysis__JpsiFinder(name                      = "EOPLambdaFin
                                      useV0Fitter                 = False,                # if False a TrkVertexFitterTool will be used
                                      TrkVertexFitterTool         = TrkVKalVrtFitter,        # VKalVrt vertex fitter
                                      TrackSelectorTool           = InDetTrackSelectorTool,
-                                     ConversionFinderHelperTool  = InDetConversionHelper,
                                      VertexPointEstimator        = VtxPointEstimator,
                                      useMCPCuts                  = False,
                                      track1Mass                  = 938.272, # Not very important, only used to calculate inv. mass cut
                                      track2Mass                  = 139.57)
 ToolSvc += EOPLambdaFinder
-print      EOPLambdaFinder
+print(EOPLambdaFinder)
 
 EOPKsFinder = Analysis__JpsiFinder(name                        = "EOPKsFinder",
                                    muAndMu                     = False,
@@ -135,13 +134,12 @@ EOPKsFinder = Analysis__JpsiFinder(name                        = "EOPKsFinder",
                                    useV0Fitter                 = False,        
                                    TrkVertexFitterTool         = TrkVKalVrtFitter, 
                                    TrackSelectorTool           = InDetTrackSelectorTool,
-                                   ConversionFinderHelperTool  = InDetConversionHelper,
                                    VertexPointEstimator        = VtxPointEstimator,
                                    useMCPCuts                  = False,
                                    track1Mass                  = 139.57, 
                                    track2Mass                  = 139.57)
 ToolSvc += EOPKsFinder
-print      EOPKsFinder
+print(EOPKsFinder)
 
 EOPPhiFinder = Analysis__JpsiFinder(name                       = "EOPPhiFinder",
                                    muAndMu                     = False,
@@ -161,13 +159,12 @@ EOPPhiFinder = Analysis__JpsiFinder(name                       = "EOPPhiFinder",
                                    useV0Fitter                 = False,       
                                    TrkVertexFitterTool         = TrkVKalVrtFitter,  
                                    TrackSelectorTool           = InDetTrackSelectorTool,
-                                   ConversionFinderHelperTool  = InDetConversionHelper,
                                    VertexPointEstimator        = VtxPointEstimator,
                                    useMCPCuts                  = False,
                                    track1Mass                  = 493.677, 
                                    track2Mass                  = 493.677)
 ToolSvc += EOPPhiFinder
-print      EOPPhiFinder
+print(EOPPhiFinder)
 
 #--------------------------------------------------------------------
 ## setup the vertex reconstruction "call" tool(s). They are part of the derivation framework.
@@ -186,7 +183,7 @@ EOPLambdaRecotrktrk = DerivationFramework__Reco_mumu(
     RefPVContainerName     = "EOPLambdaRefittedPrimaryVertices",
     RefitPV = EOPRefitPV)
 ToolSvc += EOPLambdaRecotrktrk
-print EOPLambdaRecotrktrk
+print(EOPLambdaRecotrktrk)
 
 EOPKsRecotrktrk = DerivationFramework__Reco_mumu(
     name                   = "EOPKsRecotrktrk",
@@ -196,7 +193,7 @@ EOPKsRecotrktrk = DerivationFramework__Reco_mumu(
     RefPVContainerName     = "EOPKsRefittedPrimaryVertices",
     RefitPV = EOPRefitPV)
 ToolSvc += EOPKsRecotrktrk
-print EOPKsRecotrktrk
+print(EOPKsRecotrktrk)
 
 EOPPhiRecotrktrk = DerivationFramework__Reco_mumu(
     name                   = "EOPPhiRecotrktrk",
@@ -206,7 +203,7 @@ EOPPhiRecotrktrk = DerivationFramework__Reco_mumu(
     RefPVContainerName     = "EOPPhiRefittedPrimaryVertices",
     RefitPV = EOPRefitPV)
 ToolSvc += EOPPhiRecotrktrk
-print EOPPhiRecotrktrk
+print(EOPPhiRecotrktrk)
 
 #--------------------------------------------------------------------
 ## setup the vertex selection and augmentation tool(s). These tools decorate the vertices with
@@ -229,7 +226,7 @@ EOPSelectLambda2trktrk = DerivationFramework__Select_onia2mumu(
     MassMax               = 1125.0,
     Chi2Max               = 15)
 ToolSvc += EOPSelectLambda2trktrk
-print EOPSelectLambda2trktrk
+print(EOPSelectLambda2trktrk)
 
 EOPSelectKs2trktrk = DerivationFramework__Select_onia2mumu(
     name                  = "EOPSelectKs2trktrk",
@@ -241,7 +238,7 @@ EOPSelectKs2trktrk = DerivationFramework__Select_onia2mumu(
     MassMax               = 520.0,
     Chi2Max               = 15)
 ToolSvc += EOPSelectKs2trktrk
-print EOPSelectKs2trktrk
+print(EOPSelectKs2trktrk)
 
 EOPSelectPhi2trktrk = DerivationFramework__Select_onia2mumu(
     name                  = "EOPSelectPhi2trktrk",
@@ -253,7 +250,7 @@ EOPSelectPhi2trktrk = DerivationFramework__Select_onia2mumu(
     MassMax               = 1200.0,
     Chi2Max               = 15)
 ToolSvc += EOPSelectPhi2trktrk
-print EOPSelectPhi2trktrk
+print(EOPSelectPhi2trktrk)
 
 #====================================================================
 # CREATE THE DERIVATION KERNEL ALGORITHM AND PASS THE ABOVE TOOLS
