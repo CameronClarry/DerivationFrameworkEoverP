@@ -36,7 +36,7 @@ echo "- athena/Projects/WorkDir" >> package_filters.txt
 Clone the Derivation Framework, and modify the PrimaryDPDFlags.py file in the PrimaryDPDMaker
 
 ```
-git clone https://github.com/luadamek/DerivationFrameworkEoverP.git
+git clone https://github.com/CameronClarry/DerivationFrameworkEoverP.git
 cp DerivationFrameworkEoverP/ModifiedAthena/PrimaryDPDFlags_mod.py athena/PhysicsAnalysis/PrimaryDPDMaker/python/PrimaryDPDFlags.py
 cp DerivationFrameworkEoverP/UpperCMakeLists.txt CMakeLists.txt
 ```
