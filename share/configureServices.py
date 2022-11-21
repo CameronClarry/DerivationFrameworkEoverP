@@ -6,6 +6,12 @@
 #ToolSvc += InDetMagField
 #print      InDetMagField
 
+# 
+# set data source
+# 
+from AthenaCommon.GlobalFlags  import globalflags
+globalflags.DataSource.set_Value_and_Lock('data')
+
 #
 # set up extrapolator
 #
