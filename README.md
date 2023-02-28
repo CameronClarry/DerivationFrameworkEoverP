@@ -20,15 +20,13 @@ cd source
 
 Setup AtlasDerivation and do a sparce checkout of athena.
 ```
-asetup Athena,22.0.70.2,here
+asetup Athena,22.0.104,here
 lsetup git
 git atlas init-workdir https://:@gitlab.cern.ch:8443/atlas/athena.git
 cd athena
 git atlas addpkg PrimaryDPDMaker
-git atlas addpkg TrkVertexAnalysisUtils
-git atlas addpkg xAODBPhys
 git fetch upstream
-git checkout -b 22.0.70-patches release/22.0.70.2
+git checkout release/22.0.104
 cd ..
 echo "- athena/Projects/WorkDir" >> package_filters.txt
 ```
