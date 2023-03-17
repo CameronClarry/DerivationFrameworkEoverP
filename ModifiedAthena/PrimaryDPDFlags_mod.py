@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+# Copyright (C) 2002-2021 CERN for the benefit of the ATLAS collaboration
 
 ##=============================================================================
 ## Name:        PrimaryDPDFlags
@@ -9,15 +9,11 @@
 ## Description: Here, all neccessary job flags for the PrimaryDPDMaker
 ##              are defined.
 ##
-## $Id: PrimaryDPDFlags.py,v 1.44 2009-05-11 12:20:32 cgatti Exp $
 ##=============================================================================
 
 __doc__ = """Here, all neccessary job flags for the PrimaryDPDMaker are defined."""
 __version__ = "0.0.1"
 __author__  = "Karsten Koeneke <karsten.koeneke@desy.de>"
-
-## Import the module that allows to use named units, e.g. GeV
-import AthenaCommon.SystemOfUnits as Units
 
 from AthenaCommon.JobProperties import JobProperty, JobPropertyContainer
 from AthenaCommon.JobProperties import jobproperties
@@ -34,7 +30,7 @@ daodEventSkimmingFilterNamesList = []
 #import PyUtils.RootUtils as ru
 #ROOT = ru.import_root()
 #import cppyy
-#cppyy.loadDictionary('egammaEnumsDict')
+#cppyy.load_library('libegammaEnumsDict')
 #from ROOT import egammaPID
 #from ROOT import egammaParameters
 
@@ -150,8 +146,21 @@ class WriteAllcellsStream(JobProperty):
 jobproperties.PrimaryDPDFlags.add_JobProperty(WriteAllcellsStream)
 listESDtoDPD.append(WriteAllcellsStream.StreamName)
 
+class WriteEOverPStream(JobProperty):
+    """ Produce the primary DPD EOverP DPD."""
+    statusOn     = True
+    allowedTypes = ['bool']
+    StoredValue  = False
+    StreamName   = "StreamDESDM_EOVERP"
+    FileName     = ""
+    isVirtual    = False
+    DPDMakerScript = "PrimaryDPDMaker/PerfDPD_EOverP.py"
+    pass
+jobproperties.PrimaryDPDFlags.add_JobProperty(WriteEOverPStream)
+listESDtoDPD.append(WriteEOverPStream.StreamName)
+
 class WriteIDALIGNStream(JobProperty):
-    """ Produce the primary DPD AllCells DPD."""
+    """ Produce the primary DPD ID alignment DPD."""
     statusOn     = True
     allowedTypes = ['bool']
     StoredValue  = False
@@ -175,6 +184,19 @@ class WriteDESDM_EGAMMAStream(JobProperty):
     pass
 jobproperties.PrimaryDPDFlags.add_JobProperty(WriteDESDM_EGAMMAStream)
 listESDtoDPD.append(WriteDESDM_EGAMMAStream.StreamName)
+
+class WriteDAOD_PIXELVALIDStream(JobProperty):
+    """ Produce the DPD for DAOD_PIXELVALID - AOD with PrepRawData """
+    statusOn     = True
+    allowedTypes = ['bool']
+    StoredValue  = False
+    StreamName   = "StreamDAOD_PIXELVALID"
+    FileName     = ""
+    isVirtual      = False
+    DPDMakerScript = "InDetPrepRawDataToxAOD/PixelxAOD.py"
+    pass
+jobproperties.PrimaryDPDFlags.add_JobProperty(WriteDAOD_PIXELVALIDStream)
+listRAWtoDPD.append(WriteDAOD_PIXELVALIDStream.StreamName)
 
 class WriteDESDM_MSPerfStream(JobProperty):
     """ Produce the primary DESDM for Muon Alignment and Trigger commissioning."""
@@ -299,6 +321,21 @@ class WriteRAWPerfDPD_ZMUMU(JobProperty):
 jobproperties.PrimaryDPDFlags.add_JobProperty(WriteRAWPerfDPD_ZMUMU)
 listRAWtoDPD.append(WriteRAWPerfDPD_ZMUMU.StreamName)
 
+class WriteRAWPerfDPD_DIMU(JobProperty):
+    """ Produce the primary DPD DiMu in Byte Stream format."""
+    statusOn       = True
+    allowedTypes   = ['bool']
+    StoredValue    = False
+    StreamName     = "StreamDRAW_DIMU"
+    FileName       = ""
+    Prescale       = 1
+    isVirtual      = False
+    DPDMakerScript = "PrimaryDPDMaker/DRAW_DIMU.py"
+    pass
+jobproperties.PrimaryDPDFlags.add_JobProperty(WriteRAWPerfDPD_DIMU)
+listRAWtoDPD.append(WriteRAWPerfDPD_DIMU.StreamName)
+
+
 class WriteDRAW_EGZ(JobProperty):
     """ Produce the DRAW for EGamma calibration in Z events."""
     statusOn       = True
@@ -353,14 +390,15 @@ jobproperties.PrimaryDPDFlags.add_JobProperty(WriteDRAW_EMU)
 listRAWtoDPD.append(WriteDRAW_EMU.StreamName)
 
 class WriteDRAW_BCID1(JobProperty):
-    """ Produce the BCID-filtered DRAW, based on the AcceptBCIDs list (Byte Stream format)."""
+    """ Produce the BCID-filtered DRAW, based on the AcceptBCIDs and RejectBCIDs lists."""
     statusOn       = True
     allowedTypes   = ['bool']
     StoredValue    = False
     StreamName     = "StreamDRAW_BCID1"
     FileName       = ""
     Prescale       = 1
-    AcceptBCIDs    = [11, 1247, 2430]
+    AcceptBCIDs    = []
+    RejectBCIDs    = []
     isVirtual      = False
     DPDMakerScript = "PrimaryDPDMaker/DRAW_BCID1.py"
     pass
@@ -368,19 +406,53 @@ jobproperties.PrimaryDPDFlags.add_JobProperty(WriteDRAW_BCID1)
 listRAWtoDPD.append(WriteDRAW_BCID1.StreamName)
 
 class WriteDRAW_BCID2(JobProperty):
-    """ Produce the BCID-filtered DRAW, based on the RejectBCIDs list (Byte Stream format)."""
+    """ Produce the BCID-filtered DRAW, based on the AcceptBCIDs and RejectBCIDs lists."""
     statusOn       = True
     allowedTypes   = ['bool']
     StoredValue    = False
     StreamName     = "StreamDRAW_BCID2"
     FileName       = ""
     Prescale       = 1
-    RejectBCIDs    = [11, 1247, 2430]
+    AcceptBCIDs    = []
+    RejectBCIDs    = []
     isVirtual      = False
     DPDMakerScript = "PrimaryDPDMaker/DRAW_BCID2.py"
     pass
 jobproperties.PrimaryDPDFlags.add_JobProperty(WriteDRAW_BCID2)
 listRAWtoDPD.append(WriteDRAW_BCID2.StreamName)
+
+class WriteDRAW_BCID3(JobProperty):
+    """ Produce the BCID-filtered DRAW, based on the AcceptBCIDs and RejectBCIDs lists."""
+    statusOn       = True
+    allowedTypes   = ['bool']
+    StoredValue    = False
+    StreamName     = "StreamDRAW_BCID3"
+    FileName       = ""
+    Prescale       = 1
+    AcceptBCIDs    = []
+    RejectBCIDs    = []
+    isVirtual      = False
+    DPDMakerScript = "PrimaryDPDMaker/DRAW_BCID3.py"
+    pass
+jobproperties.PrimaryDPDFlags.add_JobProperty(WriteDRAW_BCID3)
+listRAWtoDPD.append(WriteDRAW_BCID3.StreamName)
+
+
+class WriteDRAW_BCID4(JobProperty):
+    """ Produce the BCID-filtered DRAW, based on the AcceptBCIDs and RejectBCIDs lists."""
+    statusOn       = True
+    allowedTypes   = ['bool']
+    StoredValue    = False
+    StreamName     = "StreamDRAW_BCID4"
+    FileName       = ""
+    Prescale       = 1
+    AcceptBCIDs    = []
+    RejectBCIDs    = []
+    isVirtual      = False
+    DPDMakerScript = "PrimaryDPDMaker/DRAW_BCID4.py"
+    pass
+jobproperties.PrimaryDPDFlags.add_JobProperty(WriteDRAW_BCID4)
+listRAWtoDPD.append(WriteDRAW_BCID4.StreamName)
 
 class WriteDRAW_TOPSLMU(JobProperty):
     """ Produce DRAW_TOPSLMU, a top-like single-muon selection for tau embedding used by H+ searches."""
@@ -399,19 +471,6 @@ listRAWtoDPD.append(WriteDRAW_TOPSLMU.StreamName)
 ##--------------------------------------------
 ## Skimmed ESD
 ##--------------------------------------------
-
-class WriteDAOD_RPVLLStream(JobProperty):
-    """ Produce the xAOD for DPD RPVLL and UEH groups searches """
-    statusOn     = True
-    allowedTypes = ['bool']
-    StoredValue  = False
-    StreamName   = "StreamDAOD_RPVLL"
-    FileName     = ""
-    isVirtual      = False
-    DPDMakerScript = "LongLivedParticleDPDMaker/DAOD_RPVLL.py"
-    pass
-jobproperties.PrimaryDPDFlags.add_JobProperty(WriteDAOD_RPVLLStream)
-listESDtoDPD.append(WriteDAOD_RPVLLStream.StreamName)
 
 class WriteDAOD_IDNCBStream(JobProperty):
     """ Produce the DPD for DAOD_IDNCB - AOD with PrepRawData """
@@ -531,6 +590,32 @@ class WriteDAOD_L1CALO3(JobProperty):
 jobproperties.PrimaryDPDFlags.add_JobProperty(WriteDAOD_L1CALO3)
 listESDtoDPD.append(WriteDAOD_L1CALO3.StreamName)
 
+class WriteDAOD_L1CALO4(JobProperty):
+    """ Produce the DAOD for L1Calo4."""
+    statusOn       = True
+    allowedTypes   = ['bool']
+    StoredValue    = False
+    StreamName     = "StreamDAOD_L1CALO4"
+    FileName       = ""
+    isVirtual      = False
+    DPDMakerScript = "DerivationFrameworkL1Calo/L1CALO4.py"
+    pass
+jobproperties.PrimaryDPDFlags.add_JobProperty(WriteDAOD_L1CALO4)
+listESDtoDPD.append(WriteDAOD_L1CALO4.StreamName)
+
+class WriteDAOD_L1CALO5(JobProperty):
+    """ Produce the DAOD for L1Calo5."""
+    statusOn       = True
+    allowedTypes   = ['bool']
+    StoredValue    = False
+    StreamName     = "StreamDAOD_L1CALO5"
+    FileName       = ""
+    isVirtual      = False
+    DPDMakerScript = "DerivationFrameworkL1Calo/L1CALO5.py"
+    pass
+jobproperties.PrimaryDPDFlags.add_JobProperty(WriteDAOD_L1CALO5)
+listESDtoDPD.append(WriteDAOD_L1CALO5.StreamName)
+
 class WriteDESD_DEDX(JobProperty):
     """ Produce pixel dE/dx ESD """
     statusOn     = True
@@ -552,7 +637,8 @@ class WriteDAOD_EOP(JobProperty):
     StreamName   = "StreamDAOD_EOP"
     FileName     = ""
     isVirtual      = False
-    DPDMakerScript = "DerivationFrameworkEoverP/TrackCaloDecorator.py"
+    #DPDMakerScript = "DerivationFrameworkEoverP/TrackCaloDecoratorConfig.py"
+    DPDMakerScript = "DerivationFrameworkEoverP/EOP.py"
     pass
 jobproperties.PrimaryDPDFlags.add_JobProperty(WriteDAOD_EOP)
 listESDtoDPD.append(WriteDAOD_EOP.StreamName)
@@ -628,14 +714,6 @@ except ImportError :
     # This is here for backwards compatibility
     from RecExCommon.RecoFunctions import AddValidItemToList
     pass
-
-#Add D2PDMakers too
-#try:
-#    from D2PDMaker.D2PDFlags import listAODtoD2PD,listESDtoD2PD
-#    AddValidItemToList(listAODtoD2PD,listAODtoDPD)
-#    AddValidItemToList(listESDtoD2PD,listESDtoDPD)
-#except:
-#    print "Unable to import listAODtoD2PD. This requires D2PDMaker-00-00-55-08 or D2PDMaker-00-00-62"
 
 #Now build the list of all known DPDs
 AddValidItemToList(listRAWtoDPD,listAllKnownDPD)

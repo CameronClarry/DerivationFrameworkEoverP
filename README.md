@@ -25,6 +25,7 @@ lsetup git
 git atlas init-workdir https://:@gitlab.cern.ch:8443/atlas/athena.git
 cd athena
 git atlas addpkg PrimaryDPDMaker
+git atlas addpkg RecJobTransforms
 git fetch upstream
 git checkout release/22.0.104
 cd ..
@@ -36,6 +37,9 @@ Clone the Derivation Framework, and modify the PrimaryDPDFlags.py file in the Pr
 ```
 git clone https://github.com/CameronClarry/DerivationFrameworkEoverP.git
 cp DerivationFrameworkEoverP/ModifiedAthena/PrimaryDPDFlags_mod.py athena/PhysicsAnalysis/PrimaryDPDMaker/python/PrimaryDPDFlags.py
+cp DerivationFrameworkEoverP/ModifiedAthena/ESDtoDPD_Skeleton_mod.py athena/Reconstruction/RecJobTransforms/python/ESDtoDPD_Skeleton.py
+cp DerivationFrameworkEoverP/ModifiedAthena/RecoSteering_mod.py athena/Reconstruction/RecJobTransforms/python/RecoSteering.py
+cp DerivationFrameworkEoverP/ModifiedAthena/recTransformUtils_mod.py athena/Reconstruction/RecJobTransforms/python/recTransformUtils.py
 cp DerivationFrameworkEoverP/UpperCMakeLists.txt CMakeLists.txt
 ```
 
