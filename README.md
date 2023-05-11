@@ -55,13 +55,10 @@ source x86_64-slc6-gcc62-opt/setup.sh
 ## Running in Release 22
 
 ### Example: Running locally on lxplus
-Download an example esd, and run over it
+Run over example ESD
 ```
 cd ../run
-lsetup rucio
-voms-proxy-init -voms atlas
-rucio download ESD.29797580._000004.pool.root.1
-Reco_tf.py --autoConfiguration='everything' --maxEvents 100 --inputESDFile data18_13TeV/ESD.29797580._000004.pool.root.1 --outputDAOD_EOPFile output_DAOD_EOP.root
+python ../source/DerivationFrameworkEoverP/python/derivation.py
 ```
 
 ## Setup in Release 21
