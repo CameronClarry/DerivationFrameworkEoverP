@@ -68,7 +68,7 @@ if __name__=="__main__":
 
     from AthenaConfiguration.AllConfigFlags import ConfigFlags as cfgFlags
 
-    cfgFlags.Concurrency.NumThreads=8
+    cfgFlags.Concurrency.NumThreads=0
     cfgFlags.Input.isMC=False
     #cfgFlags.Input.Files= ["/cvmfs/atlas-nightlies.cern.ch/repo/data/data-art/RecExRecoTest/mc20e_13TeV/valid1.410000.PowhegPythiaEvtGen_P2012_ttbar_hdamp172p5_nonallhad.ESD.e4993_s3227_r12689/myESD.pool.root"]
     cfgFlags.Input.Files= ["/eos/user/c/caclarry/data18_13TeV.00354175.physics_MinBias.merge.ESD.r13575_p5088/ESD.29797580._000004.pool.root.1"]
