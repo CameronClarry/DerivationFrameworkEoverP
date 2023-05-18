@@ -261,6 +261,11 @@ namespace DerivationFramework {
     // Get the test beam identifier for the MBTS
     ATH_CHECK(detStore()->retrieve(m_tileTBID));
 
+    if(!m_caloCalClustersReadHandleKey.key().empty()) {
+        ATH_CHECK(m_caloCalClustersReadHandleKey.initialize());
+    }
+
+
     // Save cutflow histograms
     return StatusCode::SUCCESS;
   }
@@ -279,7 +284,15 @@ namespace DerivationFramework {
     const EventContext& eventContext = Gaudi::Hive::currentContext();
 
     const xAOD::CaloClusterContainer* clusterContainer = 0; //xAOD object used to create decorations.
-    CHECK(evtStore()->retrieve(clusterContainer, m_caloClusterContainerName));
+    //CHECK(evtStore()->retrieve(clusterContainer, m_caloClusterContainerName));
+
+    //const xAOD::CaloClusterContainer* calclusters = nullptr;
+    if (!m_caloCalClustersReadHandleKey.key().empty()) {
+      SG::ReadHandle<xAOD::CaloClusterContainer> caloCalClustersReadHandle(m_caloCalClustersReadHandleKey);
+      clusterContainer = caloCalClustersReadHandle.get();
+      ATH_MSG_INFO("Got cluster container with size " << clusterContainer->size());
+    }
+
 
     const CaloCellContainer *caloCellContainer = 0; //ESD object used to create decorations
     CHECK(evtStore()->retrieve(caloCellContainer, "AllCalo"));

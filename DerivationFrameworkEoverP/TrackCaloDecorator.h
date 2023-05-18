@@ -162,6 +162,16 @@ namespace DerivationFramework {
       int m_cutflow_trk_pass_loop_matched_clusters;
       int m_cutflow_trk_pass_loop_matched_cells;
       int m_cutflow_trk_pass_all;
+      
+      /** ReadHandleKey for the CaloClusterContainer, at LC scale, to be used as input */
+      SG::ReadHandleKey<xAOD::CaloClusterContainer> m_caloCalClustersReadHandleKey{
+          this,
+              "calClustersName",
+              "CaloCalTopoClusters",
+              "ReadHandleKey for the CaloClusterContainer, at LC scale, to be used as "
+                  "input"
+      };
+
 
     public: 
       void getHitsSum(const CaloCalibrationHitContainer* hits,const  xAOD::CaloCluster* cl,  unsigned int particle_barcode, std::vector< std::vector<float> >& hitsMap) const;
