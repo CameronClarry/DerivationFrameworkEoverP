@@ -10,36 +10,20 @@ Port to release 21: Lukas Adamek
 
 ## Setup in Release 22
 
-First we need to setup up our working directory
+First we need to setup up our working directory and Athena
 
 ```
+setupATLAS
 mkdir workdir && cd workdir
 mkdir source build run
 cd source
-```
-
-Setup AtlasDerivation and do a sparce checkout of athena.
-```
 asetup Athena,22.0.104,here
-lsetup git
-git atlas init-workdir https://:@gitlab.cern.ch:8443/atlas/athena.git
-cd athena
-git atlas addpkg PrimaryDPDMaker
-git atlas addpkg RecJobTransforms
-git fetch upstream
-git checkout release/22.0.104
-cd ..
-echo "- athena/Projects/WorkDir" >> package_filters.txt
 ```
 
-Clone the Derivation Framework, and modify the PrimaryDPDFlags.py file in the PrimaryDPDMaker
+Clone the Derivation Framework, and give the project a CMakeLists
 
 ```
 git clone https://github.com/CameronClarry/DerivationFrameworkEoverP.git
-cp DerivationFrameworkEoverP/ModifiedAthena/PrimaryDPDFlags_mod.py athena/PhysicsAnalysis/PrimaryDPDMaker/python/PrimaryDPDFlags.py
-cp DerivationFrameworkEoverP/ModifiedAthena/ESDtoDPD_Skeleton_mod.py athena/Reconstruction/RecJobTransforms/python/ESDtoDPD_Skeleton.py
-cp DerivationFrameworkEoverP/ModifiedAthena/RecoSteering_mod.py athena/Reconstruction/RecJobTransforms/python/RecoSteering.py
-cp DerivationFrameworkEoverP/ModifiedAthena/recTransformUtils_mod.py athena/Reconstruction/RecJobTransforms/python/recTransformUtils.py
 cp DerivationFrameworkEoverP/UpperCMakeLists.txt CMakeLists.txt
 ```
 
