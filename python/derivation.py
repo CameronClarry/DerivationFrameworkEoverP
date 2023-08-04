@@ -62,8 +62,10 @@ def EOPCfg(flags):
     EOPSlimmingHelper = SlimmingHelper("EOPSlimmingHelper", NamesAndTypes = flags.Input.TypedCollections, ConfigFlags = flags)
     EOPSlimmingHelper.SmartCollections = ["EventInfo","InDetTrackParticles","PrimaryVertices"]
 
-    #EOPSlimmingHelper.ExtraVariables += ["TrigConfKeys.TrigConfKeys"]
-    #EOPSlimmingHelper.AllVariables += ["TrigConfKeys"]
+    # InDetTrackParticlesAuxDyn.CALO_trkEta_TileBar2
+    EOPSlimmingHelper.ExtraVariables += ["InDetTrackParticles.numberOfTRTHits.CALO_trkEta_TileBar2"]
+    EOPSlimmingHelper.AllVariables += ["InDetTrackParticles"]
+    EOPSlimmingHelper.AllVariables += ["VertexContainer", "VertexAuxContainer"]
     EOPItemList = EOPSlimmingHelper.GetItemList()
     acc.merge(OutputStreamCfg(flags, "DAOD_EOP", ItemList=EOPItemList, AcceptAlgs=["TrackCaloDecorator_KERN"]))
 
@@ -79,10 +81,10 @@ if __name__=="__main__":
     cfgFlags.Concurrency.NumThreads=8
     cfgFlags.Input.isMC=False
     #cfgFlags.Input.Files= ["/cvmfs/atlas-nightlies.cern.ch/repo/data/data-art/RecExRecoTest/mc20e_13TeV/valid1.410000.PowhegPythiaEvtGen_P2012_ttbar_hdamp172p5_nonallhad.ESD.e4993_s3227_r12689/myESD.pool.root"]
-    cfgFlags.Input.Files= ["/eos/user/c/caclarry/data18_13TeV.00354175.physics_MinBias.merge.ESD.r13575_p5088/ESD.29797580._000004.pool.root.1"]
+    cfgFlags.Input.Files= ["/eos/user/c/caclarry/data18_13TeV/ESD.30341268._033971.pool.root.1"]
     #cfgFlags.Input.Files= ["/eos/user/c/caclarry/mc20_13TeV/ESD.31450936._000024.pool.root.1"]
-    cfgFlags.Output.AODFileName="output_AOD.root"
-    cfgFlags.Output.doWriteAOD=True
+    #cfgFlags.Output.AODFileName="output_AOD.root"
+    #cfgFlags.Output.doWriteAOD=True
     cfgFlags.lock()
 
     from AthenaConfiguration.MainServicesConfig import MainServicesCfg
@@ -109,4 +111,4 @@ if __name__=="__main__":
     #result.addEventAlgo(CompFactory.ClusterMatching.CaloClusterMatchLinkAlg("MuonTCLinks", ClustersToDecorate="MuonClusterCollection"))
     cfg.merge(result)
 
-    cfg.run(maxEvents=100)
+    cfg.run(maxEvents=10)
