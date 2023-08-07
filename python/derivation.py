@@ -7,25 +7,159 @@ def EOPKernelCfg(flags, name='TrackCaloDecorator_KERN', **kwargs):
     # Get the ComponentAccumulator
     acc = ComponentAccumulator()
 
-    # Extrapolator tool 1
-    #extrapolator = CompFactory.Trk.Extrapolator(name = "EOPExtrapolator")
-    # Extrapolator tool 2
+    # Extrapolator tool
     from TrkConfig.AtlasExtrapolatorConfig import AtlasExtrapolatorCfg
     extrapolator = acc.popToolsAndMerge(AtlasExtrapolatorCfg(flags, name="EOPExtrapolator"))
     acc.addPublicTool(extrapolator)
-    #caloExtensionTool = CompFactory.Trk.ParticleCaloExtensionTool(name="EOPParticleCaloExtensionTool",
-                                                                  #ParticleType = "pion", ##What difference does the choice between pion and muon make?
-                                                                  #Extrapolator = extrapolator)
 
     from TrackToCalo.TrackToCaloConfig import ParticleCaloExtensionToolCfg
     caloExtensionTool = acc.popToolsAndMerge(ParticleCaloExtensionToolCfg(flags, name="EOPCaloExtensionTool"))
     acc.addPublicTool(caloExtensionTool)
 
-    #CommonTruthClassifier = CompFactory.MCTruthClassifier(name = "CommonTruthClassifier",
-                                                      #ParticleCaloExtensionTool = caloExtensionTool)
     from MCTruthClassifier.MCTruthClassifierConfig import MCTruthClassifierCfg
     CommonTruthClassifier = acc.popToolsAndMerge(MCTruthClassifierCfg(flags, ParticleCaloExtensionTool=caloExtensionTool))
     acc.addPublicTool(CommonTruthClassifier)
+
+    #from InDetConversionFinderTools.InDetConversionFinderToolsConf import InDet__VertexPointEstimator
+    #from InDetConversionFinderTools.InDetConversionFinderToolsConfig import VertexPointEstimatorCfg
+    from InDetConfig.InDetConversionFinderToolsConfig import VertexPointEstimatorCfg
+    VtxPointEstimator = acc.popToolsAndMerge(VertexPointEstimatorCfg(flags,
+                                                    name = "VtxPointEstimator",
+                                                    MaxChi2OfVtxEstimation = 2000.))
+    acc.addPublicTool(VtxPointEstimator)
+    print(flags.InDet.SecVertex.VtxPt.MinDeltaR)
+    print(flags.InDet.SecVertex.VtxPt.MaxDeltaR)
+    print(flags.InDet.SecVertex.VtxPt.MaxPhi)
+
+#    from InDetRecExample.InDetKeys import InDetKeys
+#
+#    from InDetAssociationTools.InDetAssociationToolsConf import InDet__InDetPRD_AssociationToolGangedPixels
+#    InDetPrdAssociationTool = InDet__InDetPRD_AssociationToolGangedPixels(name                           = "InDetPrdAssociationTool",
+#                                                                          PixelClusterAmbiguitiesMapName = InDetKeys.GangedPixelMap())
+#    ToolSvc += InDetPrdAssociationTool
+#
+#    from RecExConfig.RecFlags import rec
+#    CountDeadModulesAfterLastHit=False
+##rec.Commissioning=False
+#
+#    from InDetRecExample.InDetJobProperties import InDetFlags
+#
+#    from InDetTrackHoleSearch.InDetTrackHoleSearchConf import InDet__InDetTrackHoleSearchTool
+#    InDetHoleSearchTool = InDet__InDetTrackHoleSearchTool(name = "InDetHoleSearchTool",
+#                                                          Extrapolator = InDetExtrapolator,
+#                                                          #Commissioning = rec.Commissioning())
+#                                                          CountDeadModulesAfterLastHit = CountDeadModulesAfterLastHit)
+#    ToolSvc += InDetHoleSearchTool
+#
+#    from AthenaCommon.DetFlags import DetFlags
+#
+#    from InDetTrackSummaryHelperTool.InDetTrackSummaryHelperToolConf import InDet__InDetTrackSummaryHelperTool
+#    InDetTrackSummaryHelperTool = InDet__InDetTrackSummaryHelperTool(name         = "InDetSummaryHelper",
+#                                                                     AssoTool     = InDetPrdAssociationTool,
+#                                                                     DoSharedHits = False,
+#                                                                     HoleSearch   = InDetHoleSearchTool,
+#                                                                     usePixel      = DetFlags.haveRIO.pixel_on(),
+#                                                                     useSCT        = DetFlags.haveRIO.SCT_on(),
+#                                                                     useTRT        = DetFlags.haveRIO.TRT_on())
+#    ToolSvc += InDetTrackSummaryHelperTool
+#
+#    from InDetTrackSelectorTool.InDetTrackSelectorToolConf import InDet__InDetDetailedTrackSelectorTool
+#    InDetTrackSelectorTool = InDet__InDetDetailedTrackSelectorTool(name = "InDetDetailedTrackSelectorTool",
+#                                                                   pTMin                = 400.0,
+#                                                                   IPd0Max              = 10000.0,
+#                                                                   IPz0Max              = 10000.0,
+#                                                                   z0Max                = 10000.0,
+#                                                                   sigIPd0Max           = 10000.0,
+#                                                                   sigIPz0Max           = 10000.0,
+#                                                                   d0significanceMax    = -1.,
+#                                                                   z0significanceMax    = -1.,
+#                                                                   etaMax               = 9999.,
+#                                                                   useTrackSummaryInfo  = True,
+#                                                                   nHitBLayer           = 0,
+#                                                                   nHitPix              = 1,
+#                                                                   nHitBLayerPlusPix    = 1,
+#                                                                   nHitSct              = 2,
+#                                                                   nHitSi               = 3,
+#                                                                   nHitTrt              = 0,
+#                                                                   nHitTrtHighEFractionMax = 10000.0,
+#                                                                   useSharedHitInfo     = False,
+#                                                                   useTrackQualityInfo  = True,
+#                                                                   fitChi2OnNdfMax      = 10000.0,
+#                                                                   TrtMaxEtaAcceptance  = 1.9,
+#                                                                   TrackSummaryTool     = InDetTrackSummaryTool,
+#                                                                   Extrapolator         = extrapolator
+#                                                                  )
+#
+#    ToolSvc+=InDetTrackSelectorTool
+#
+#    from TrkVKalVrtFitter.TrkVKalVrtFitterConf import Trk__TrkVKalVrtFitter
+#    TrkVKalVrtFitter = Trk__TrkVKalVrtFitter(
+#                                             name                = "VKalVrtFitterName",
+#                                             Extrapolator        = InDetExtrapolator,
+##                                         MagFieldSvc         = InDetMagField,
+#                                             FirstMeasuredPoint  = True,
+#                                             #FirstMeasuredPointLimit = True,
+#                                             MakeExtendedVertex  = True)
+#    ToolSvc += TrkVKalVrtFitter
+#
+#    from TrkV0Fitter.TrkV0FitterConf import Trk__TrkV0VertexFitter
+#    TrkV0Fitter = Trk__TrkV0VertexFitter(name              = 'TrkV0FitterName',
+#                                         MaxIterations     = 10,
+#                                         Use_deltaR        = False,
+#                                         Extrapolator      = InDetExtrapolator,
+##                                     MagneticFieldTool = InDetMagField
+#                                         )
+#    ToolSvc += TrkV0Fitter
+#
+#    #from JpsiUpsilonTools.JpsiUpsilonToolsConf import Analysis__JpsiFinder
+#    from JpsiUpsilonTools.JpsiUpsilonToolsConfig import JpsiFinderCfg
+#    EOPLambdaFinder = JpsiFinderCfg(name                      = "EOPLambdaFinder",
+#                                         muAndMu                     = False,
+#                                         muAndTrack                  = False,
+#                                         TrackAndTrack               = True,
+#                                         assumeDiMuons               = False, 
+#                                         invMassUpper                = 1125.0,
+#                                         invMassLower                = 1105.0,
+#                                         Chi2Cut                     = 15.,
+#                                         oppChargesOnly              = True,
+#                                         combOnly            	 = False,
+#                                         atLeastOneComb              = False,
+#                                         useCombinedMeasurement      = False, 
+#                                         muonCollectionKey           = "Muons",
+#                                         TrackParticleCollection     = "InDetTrackParticles",
+#                                         V0VertexFitterTool          = TrkV0Fitter,             # V0 vertex fitter
+#                                         useV0Fitter                 = False,                # if False a TrkVertexFitterTool will be used
+#                                         TrkVertexFitterTool         = TrkVKalVrtFitter,        # VKalVrt vertex fitter
+#                                         TrackSelectorTool           = InDetTrackSelectorTool,
+#                                         VertexPointEstimator        = VtxPointEstimator,
+#                                         useMCPCuts                  = False,
+#                                         track1Mass                  = 938.272, # Not very important, only used to calculate inv. mass cut
+#                                         track2Mass                  = 139.57)
+#    ToolSvc += EOPLambdaFinder
+#
+#    from DerivationFrameworkEoverP.DerivationFrameworkEoverPConf import DerivationFramework__Reco_mumu
+#    EOPRefitPV = False
+#    EOPLambdaRecotrktrk = DerivationFramework__Reco_mumu(
+#        name                   = "EOPLambdaRecotrktrk",
+#        JpsiFinder             = EOPLambdaFinder,
+#        OutputVtxContainerName = "LambdaCandidates",
+#        PVContainerName        = "PrimaryVertices",
+#        RefPVContainerName     = "EOPLambdaRefittedPrimaryVertices",
+#        RefitPV = EOPRefitPV)
+#    ToolSvc += EOPLambdaRecotrktrk
+#
+#    from DerivationFrameworkEoverP.DerivationFrameworkEoverPConf import DerivationFramework__Select_onia2mumu
+#    EOPSelectLambda2trktrk = DerivationFramework__Select_onia2mumu(
+#        name                  = "EOPSelectLambda2trktrk",
+#        HypothesisName        = "Lambda",
+#        InputVtxContainerName = EOPLambdaRecotrktrk.OutputVtxContainerName,
+#        TrkMasses             = [938.272, 139.57], # Proton, pion PDG mass
+#        VtxMassHypo           = 1115.0, # lambda PDG mass
+#        MassMin               = 1105.0,
+#        MassMax               = 1125.0,
+#        Chi2Max               = 15)
+#    ToolSvc += EOPSelectLambda2trktrk
+
 
 
     CaloDeco = CompFactory.DerivationFramework.TrackCaloDecorator(name = "TrackCaloDecorator",
@@ -41,7 +175,7 @@ def EOPKernelCfg(flags, name='TrackCaloDecorator_KERN', **kwargs):
     #augmentationTools = [extrapolator, caloExtensionTool, CommonTruthClassifier, CaloDeco]
     #augmentationTools = [extrapolator, caloExtensionTool, CaloDeco]
     #augmentationTools = [caloExtensionTool, CaloDeco]
-    augmentationTools = [CaloDeco]
+    augmentationTools = [CaloDeco]#, EOPSelectLambda2trktrk, EOPLambdaRecotrktrk]
     DerivationKernel = CompFactory.DerivationFramework.DerivationKernel
     acc.addEventAlgo(DerivationKernel(name, AugmentationTools = augmentationTools))
     #acc.setPrivateTools(caloExtensionTool)
