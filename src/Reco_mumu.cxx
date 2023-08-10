@@ -32,6 +32,7 @@ namespace DerivationFramework {
     // Declare tools    
     declareProperty("V0Tools"   , m_v0Tools);
     declareProperty("JpsiFinder", m_jpsiFinder);
+    declareProperty("PVRefitter", m_pvRefitter);
     
     // Declare user-defined properties
     declareProperty("OutputVtxContainerName", m_outputVtxContainerName = "OniaCandidates");

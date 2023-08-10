@@ -43,7 +43,7 @@ namespace DerivationFramework {
      */
     ToolHandle<Trk::V0Tools>                    m_v0Tools;
     ToolHandle<Analysis::JpsiFinder>            m_jpsiFinder;
-    ToolHandle<Analysis::PrimaryVertexRefitter> m_pvRefitter{this, "PVRefitter", "Analysis::PrimaryVertexRefitter"};
+    ToolHandle<Analysis::PrimaryVertexRefitter> m_pvRefitter;
     SG::ReadCondHandleKey<InDet::BeamSpotData> m_beamSpotKey { this, "BeamSpotKey", "BeamSpotData", "SG key for beam spot" };
       
     /** job options
