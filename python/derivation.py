@@ -158,6 +158,56 @@ def EOPKernelCfg(flags, name='TrackCaloDecorator_KERN', **kwargs):
                                            track2Mass                  = 139.57))
     acc.addPublicTool(EOPLambdaFinder)
 
+    EOPKsFinder = acc.popToolsAndMerge(JpsiFinderCfg(flags,
+                                           name                      = "EOPKsFinder",
+                                           muAndMu                     = False,
+                                           muAndTrack                  = False,
+                                           TrackAndTrack               = True,
+                                           assumeDiMuons               = False, 
+                                           invMassUpper                = 520.0,
+                                           invMassLower                = 480.0,
+                                           Chi2Cut                     = 15.,
+                                           oppChargesOnly              = True,
+                                           combOnly            	       = False,
+                                           atLeastOneComb              = False,
+                                           useCombinedMeasurement      = False, 
+                                           muonCollectionKey           = "Muons",
+                                           TrackParticleCollection     = "InDetTrackParticles",
+                                           V0VertexFitterTool          = TrkV0Fitter,             # V0 vertex fitter
+                                           useV0Fitter                 = False,                # if False a TrkVertexFitterTool will be used
+                                           TrkVertexFitterTool         = TrkVKalVrtFitter,        # VKalVrt vertex fitter
+                                           TrackSelectorTool           = InDetTrackSelectorTool,
+                                           VertexPointEstimator        = VtxPointEstimator,
+                                           useMCPCuts                  = False,
+                                           track1Mass                  = 139.57,
+                                           track2Mass                  = 139.57))
+    acc.addPublicTool(EOPKsFinder)
+
+    EOPPhiFinder = acc.popToolsAndMerge(JpsiFinderCfg(flags,
+                                           name                      = "EOPPhiFinder",
+                                           muAndMu                     = False,
+                                           muAndTrack                  = False,
+                                           TrackAndTrack               = True,
+                                           assumeDiMuons               = False, 
+                                           invMassUpper                = 1200.0,
+                                           invMassLower                = 987.354, # taken from HIGG2D5
+                                           Chi2Cut                     = 15.,
+                                           oppChargesOnly              = True,
+                                           combOnly            	       = False,
+                                           atLeastOneComb              = False,
+                                           useCombinedMeasurement      = False, 
+                                           muonCollectionKey           = "Muons",
+                                           TrackParticleCollection     = "InDetTrackParticles",
+                                           V0VertexFitterTool          = TrkV0Fitter,             # V0 vertex fitter
+                                           useV0Fitter                 = False,                # if False a TrkVertexFitterTool will be used
+                                           TrkVertexFitterTool         = TrkVKalVrtFitter,        # VKalVrt vertex fitter
+                                           TrackSelectorTool           = InDetTrackSelectorTool,
+                                           VertexPointEstimator        = VtxPointEstimator,
+                                           useMCPCuts                  = False,
+                                           track1Mass                  = 493.677, # Not very important, only used to calculate inv. mass cut
+                                           track2Mass                  = 493.677))
+    acc.addPublicTool(EOPPhiFinder)
+
     from TrkConfig.TrkVertexAnalysisUtilsConfig import V0ToolsCfg
     V0Tools = acc.popToolsAndMerge(V0ToolsCfg(flags, name = "V0Tools", Extrapolator=extrapolator))
     #V0Tools = CompFactory.Trk.V0Tools("ThisIsV0Tools", Extrapolator=extrapolator)
@@ -178,10 +228,32 @@ def EOPKernelCfg(flags, name='TrackCaloDecorator_KERN', **kwargs):
         RefitPV = EOPRefitPV)
     acc.addPublicTool(EOPLambdaRecotrktrk)
 
+    EOPKsRecotrktrk = CompFactory.DerivationFramework.Reco_mumu(
+        name                   = "EOPKsRecotrktrk",
+        JpsiFinder             = EOPKsFinder,
+        V0Tools = V0Tools,
+        PVRefitter = PvRefitter,
+        OutputVtxContainerName = "KsCandidates",
+        PVContainerName        = "PrimaryVertices",
+        RefPVContainerName     = "EOPKsRefittedPrimaryVertices",
+        RefitPV = EOPRefitPV)
+    acc.addPublicTool(EOPKsRecotrktrk)
+
+    EOPPhiRecotrktrk = CompFactory.DerivationFramework.Reco_mumu(
+        name                   = "EOPPhiRecotrktrk",
+        JpsiFinder             = EOPPhiFinder,
+        V0Tools = V0Tools,
+        PVRefitter = PvRefitter,
+        OutputVtxContainerName = "PhiCandidates",
+        PVContainerName        = "PrimaryVertices",
+        RefPVContainerName     = "EOPPhiRefittedPrimaryVertices",
+        RefitPV = EOPRefitPV)
+    acc.addPublicTool(EOPPhiRecotrktrk)
+
     EOPSelectLambda2trktrk = CompFactory.DerivationFramework.Select_onia2mumu(
         name                  = "EOPSelectLambda2trktrk",
         HypothesisName        = "Lambda",
-        InputVtxContainerName = "StoreGateSvc+"+EOPLambdaRecotrktrk.OutputVtxContainerName,
+        InputVtxContainerName = EOPLambdaRecotrktrk.OutputVtxContainerName,
         TrkMasses             = [938.272, 139.57], # Proton, pion PDG mass
         VtxMassHypo           = 1115.0, # lambda PDG mass
         MassMin               = 1105.0,
@@ -190,6 +262,30 @@ def EOPKernelCfg(flags, name='TrackCaloDecorator_KERN', **kwargs):
         V0Tool = V0Tools)
     acc.addPublicTool(EOPSelectLambda2trktrk)
 
+    EOPSelectKs2trktrk = CompFactory.DerivationFramework.Select_onia2mumu(
+        name                  = "EOPSelectKs2trktrk",
+        HypothesisName        = "Ks",
+        InputVtxContainerName = EOPKsRecotrktrk.OutputVtxContainerName,
+        TrkMasses             = [139.57, 139.57],
+        VtxMassHypo           = 497.611, # lambda k_s mass
+        MassMin               = 480.0,
+        MassMax               = 520.0,
+        Chi2Max               = 15,
+        V0Tool = V0Tools)
+    acc.addPublicTool(EOPSelectKs2trktrk)
+
+    EOPSelectPhi2trktrk = CompFactory.DerivationFramework.Select_onia2mumu(
+        name                  = "EOPSelectPhi2trktrk",
+        HypothesisName        = "Phi",
+        #InputVtxContainerName = "StoreGateSvc+"+EOPLambdaRecotrktrk.OutputVtxContainerName,
+        InputVtxContainerName = EOPPhiRecotrktrk.OutputVtxContainerName,
+        TrkMasses             = [493.677, 493.677], # K+/- PDG mass
+        VtxMassHypo           = 1019.461, # phi PDG mass
+        MassMin               = 987.354,
+        MassMax               = 1200.0,
+        Chi2Max               = 15,
+        V0Tool = V0Tools)
+    acc.addPublicTool(EOPSelectPhi2trktrk)
 
 
     CaloDeco = CompFactory.DerivationFramework.TrackCaloDecorator(name = "TrackCaloDecorator",
@@ -205,7 +301,7 @@ def EOPKernelCfg(flags, name='TrackCaloDecorator_KERN', **kwargs):
     #augmentationTools = [extrapolator, caloExtensionTool, CommonTruthClassifier, CaloDeco]
     #augmentationTools = [extrapolator, caloExtensionTool, CaloDeco]
     #augmentationTools = [caloExtensionTool, CaloDeco]
-    augmentationTools = [CaloDeco, EOPLambdaRecotrktrk, EOPSelectLambda2trktrk]
+    augmentationTools = [CaloDeco, EOPLambdaRecotrktrk, EOPSelectLambda2trktrk, EOPKsRecotrktrk, EOPSelectKs2trktrk, EOPPhiRecotrktrk, EOPSelectPhi2trktrk]
     DerivationKernel = CompFactory.DerivationFramework.DerivationKernel
     acc.addEventAlgo(DerivationKernel(name, AugmentationTools = augmentationTools))
     #acc.setPrivateTools(caloExtensionTool)
@@ -226,10 +322,13 @@ def EOPCfg(flags):
     EOPSlimmingHelper = SlimmingHelper("EOPSlimmingHelper", NamesAndTypes = flags.Input.TypedCollections, ConfigFlags = flags)
     EOPSlimmingHelper.SmartCollections = ["EventInfo","InDetTrackParticles","PrimaryVertices"]
 
-    # InDetTrackParticlesAuxDyn.CALO_trkEta_TileBar2
-    EOPSlimmingHelper.ExtraVariables += ["InDetTrackParticles.numberOfTRTHits.CALO_trkEta_TileBar2"]
     EOPSlimmingHelper.AllVariables += ["InDetTrackParticles"]
-    EOPSlimmingHelper.AllVariables += ["VertexContainer", "VertexAuxContainer", "LambdaCandidates", "LambdaCandidatesAuxDyn", "OniaCandidates"]
+
+    # Add secondary vertices
+    EOPSlimmingHelper.StaticContent += ["xAOD::VertexContainer#LambdaCandidates","xAOD::VertexAuxContainer#LambdaCandidatesAux.","xAOD::VertexAuxContainer#LambdaCandidatesAux.-vxTrackAtVertex"]
+    EOPSlimmingHelper.StaticContent += ["xAOD::VertexContainer#KsCandidates","xAOD::VertexAuxContainer#KsCandidatesAux.","xAOD::VertexAuxContainer#KsCandidatesAux.-vxTrackAtVertex"]
+    EOPSlimmingHelper.StaticContent += ["xAOD::VertexContainer#PhiCandidates","xAOD::VertexAuxContainer#PhiCandidatesAux.","xAOD::VertexAuxContainer#PhiCandidatesAux.-vxTrackAtVertex"]
+
     EOPItemList = EOPSlimmingHelper.GetItemList()
     acc.merge(OutputStreamCfg(flags, "DAOD_EOP", ItemList=EOPItemList, AcceptAlgs=["TrackCaloDecorator_KERN"]))
 
