@@ -32,7 +32,7 @@ namespace DerivationFramework {
     declareInterface<DerivationFramework::IAugmentationTool>(this);
 
     // Declare tools    
-    declareProperty("V0Tools", m_v0Tools);
+    declareProperty("V0Tool", m_v0Tools);
 
     // Declare user-defined properties
     
@@ -140,8 +140,8 @@ namespace DerivationFramework {
   StatusCode Select_onia2mumu::addBranches() const
   {
     // Jpsi container and its auxilliary store
-    xAOD::VertexContainer*    oniaContainer = NULL;
-    xAOD::VertexAuxContainer* oniaAuxContainer = NULL;
+    const xAOD::VertexContainer*    oniaContainer = NULL;
+    const xAOD::VertexAuxContainer* oniaAuxContainer = NULL;
     
     // retrieve from the StoreGate
     CHECK(evtStore()->retrieve(oniaContainer, m_inputVtxContainerName));
@@ -152,10 +152,9 @@ namespace DerivationFramework {
     bool doZ0   = (m_DoVertexType & 4) != 0;
     bool doZ0BA = (m_DoVertexType & 8) != 0;
     // loop over onia candidates and perform selection and augmentation
-    xAOD::VertexContainer::iterator oniaItr = oniaContainer->begin();
-    for(; oniaItr!=oniaContainer->end(); ++oniaItr) {
+    for(const auto& oniaItr : *oniaContainer) {
       // create BPhysHypoHelper
-      xAOD::BPhysHypoHelper onia(m_hypoName, *oniaItr);
+      xAOD::BPhysHypoHelper onia(m_hypoName, oniaItr);
       
       //----------------------------------------------------
       // decorate the vertex
