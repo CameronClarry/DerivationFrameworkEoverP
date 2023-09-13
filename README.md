@@ -42,9 +42,12 @@ source x86_64-slc6-gcc62-opt/setup.sh
 Run over example ESD
 ```
 cd ../run
-python ../source/DerivationFrameworkEoverP/python/derivation.py
+# Running on data:
+python ../source/DerivationFrameworkEoverP/python/derivation.py --input_files /path/to/data/esd.root --isData
+# Running on MC:
+python ../source/DerivationFrameworkEoverP/python/derivation.py --input_files /path/to/mc/esd.root
 ```
-
+Use ``python derivation.py --help`` to see a full list of options.
 ## Setup in Release 21
 
 First we need to setup up our working directory

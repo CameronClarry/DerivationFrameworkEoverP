@@ -1,5 +1,8 @@
 # Copyright (C) 2002-2022 CERN for the benefit of the ATLAS collaboration
 
+from AthenaConfiguration.ComponentFactory import CompFactory
+from AthenaConfiguration.ComponentAccumulator import ComponentAccumulator
+
 # A fixed version of this config function
 def BPHY_InDetDetailedTrackSelectorToolCfg(flags, name='BPHY_InDetDetailedTrackSelectorTool', **kwargs):
     acc = ComponentAccumulator()
@@ -336,18 +339,20 @@ def EOPCfg(flags):
 
 if __name__=="__main__":
 
-    from AthenaCommon.GlobalFlags  import globalflags
-    globalflags.DataSource.set_Value_and_Lock('data')
-
+    import argparse
+    parser = argparse.ArgumentParser(description='Submit plotting batch jobs for the EoverPAnalysis plotting')
+    parser.add_argument('--input_files', '-i', dest="input_files", type=str, required=True, help='comma-separated list of files to run on')
+    parser.add_argument('--isData', action=argparse.BooleanOptionalAction, help='whether the samples to be run over are data')
+    parser.add_argument('--nthreads', dest="nthreads", type=int, default=8, help='number of threads to use')
+    parser.add_argument('--maxEvents', dest="max_events", type=int, default=None, help='maximum number of events to process')
+    args = parser.parse_args()
+    
+    # Set config flags
     from AthenaConfiguration.AllConfigFlags import ConfigFlags as cfgFlags
-
-    cfgFlags.Concurrency.NumThreads=8
-    cfgFlags.Input.isMC=False
-    #cfgFlags.Input.Files= ["/cvmfs/atlas-nightlies.cern.ch/repo/data/data-art/RecExRecoTest/mc20e_13TeV/valid1.410000.PowhegPythiaEvtGen_P2012_ttbar_hdamp172p5_nonallhad.ESD.e4993_s3227_r12689/myESD.pool.root"]
-    cfgFlags.Input.Files= ["/eos/user/c/caclarry/data18_13TeV/ESD.30341268._033971.pool.root.1"]
-    #cfgFlags.Input.Files= ["/eos/user/c/caclarry/mc20_13TeV/ESD.31450936._000024.pool.root.1"]
-    #cfgFlags.Output.AODFileName="output_AOD.root"
-    #cfgFlags.Output.doWriteAOD=True
+    cfgFlags.Concurrency.NumThreads=args.nthreads
+    if args.isData:
+        cfgFlags.Input.isMC=False
+    cfgFlags.Input.Files = args.input_files.split(",")
     cfgFlags.lock()
 
     from AthenaConfiguration.MainServicesConfig import MainServicesCfg
@@ -355,23 +360,7 @@ if __name__=="__main__":
 
     from AthenaPoolCnvSvc.PoolReadConfig import PoolReadCfg
     cfg.merge(PoolReadCfg(cfgFlags))
-    from eflowRec.PFRun3Config import PFFullCfg
-    cfg.merge(PFFullCfg(cfgFlags))
-    
-    from eflowRec.PFRun3Remaps import ListRemaps
 
-    list_remaps=ListRemaps()
-    for mapping in list_remaps:
-        cfg.merge(mapping)    
-
-    #Given we rebuild topoclusters from the ESD, we should also redo the matching between topoclusters and muon clusters.
-    #The resulting links are used to create the global GPF muon-FE links.
-    from AthenaConfiguration.ComponentFactory import CompFactory
-    from AthenaConfiguration.ComponentAccumulator import ComponentAccumulator
-    
     cfg.merge(EOPCfg(cfgFlags))
-    result = ComponentAccumulator()    
-    #result.addEventAlgo(CompFactory.ClusterMatching.CaloClusterMatchLinkAlg("MuonTCLinks", ClustersToDecorate="MuonClusterCollection"))
-    cfg.merge(result)
 
-    cfg.run(maxEvents=10)
+    cfg.run(maxEvents=args.max_events)
