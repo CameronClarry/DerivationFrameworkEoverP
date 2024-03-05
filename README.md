@@ -13,7 +13,7 @@ Port to release 21: Lukas Adamek
 First we need to setup up our working directory and Athena
 
 ```
-setupATLAS
+setupATLAS -c centos7
 mkdir workdir && cd workdir
 mkdir source build run
 cd source
@@ -34,20 +34,35 @@ cmake ../source && make
 source x86_64-slc6-gcc62-opt/setup.sh
 ```
 
-
-
 ## Running in Release 22
+
+On subsequent sessions, set up the proper running environment using:
+```
+setupATLAS -c centos7
+cd source
+asetup
+cd ../build
+source x86_64-centos7-gcc11-opt/setup.sh
+cd ../run
+```
 
 ### Example: Running locally on lxplus
 Run over example ESD
 ```
-cd ../run
 # Running on data:
-python ../source/DerivationFrameworkEoverP/python/derivation.py --input_files /path/to/data/esd.root --isData
+rucio download ESD.29797580._000004.pool.root.1
+python ../source/DerivationFrameworkEoverP/python/derivation.py --input_files /path/to/data/esd.root --isData --maxEvents 100 --nthreads 1
 # Running on MC:
-python ../source/DerivationFrameworkEoverP/python/derivation.py --input_files /path/to/mc/esd.root
+python ../source/DerivationFrameworkEoverP/python/derivation.py --input_files /path/to/mc/esd.root --maxEvents 100 --nthreads 1
 ```
 Use ``python derivation.py --help`` to see a full list of options.
+
+### Example: Submit to grid
+```
+cd ../
+prun --exec "ls;mkdir build;cd build;cmake ../source;make;source build/x86_64-centos7-gcc11-opt/setup.sh;cd ../; python source/DerivationFrameworkEoverP/python/derivation.py --isData --maxEvents 100 --nthreads 1 --input_files %IN" --inDS data18_13TeV:data18_13TeV.00355331.physics_MinBias.recon.ESD.r13575 --nFiles 1 --output myDAOD_EOP.pool.root --outDS eop.derivation.$(uuidgen) --athenaTag=Athena,22.0.104 --excludeFile build
+```
+
 ## Setup in Release 21
 
 First we need to setup up our working directory
