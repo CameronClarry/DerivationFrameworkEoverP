@@ -265,6 +265,10 @@ namespace DerivationFramework {
         ATH_CHECK(m_caloCalClustersReadHandleKey.initialize());
     }
 
+    if(!m_caloCalCellsReadHandleKey.key().empty()) {
+        ATH_CHECK(m_caloCalCellsReadHandleKey.initialize());
+    }
+
 
     // Save cutflow histograms
     return StatusCode::SUCCESS;
@@ -295,7 +299,12 @@ namespace DerivationFramework {
 
 
     const CaloCellContainer *caloCellContainer = 0; //ESD object used to create decorations
-    CHECK(evtStore()->retrieve(caloCellContainer, "AllCalo"));
+    //CHECK(evtStore()->retrieve(caloCellContainer, "AllCalo"));
+    if (!m_caloCalCellsReadHandleKey.key().empty()) {
+      SG::ReadHandle<CaloCellContainer> caloCalCellsReadHandle(m_caloCalCellsReadHandleKey);
+      caloCellContainer = caloCalCellsReadHandle.get();
+      ATH_MSG_INFO("Got cell container with size " << caloCellContainer->size());
+    }
 
     const xAOD::TruthParticleContainer* truthParticles = 0;
     bool hasTruthParticles = true;
@@ -444,7 +453,7 @@ namespace DerivationFramework {
       //}
 
       /*a map to store the track parameters associated with the different layers of the calorimeter system */
-      std::map<CaloSampling::CaloSample, const Trk::TrackParameters*> parametersMap;
+      std::map<CaloSampling::CaloSample, std::unique_ptr<Trk::TrackParameters>> parametersMap;
 
       /*get the CaloExtension object*/
       std::unique_ptr<Trk::CaloExtension> extension = nullptr;
@@ -468,10 +477,10 @@ namespace DerivationFramework {
           }
 
           if (parametersMap[intLayer] == NULL) {
-            parametersMap[intLayer] = clParameter.clone();
+            parametersMap[intLayer] = clParameter.uniqueClone();
           } else if (m_trackParametersIdHelper->isEntryToVolume(clParameter.cIdentifier())) {
-            delete parametersMap[intLayer];
-            parametersMap[intLayer] = clParameter.clone();
+            //delete parametersMap[intLayer];
+            parametersMap[intLayer] = clParameter.uniqueClone();
           }
         }
 

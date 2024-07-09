@@ -172,6 +172,15 @@ namespace DerivationFramework {
                   "input"
       };
 
+      /** ReadHandleKey for the CaloCellContainer, at LC scale, to be used as input */
+      SG::ReadHandleKey<CaloCellContainer> m_caloCalCellsReadHandleKey{
+          this,
+              "calCellsName",
+              "AllCalo",
+              "ReadHandleKey for the CaloCellContainer, at LC scale, to be used as "
+                  "input"
+      };
+
 
     public: 
       void getHitsSum(const CaloCalibrationHitContainer* hits,const  xAOD::CaloCluster* cl,  unsigned int particle_barcode, std::vector< std::vector<float> >& hitsMap) const;
