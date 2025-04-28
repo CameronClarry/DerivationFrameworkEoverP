@@ -340,19 +340,30 @@ def EOPCfg(flags):
 if __name__=="__main__":
 
     import argparse
+    import os
     parser = argparse.ArgumentParser(description='Submit plotting batch jobs for the EoverPAnalysis plotting')
-    parser.add_argument('--input_files', '-i', dest="input_files", type=str, required=True, help='comma-separated list of files to run on')
+    parser.add_argument('--input_files', '-i', dest="input_files", type=str, required=True, help='comma-separated list of files to run on (or a text file containing paths)')
+    parser.add_argument('--useFileList', action='store_true', help='whether to parse the input_files as a text file containing the file paths')
     parser.add_argument('--isData', action=argparse.BooleanOptionalAction, help='whether the samples to be run over are data')
     parser.add_argument('--nthreads', dest="nthreads", type=int, default=8, help='number of threads to use')
     parser.add_argument('--maxEvents', dest="max_events", type=int, default=None, help='maximum number of events to process')
+    parser.add_argument('--athenaThreads', dest="athena_threads", action=argparse.BooleanOptionalAction, help='use the environment variable ATHENA_PROC_NUMBER for the number of threads')
     args = parser.parse_args()
     
     # Set config flags
     from AthenaConfiguration.AllConfigFlags import ConfigFlags as cfgFlags
-    cfgFlags.Concurrency.NumThreads=args.nthreads
+    if args.athena_threads:
+        print("ATHENA_PROC_NUMBER:", os.environ['ATHENA_PROC_NUMBER'])
+        cfgFlags.Concurrency.NumThreads=int(os.environ['ATHENA_PROC_NUMBER'])
+    else:
+        cfgFlags.Concurrency.NumThreads=args.nthreads
     if args.isData:
         cfgFlags.Input.isMC=False
-    cfgFlags.Input.Files = args.input_files.split(",")
+    if args.useFileList:
+        with open(args.input_files, 'r') as f:
+            cfgFlags.Input.Files = [line.strip() for line in f.readlines()]
+    else:
+        cfgFlags.Input.Files = args.input_files.split(",")
     cfgFlags.lock()
 
     from AthenaConfiguration.MainServicesConfig import MainServicesCfg
