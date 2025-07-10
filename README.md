@@ -31,13 +31,14 @@ And finally, compile the project.
 ```
 cd ../build
 cmake ../source && make
-source x86_64-slc6-gcc62-opt/setup.sh
+source x86_64-centos7-gcc11-opt/setup.sh
 ```
 
 ## Running in Release 22
 
 On subsequent sessions, set up the proper running environment using:
 ```
+cd workdir
 setupATLAS -c centos7
 cd source
 asetup
@@ -59,8 +60,10 @@ Use ``python derivation.py --help`` to see a full list of options.
 
 ### Example: Submit to grid
 ```
+# Switch to workdir
 cd ../
-prun --exec "ls;mkdir build;cd build;cmake ../source;make;source build/x86_64-centos7-gcc11-opt/setup.sh;cd ../; python source/DerivationFrameworkEoverP/python/derivation.py --isData --maxEvents 100 --nthreads 1 --input_files %IN" --inDS data18_13TeV:data18_13TeV.00355331.physics_MinBias.recon.ESD.r13575 --nFiles 1 --output myDAOD_EOP.pool.root --outDS eop.derivation.$(uuidgen) --athenaTag=Athena,22.0.104 --excludeFile build
+# Make the appropriate changes for the dataset you are running on
+prun --bexec "ls;mkdir build;cd build;cmake ../source;make;cd ../" --exec "ls;source build/x86_64-centos7-gcc11-opt/setup.sh;python source/DerivationFrameworkEoverP/python/derivation.py --isData --maxEvents=\"-1\" --nthreads 1 --input_files %IN" --inDS data17_13TeV.00341312.physics_ZeroBias.merge.ESD.r16331_p6686 --output myDAOD_EOP.pool.root --outDS eop.derivation.$(uuidgen) --athenaTag=Athena,22.0.104 --excludeFile ./build/ --cpuTimePerEvent 220
 ```
 
 ## Setup in Release 21
