@@ -332,6 +332,10 @@ def EOPCfg(flags):
     EOPSlimmingHelper.StaticContent += ["xAOD::VertexContainer#KsCandidates","xAOD::VertexAuxContainer#KsCandidatesAux.","xAOD::VertexAuxContainer#KsCandidatesAux.-vxTrackAtVertex"]
     EOPSlimmingHelper.StaticContent += ["xAOD::VertexContainer#PhiCandidates","xAOD::VertexAuxContainer#PhiCandidatesAux.","xAOD::VertexAuxContainer#PhiCandidatesAux.-vxTrackAtVertex"]
 
+    # Add truth information
+    if flags.Input.isMC:
+        EOPSlimmingHelper.AllVariables += ["TruthParticles"]
+
     EOPItemList = EOPSlimmingHelper.GetItemList()
     acc.merge(OutputStreamCfg(flags, "DAOD_EOP", ItemList=EOPItemList, AcceptAlgs=["TrackCaloDecorator_KERN"]))
 

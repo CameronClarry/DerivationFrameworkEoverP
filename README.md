@@ -65,7 +65,7 @@ Use ``python derivation.py --help`` to see a full list of options.
 ### Example: Submit to grid
 ```
 # Make the appropriate changes for the dataset you are running on
-prun --bexec "ls;mkdir build;cd build;cmake ../source;make;cd ../" --exec "ls;source build/x86_64-centos7-gcc11-opt/setup.sh;python source/DerivationFrameworkEoverP/python/derivation.py --isData --maxEvents=\"-1\" --nthreads 1 --input_files %IN" --inDS data17_13TeV.00341312.physics_ZeroBias.merge.ESD.r16331_p6686 --output myDAOD_EOP.pool.root --outDS eop.derivation.$(uuidgen) --athenaTag=Athena,22.0.104 --excludeFile ./build/ --cpuTimePerEvent 220
+prun --bexec "ls;mkdir build;cd build;cmake ../source;make;cd ../" --exec "ls;source build/x86_64-centos7-gcc11-opt/setup.sh;python source/DerivationFrameworkEoverP/python/derivation.py --isData --maxEvents=\"-1\" --nthreads 1 --input_files %IN" --inDS data17_13TeV.00341312.physics_ZeroBias.merge.ESD.r16331_p6686 --output myDAOD_EOP.pool.root --outDS user.<username>.DAOD_EOP.$(uuidgen) --athenaTag=Athena,22.0.104 --excludeFile ./build/ --cpuTimePerEvent 220
 ```
 
 ## Setup in Release 21
